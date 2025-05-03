@@ -1,0 +1,34 @@
+structure idea
+
+- app
+  - models
+    - data_sources
+      - csv_data
+      - json_data
+      - mock_data
+    - config
+    - data_source
+    - import
+    - row
+    - step
+    - user
+    - workflow
+    - workflow_execution
+  - controllers
+    - api
+    - v1
+      - workflows
+        - steps
+        - workflow_executions
+      - users
+  - services
+    - hydra_manager
+    - workflow_executor
+  - views
+  - serializers
+  - presenters
+  - helpers
+  - jobs
+- lib
+  - hydra_logger
+- config
