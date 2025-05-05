@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_03_234021) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_05_010100) do
   create_table "configs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -44,10 +44,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_03_234021) do
   create_table "workflow_steps", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "workflow_id", null: false
+    t.index ["workflow_id"], name: "index_workflow_steps_on_workflow_id"
   end
 
   create_table "workflows", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
+
+  add_foreign_key "workflow_steps", "workflows"
 end
