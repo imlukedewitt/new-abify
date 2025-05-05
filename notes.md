@@ -23,6 +23,7 @@ structure idea
       - users
   - services
     - hydra_manager
+    - row_processor
     - workflow_executor
   - views
   - serializers
