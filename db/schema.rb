@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_05_010100) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_05_042128) do
   create_table "configs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -29,8 +29,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_05_010100) do
   end
 
   create_table "rows", force: :cascade do |t|
+    t.integer "workflow_execution_id", null: false
+    t.integer "data_source_id", null: false
+    t.json "original_data"
+    t.json "data"
+    t.string "status"
+    t.integer "source_index"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["data_source_id"], name: "index_rows_on_data_source_id"
+    t.index ["workflow_execution_id"], name: "index_rows_on_workflow_execution_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -53,5 +61,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_05_010100) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "rows", "data_sources"
+  add_foreign_key "rows", "workflow_executions"
   add_foreign_key "workflow_steps", "workflows"
 end
