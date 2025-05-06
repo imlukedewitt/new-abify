@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_05_042128) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_06_045229) do
   create_table "configs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -53,6 +53,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_05_042128) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "workflow_id", null: false
+    t.json "config"
+    t.integer "order"
+    t.string "name"
     t.index ["workflow_id"], name: "index_workflow_steps_on_workflow_id"
   end
 
