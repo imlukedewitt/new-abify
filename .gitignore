@@ -36,3 +36,4 @@
 # ignore vscode stuff
 *.code-workspace
 .vscode/launch.json
+.vscode/settings.json
