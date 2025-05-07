@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_06_045229) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_07_042731) do
   create_table "configs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -45,6 +45,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_045229) do
     t.string "email"
     t.string "first_name"
     t.string "last_name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "workflow_executions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
