@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 ##
-# WorkflowExecutor is responsible for executing a workflow, which is a series of steps
-# Creates a WorkflowStepExecutor for each row in the data source
-# and executes each step in the workflow
+# WorkflowExecutor creates a RowProcessor for every Row in the Data Source
 class WorkflowExecutor
   attr_reader :workflow, :data_source, :hydra_manager, :response
 
