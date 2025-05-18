@@ -3,8 +3,8 @@
 require 'liquid'
 
 ##
-# WorkflowStepExecutor is responsible for executing a workflow step
-class WorkflowStepExecutor
+# StepProcessor is responsible for processing a workflow step
+class StepProcessor
   attr_reader :step, :context, :config
 
   def initialize(workflow_step, context)
