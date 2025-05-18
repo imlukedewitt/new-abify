@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe WorkflowStepExecutor do
+RSpec.describe StepProcessor do
   let(:workflow) { create(:workflow) }
   let(:step) { create(:workflow_step, workflow: workflow) }
   let(:context) { { key: 'value' } }
