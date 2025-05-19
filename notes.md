@@ -6,6 +6,8 @@ structure idea
       - csv_data
       - json_data
       - mock_data
+    - batch
+    - batch_execution
     - config
     - data_source
     - import
@@ -78,12 +80,11 @@ steps:
     skip_if:
       $present: "{{row.payment_profile_id}}"
     method: "get"
-    url:
-      path: "{{base}}/payment_profiles.json"
-      params:
-        customer_id: "{{row.customer_id}}"
-        sort: "created_at"
-        order: "desc"
+    url: "{{base}}/payment_profiles.json"
+    params:
+      customer_id: "{{row.customer_id}}"
+      sort: "created_at"
+      order: "desc"
     success_key: "payment_profile_id"
     success_value: "{{response[0].id}}"
 
