@@ -8,12 +8,14 @@ FactoryBot.define do
     sequence(:order) { |n| n }
     config do
       {
-        'name_template' => '1',
-        'required_template' => 'true',
-        'skip_condition_template' => '{{row.customer_id | present?}}',
-        'method_template' => 'get',
-        'url_template' => '{{base_url}}/customers/lookup.json?reference={{row.customer_reference}}',
-        'success_data_template' => { 'customer_id' => '{{response}}' }
+        'liquid_templates' => {
+          'name' => '1',
+          'required' => 'true',
+          'skip_condition' => '{{row.customer_id | present?}}',
+          'method' => 'get',
+          'url' => '{{base_url}}/customers/lookup.json?reference={{row.customer_reference}}',
+          'success_data' => { 'customer_id' => '{{response.customer.id}}' }
+        }
       }
     end
   end
