@@ -16,7 +16,6 @@ class WorkflowStep < ApplicationRecord
   validates :config, presence: true
   validates :name, presence: true
   validates :order, presence: true, numericality: { only_integer: true, greater_than: 0 }
-
   validate :validate_config
 
   CONFIG_REQUIRED_KEYS = %w[
@@ -31,6 +30,10 @@ class WorkflowStep < ApplicationRecord
     skip_condition
     success_data
   ].freeze
+
+  def process
+    StepProcessor.call(self)
+  end
 
   private
 
