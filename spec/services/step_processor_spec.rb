@@ -17,4 +17,15 @@ RSpec.describe StepProcessor do
       expect { described_class.new(nil, context) }.to raise_error(ArgumentError)
     end
   end
+
+  describe '::call' do
+    it 'initializes a new instance and calls execute' do
+      step = create(:workflow_step)
+      expect(described_class).to receive(:new)
+        .with(step)
+        .and_return(executor)
+      expect(executor).to receive(:call)
+      described_class.call(step)
+    end
+  end
 end
