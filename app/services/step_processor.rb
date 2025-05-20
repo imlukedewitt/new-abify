@@ -15,6 +15,10 @@ class StepProcessor
   end
 
   def self.call(step)
-    new(step).execute
+    new(step).call
+  end
+
+  def call
+    # .
   end
 end
