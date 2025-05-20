@@ -10,7 +10,7 @@ class StepProcessor
   def initialize(step)
     raise ArgumentError, 'step is required' unless step
 
-    @step = workflow_step
+    @step = step
     @config = @step.config.with_indifferent_access
   end
 
