@@ -7,15 +7,14 @@ require 'liquid'
 class StepProcessor
   attr_reader :step, :context, :config
 
-  def initialize(workflow_step, context)
-    raise ArgumentError, 'workflow_step is required' unless workflow_step
+  def initialize(step)
+    raise ArgumentError, 'step is required' unless step
 
     @step = workflow_step
-    @context = context
     @config = @step.config.with_indifferent_access
   end
 
-  def self.call(workflow_step, context)
-    new(workflow_step, context).execute
+  def self.call(step)
+    new(step).execute
   end
 end
