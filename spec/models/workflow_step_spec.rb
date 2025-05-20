@@ -72,4 +72,13 @@ RSpec.describe WorkflowStep, type: :model do
       expect(step.errors[:config]).to include('unexpected key in liquid_templates: unsupported_key')
     end
   end
+
+  describe '#process' do
+    let(:step) { create(:workflow_step) }
+
+    it 'calls the service StepProcessor' do
+      expect(StepProcessor).to receive(:call)
+      step.process
+    end
+  end
 end
