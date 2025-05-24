@@ -12,7 +12,7 @@ module WorkflowFilters
     when Array, Hash
       !value.empty?
     else
-      false
+      true
     end
   end
 end
