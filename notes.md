@@ -67,8 +67,7 @@ batch:
 steps:
   - name: "Look Up Customer"
     required: true
-    skip_if:
-      $present: "{{row.customer_id}}"
+    skip_condition: "{{row.customer_id | present?}}"
     method: "get"
     url: "{{base}}/customers/lookup.json?reference={{row.customer_reference}}"
     success_key: "customer_id"
@@ -77,8 +76,7 @@ steps:
 
   - name: "Look Up Payment Profile"
     required: true
-    skip_if:
-      $present: "{{row.payment_profile_id}}"
+    skip_condition: "{{row.payment_profile_id | present?}}"
     method: "get"
     url: "{{base}}/payment_profiles.json"
     params:
