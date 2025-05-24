@@ -6,11 +6,11 @@ RSpec.describe StepProcessor do
   let(:workflow) { create(:workflow) }
   let(:step) { create(:workflow_step, workflow: workflow) }
   let(:context) { { key: 'value' } }
-  let(:executor) { described_class.new(step) }
+  let(:step_processor) { described_class.new(step) }
 
   describe '#initialize' do
     it 'assigns the class variables' do
-      expect(executor.step).to eq(step)
+      expect(step_processor.step).to eq(step)
     end
 
     it 'raises an error when step is nil' do
@@ -23,8 +23,8 @@ RSpec.describe StepProcessor do
       step = create(:workflow_step)
       expect(described_class).to receive(:new)
         .with(step)
-        .and_return(executor)
-      expect(executor).to receive(:call)
+        .and_return(step_processor)
+      expect(step_processor).to receive(:call)
       described_class.call(step)
     end
   end
