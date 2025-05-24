@@ -1,23 +1,29 @@
+# frozen_string_literal: true
+
+require_relative '../liquid/filters/workflow_filters'
+require_relative '../../lib/data_utils'
+
 class LiquidProcessor
   def initialize(template_string, context_data = {})
     @template_string = template_string
     @context_data = context_data
+    @environment = create_liquid_environment
   end
 
   def process
-    template = Liquid::Template.parse(@template_string)
-    template.render(deep_stringify_keys(@context_data))
+    template = Liquid::Template.parse(@template_string, environment: @environment)
+    template.render(DataUtils.deep_stringify_keys(@context_data))
   end
 
   def valid?
-    Liquid::Template.parse(@template_string)
+    Liquid::Template.parse(@template_string, environment: @environment)
     true
   rescue Liquid::SyntaxError
     false
   end
 
   def validation_errors
-    Liquid::Template.parse(@template_string)
+    Liquid::Template.parse(@template_string, environment: @environment)
     nil
   rescue Liquid::SyntaxError => e
     e.message
@@ -25,14 +31,9 @@ class LiquidProcessor
 
   private
 
-  def deep_stringify_keys(obj)
-    case obj
-    when Hash
-      obj.transform_keys(&:to_s).transform_values { |v| deep_stringify_keys(v) }
-    when Array
-      obj.map { |v| deep_stringify_keys(v) }
-    else
-      obj
-    end
+  def create_liquid_environment
+    environment = Liquid::Environment.new
+    environment.register_filter(WorkflowFilters)
+    environment
   end
 end
