@@ -41,6 +41,18 @@ RSpec.describe LiquidProcessor do
 
       expect(result).to eq("First payment profile ID: pp_123")
     end
+
+    describe 'with custom filters' do
+      it 'processes present? filter for non-empty string' do
+        template = "{{ value | present? }}"
+        context_data = { value: "hello" }
+        
+        processor = LiquidProcessor.new(template, context_data)
+        result = processor.process
+        
+        expect(result).to eq("true")
+      end
+    end
   end
 
   describe '#valid?' do
