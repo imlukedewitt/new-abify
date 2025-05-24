@@ -11,4 +11,16 @@ module DataUtils
       obj
     end
   end
+
+  def self.to_boolean(value)
+    result = value.to_s.strip.downcase
+    case result
+    when "true", "1", "yes"
+      true
+    when "false", "0", "no", ""
+      false
+    else
+      true
+    end
+  end
 end
