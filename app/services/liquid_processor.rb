@@ -15,6 +15,11 @@ class LiquidProcessor
     template.render(DataUtils.deep_stringify_keys(@context_data))
   end
 
+  def process_as_boolean
+    result = process
+    DataUtils.to_boolean(result)
+  end
+
   def valid?
     Liquid::Template.parse(@template_string, environment: @environment)
     true
