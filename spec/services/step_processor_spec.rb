@@ -3,11 +3,12 @@
 require 'rails_helper'
 
 RSpec.describe StepProcessor do
+  let(:api_key) { 'abc123' }
   let(:workflow) { create(:workflow) }
   let(:step) { create(:workflow_step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:on_complete) { -> { puts 'done' } }
-  let(:step_processor) { described_class.new(step, row, on_complete: on_complete) }
+  let(:step_processor) { described_class.new(step, row, on_complete: on_complete, api_key: api_key) }
   let(:hydra_manager) { instance_double(HydraManager) }
 
   before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
@@ -19,6 +20,7 @@ RSpec.describe StepProcessor do
       expect(step_processor.config).to eq(step.config.with_indifferent_access)
       expect(step_processor.instance_variable_get(:@hydra_manager)).to eq(hydra_manager)
       expect(step_processor.instance_variable_get(:@on_complete)).to eq(on_complete)
+      expect(step_processor.instance_variable_get(:@api_key)).to eq(api_key)
     end
 
     it 'raises an error when step is nil' do

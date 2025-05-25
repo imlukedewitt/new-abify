@@ -8,7 +8,7 @@ require_relative 'liquid_processor'
 class StepProcessor
   attr_reader :step, :row, :config
 
-  def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil)
+  def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, api_key: nil)
     raise ArgumentError, 'step is required' unless step
     raise ArgumentError, 'row is required' unless row
 
@@ -17,6 +17,7 @@ class StepProcessor
     @config = @step.config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
+    @api_key = api_key
   end
 
   def self.call(step, row)
