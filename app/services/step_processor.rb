@@ -52,11 +52,11 @@ class StepProcessor
     parsed_response = parse_json_response(response.body)
     return { success: false, error: "Invalid JSON response" } if parsed_response.nil?
 
-    if response.status.between?(200, 299)
+    if response.code.between?(200, 299)
       success_data = extract_success_data(parsed_response)
       { success: true, data: success_data }
     else
-      error = parsed_response["errors"] || "Request failed with status #{response.status}"
+      error = parsed_response["errors"] || "Request failed with status #{response.code}"
       { success: false, error: error }
     end
   rescue StandardError => e

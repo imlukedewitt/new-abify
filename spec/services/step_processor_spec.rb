@@ -67,7 +67,7 @@ RSpec.describe StepProcessor do
             on_complete: kind_of(Proc)
           )
         ) do |args|
-          response = double('response', body: '{}', status: 200)
+          response = double('response', body: '{}', code: 200)
           args[:on_complete].call(response)
           double('Typhoeus::Request')
         end
@@ -95,7 +95,7 @@ RSpec.describe StepProcessor do
       expect(hydra_manager).to receive(:queue) do |args|
         response = double('response',
                           body: '{"customer":{"id":"123"}}',
-                          status: 200)
+                          code: 200)
         args[:on_complete].call(response)
       end
 
@@ -119,7 +119,7 @@ RSpec.describe StepProcessor do
       expect(hydra_manager).to receive(:queue) do |args|
         response = double('response',
                           body: '{"error":"Not found"}',
-                          status: 404)
+                          code: 404)
         args[:on_complete].call(response)
         double('Typhoeus::Request')
       end
@@ -144,7 +144,7 @@ RSpec.describe StepProcessor do
       expect(hydra_manager).to receive(:queue) do |args|
         response = double('response',
                           body: 'not json',
-                          status: 200)
+                          code: 200)
         args[:on_complete].call(response)
         double('Typhoeus::Request')
       end
@@ -166,7 +166,7 @@ RSpec.describe StepProcessor do
       processor = described_class.new(step, row) # No callback provided
 
       expect(hydra_manager).to receive(:queue) do |args|
-        response = double('response', body: '{}', status: 200)
+        response = double('response', body: '{}', code: 200)
         expect { args[:on_complete].call(response) }.not_to raise_error
       end
 
@@ -189,7 +189,7 @@ RSpec.describe StepProcessor do
     it 'returns success result for 2xx responses' do
       response = double('response',
                         body: '{"data":"value"}',
-                        status: 201)
+                        code: 201)
 
       result = processor.send(:process_response, response)
       expect(result).to eq(success: true, data: {})
@@ -198,7 +198,7 @@ RSpec.describe StepProcessor do
     it 'extracts error message from response when available' do
       response = double('response',
                         body: '{"errors":"Something went wrong"}',
-                        status: 422)
+                        code: 422)
 
       result = processor.send(:process_response, response)
       expect(result).to eq(success: false, error: "Something went wrong")
@@ -207,7 +207,7 @@ RSpec.describe StepProcessor do
     it 'handles empty responses' do
       response = double('response',
                         body: '',
-                        status: 204)
+                        code: 204)
 
       result = processor.send(:process_response, response)
       expect(result).to eq(success: true, data: {})

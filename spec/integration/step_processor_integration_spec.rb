@@ -9,15 +9,21 @@ RSpec.describe StepProcessor, :integration, :vcr do
              'liquid_templates' => {
                'name' => 'Get Post',
                'url' => 'https://jsonplaceholder.typicode.com/posts/1',
-               'method' => 'get'
+               'method' => 'get',
+               'success_data' => {
+                 'id' => '{{response.id}}',
+                 'userId' => '{{response.userId}}',
+                 'title' => '{{response.title}}',
+                 'body' => '{{response.body}}'
+               }
              }
            })
   end
   let(:row) { create(:row) }
 
   it 'can make a real HTTP request and process the response', vcr: { cassette_name: 'jsonplaceholder/get_post' } do
-    response_data = nil
-    callback = ->(response) { response_data = JSON.parse(response.body) }
+    result = nil
+    callback = ->(response) { result = response }
 
     processor = described_class.new(step, row, on_complete: callback)
     processor.call
@@ -25,10 +31,10 @@ RSpec.describe StepProcessor, :integration, :vcr do
     # Run the hydra queue to actually make the requests
     HydraManager.instance.run
 
-    # Verify we got data back
-    expect(response_data).to include(
-      'id' => 1,
-      'userId' => kind_of(Integer),
+    # Verify success response
+    expect(result[:data]).to include(
+      'id' => "1",
+      'userId' => "1",
       'title' => be_a(String),
       'body' => be_a(String)
     )
@@ -40,23 +46,30 @@ RSpec.describe StepProcessor, :integration, :vcr do
         'name' => 'Create Post',
         'url' => 'https://jsonplaceholder.typicode.com/posts',
         'method' => 'post',
-        'body' => '{"title":"Test Post","body":"This is a test post","userId":1}'
+        'body' => '{"title":"Test Post","body":"This is a test post","userId":1}',
+        'success_data' => {
+          'id' => '{{response.id}}',
+          'title' => '{{response.title}}',
+          'body' => '{{response.body}}',
+          'userId' => '{{response.userId}}'
+        }
       }
     }
 
-    response_data = nil
-    callback = ->(response) { response_data = JSON.parse(response.body) }
+    result = nil
+    callback = ->(response) { result = response }
 
     processor = described_class.new(step, row, on_complete: callback)
     processor.call
 
     HydraManager.instance.run
 
-    expect(response_data).to include(
-      'id' => kind_of(Integer),
+    # Verify success response
+    expect(result[:data]).to include(
+      'id' => "101",
       'title' => 'Test Post',
       'body' => 'This is a test post',
-      'userId' => 1
+      'userId' => "1"
     )
   end
 
@@ -69,14 +82,16 @@ RSpec.describe StepProcessor, :integration, :vcr do
       }
     }
 
-    response_status = nil
-    callback = ->(response) { response_status = response.code }
+    result = nil
+    callback = ->(response) { result = response }
 
     processor = described_class.new(step, row, on_complete: callback)
     processor.call
 
     HydraManager.instance.run
 
-    expect(response_status).to eq(404)
+    # Verify error response
+    expect(result).to include(success: false)
+    expect(result).to include(error: "Request failed with status 404")
   end
 end
