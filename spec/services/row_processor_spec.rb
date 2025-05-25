@@ -70,11 +70,11 @@ RSpec.describe RowProcessor do
       allow(second_processor).to receive(:should_skip?).and_return(false)
       expect(second_processor).to receive(:call)
 
-      # Simulate completion of first step
-      processor.send(:handle_step_completion, double("response"))
+      # Simulate completion of first step with success
+      processor.send(:handle_step_completion, { success: true, data: { 'customer_id' => '123' } })
 
       expect(StepProcessor).not_to receive(:new)
-      processor.send(:handle_step_completion, double("response"))
+      processor.send(:handle_step_completion, { success: true, data: { 'subscription_id' => '456' } })
     end
 
     it "skips steps when should_skip? returns true" do
@@ -96,6 +96,31 @@ RSpec.describe RowProcessor do
       expect(second_processor).to receive(:call)
 
       processor.call
+    end
+
+    it "handles steps without success_data" do
+      step_without_data = build(:step, order: 1, config: {
+                                  'liquid_templates' => {
+                                    'method' => 'get',
+                                    'url' => 'https://api.example.com/endpoint'
+                                  }
+                                })
+      allow(workflow).to receive(:steps).and_return([step_without_data])
+
+      processor = described_class.new(row: row, workflow: workflow)
+      step_processor = instance_double(StepProcessor)
+
+      expect(StepProcessor).to receive(:new)
+        .with(step_without_data, row, anything)
+        .and_return(step_processor)
+      allow(step_processor).to receive(:should_skip?).and_return(false)
+      expect(step_processor).to receive(:call)
+
+      processor.call
+
+      expect do
+        processor.send(:handle_step_completion, { success: true, data: {} })
+      end.not_to raise_error
     end
   end
 end

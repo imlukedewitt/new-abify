@@ -29,7 +29,10 @@ class StepProcessor
     @hydra_manager.queue(
       **render_request_fields,
       api_key: @api_key,
-      on_complete: ->(response) { @on_complete&.call(response) }
+      on_complete: lambda { |response|
+        result = process_response(response)
+        @on_complete&.call(result)
+      }
     )
   end
 
@@ -42,6 +45,44 @@ class StepProcessor
   end
 
   private
+
+  def process_response(response)
+    return { success: false, error: "No response received" } if response.nil?
+
+    parsed_response = parse_json_response(response.body)
+
+    if response.status.between?(200, 299)
+      success_data = extract_success_data(parsed_response)
+      { success: true, data: success_data }
+    else
+      error = parsed_response["errors"] || "Request failed with status #{response.status}"
+      { success: false, error: error }
+    end
+  rescue StandardError => e
+    { success: false, error: e.message }
+  end
+
+  def parse_json_response(body)
+    return {} if body.nil? || body.empty?
+
+    JSON.parse(body)
+  rescue JSON::ParserError
+    body.to_s
+  end
+
+  def extract_success_data(parsed_response)
+    success_templates = @config.dig('liquid_templates', 'success_data')
+    return {} unless success_templates.is_a?(Hash)
+
+    context_with_response = context.merge('response' => parsed_response)
+
+    success_templates.each_with_object({}) do |(key, template), result|
+      processor = Liquid::Processor.new(template, context_with_response)
+      result[key] = processor.render
+    rescue StandardError => e
+      raise "Failed to extract required success data '#{key}': #{e.message}" if required?
+    end
+  end
 
   def evaluate_boolean_condition(condition_key)
     condition = @config.dig('liquid_templates', condition_key)

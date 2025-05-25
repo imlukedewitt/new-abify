@@ -24,9 +24,38 @@ class RowProcessor
 
   private
 
-  def handle_step_completion(response)
+  def handle_step_completion(result)
+    # Handle skipped steps (nil result)
+    result ||= { success: true, data: {} }
+
+    if result[:success]
+      update_row_with_success_data(result[:data])
+    else
+      handle_step_failure(result[:error])
+    end
+
     @current_step_index += 1
     call
+  end
+
+  def update_row_with_success_data(data)
+    return if data.nil? || data.empty?
+
+    row.data ||= {}
+    row.data.merge!(data)
+    row.save
+  end
+
+  def handle_step_failure(error)
+    current_step = @ordered_steps[@current_step_index]
+
+    if current_step.required?
+      row.update(status: :failed)
+      raise "Required step #{current_step.name} failed: #{error}"
+    end
+
+    # For non-required steps, we just continue processing
+    Rails.logger.warn("Non-required step #{current_step.name} failed: #{error}")
   end
 
   def process_current_step
