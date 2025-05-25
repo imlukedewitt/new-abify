@@ -123,4 +123,49 @@ RSpec.describe StepProcessor do
       expect(step_processor.process_template_field('nonexistent')).to be_nil
     end
   end
+
+  describe '#process_request_fields' do
+    it 'processes all configured template fields for a request' do
+      step.config = {
+        'liquid_templates' => {
+          'url' => 'https://api.example.com/users/{{row.first_name}}',
+          'method' => '{{row.http_method | default: "post"}}',
+          'body' => '{"name":"{{row.first_name}} {{row.last_name}}"}',
+          'params' => '{"email":"{{row.email}}"}'
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      result = step_processor.process_request_fields
+
+      expect(result[:url]).to eq('https://api.example.com/users/John')
+      expect(result[:method]).to eq('post')
+      expect(result[:body]).to eq('{"name":"John Doe"}')
+      expect(result[:params]).to eq('{"email":"john.doe@example.com"}')
+    end
+
+    it 'only includes fields that are configured' do
+      step.config = {
+        'liquid_templates' => {
+          'url' => 'https://api.example.com/users',
+          'method' => 'get'
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      result = step_processor.process_request_fields
+
+      expect(result).to include(:url, :method)
+      expect(result).not_to include(:body, :params)
+    end
+
+    it 'returns an empty hash when no liquid_templates are configured' do
+      step.config = {}
+      step_processor = StepProcessor.new(step, row)
+
+      result = step_processor.process_request_fields
+
+      expect(result).to eq({})
+    end
+  end
 end

@@ -41,6 +41,20 @@ class StepProcessor
     processor.process
   end
 
+  def process_request_fields
+    liquid_templates = @config['liquid_templates']
+    return {} unless liquid_templates.is_a?(Hash)
+
+    result = {}
+    
+    %w[url method body params].each do |field|
+      processed_value = process_template_field(field)
+      result[field.to_sym] = processed_value if processed_value
+    end
+
+    result
+  end
+
   private
 
   def context
