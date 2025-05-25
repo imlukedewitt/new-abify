@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'liquid'
+require_relative 'hydra_manager'
 require_relative 'liquid_processor'
 
-##
 # StepProcessor is responsible for processing a workflow step
 class StepProcessor
   attr_reader :step, :row, :config
@@ -15,6 +15,7 @@ class StepProcessor
     @step = step
     @row = row
     @config = @step.config.with_indifferent_access
+    @hydra_manager = HydraManager.instance
   end
 
   def self.call(step, row)
@@ -22,7 +23,14 @@ class StepProcessor
   end
 
   def call
-    # .
+    # TODO: where does the API key come from?
+    url, method, body, params = render_request_fields.values_at(:url, :method, :body, :params)
+    @hydra_manager.queue(
+      url: url,
+      method: method,
+      body: body,
+      params: params
+    )
   end
 
   private
