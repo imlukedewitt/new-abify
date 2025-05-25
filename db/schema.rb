@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_18_193806) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_25_175326) do
   create_table "batches", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -72,6 +72,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_18_193806) do
   create_table "workflows", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "config"
   end
 
   add_foreign_key "rows", "data_sources"
