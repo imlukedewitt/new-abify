@@ -7,11 +7,11 @@ RSpec.describe StepProcessor do
   let(:step) { create(:workflow_step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:step_processor) { described_class.new(step, row) }
+  let(:hydra_manager) { instance_double(HydraManager) }
+
+  before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
 
   describe '#initialize' do
-    let(:hydra_manager) { instance_double(HydraManager) }
-    before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
-
     it 'assigns the class variables' do
       expect(step_processor.step).to eq(step)
       expect(step_processor.row).to eq(row)
