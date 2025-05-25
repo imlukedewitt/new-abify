@@ -35,10 +35,13 @@ class StepProcessor
 
   private
 
+  # TODO: Should this be a public method? Or maybe even a class method?
+  # the RowProcessor needs to know this info before calling the StepProcessor
   def should_skip?
     evaluate_boolean_condition('skip_condition')
   end
 
+  # TODO: same as above
   def required?
     evaluate_boolean_condition('required_condition')
   end
