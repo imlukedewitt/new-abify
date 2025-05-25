@@ -63,6 +63,62 @@ RSpec.describe StepProcessor do
     end
   end
 
+  describe '#required?' do
+    it 'returns false when no required_condition is configured' do
+      expect(step_processor.send(:required?)).to be false
+    end
+
+    it 'evaluates required_condition and returns boolean result' do
+      step.config = {
+        'liquid_templates' => {
+          'required_condition' => "{{row.organization | present?}}"
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.send(:required?)).to be true
+    end
+
+    it 'returns false when required_condition evaluates to false' do
+      step.config = {
+        'liquid_templates' => {
+          'required_condition' => "{{row.missing_field | present?}}"
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.send(:required?)).to be false
+    end
+  end
+
+  describe '#evaluate_boolean_condition' do
+    it 'returns false when condition is not configured' do
+      expect(step_processor.send(:evaluate_boolean_condition, 'nonexistent_condition')).to be false
+    end
+
+    it 'evaluates condition and returns boolean result' do
+      step.config = {
+        'liquid_templates' => {
+          'test_condition' => "{{row.first_name | present?}}"
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.send(:evaluate_boolean_condition, 'test_condition')).to be true
+    end
+
+    it 'handles complex boolean expressions' do
+      step.config = {
+        'liquid_templates' => {
+          'complex_condition' => "{% if row.email contains '@' and row.organization %}true{% else %}false{% endif %}"
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.send(:evaluate_boolean_condition, 'complex_condition')).to be true
+    end
+  end
+
   describe '#render_template_field' do
     it 'processes URL with Liquid templates' do
       step.config = {

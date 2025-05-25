@@ -27,17 +27,19 @@ class StepProcessor
 
   private
 
-  def context
-    @context ||= {
-      row: @row.data
-    }
+  def should_skip?
+    evaluate_boolean_condition('skip_condition')
   end
 
-  def should_skip?
-    skip_condition = @config.dig('liquid_templates', 'skip_condition')
-    return false unless skip_condition
+  def required?
+    evaluate_boolean_condition('required_condition')
+  end
 
-    processor = LiquidProcessor.new(skip_condition, context)
+  def evaluate_boolean_condition(condition_key)
+    condition = @config.dig('liquid_templates', condition_key)
+    return false unless condition
+
+    processor = LiquidProcessor.new(condition, context)
     processor.render_as_boolean
   end
 
@@ -47,6 +49,12 @@ class StepProcessor
 
     processor = LiquidProcessor.new(template, context)
     processor.render
+  end
+
+  def context
+    @context ||= {
+      row: @row.data
+    }
   end
 
   def render_request_fields
