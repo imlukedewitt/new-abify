@@ -25,6 +25,14 @@ class StepProcessor
     # .
   end
 
+  private
+
+  def context
+    @context ||= {
+      row: @row.data
+    }
+  end
+
   def should_skip?
     skip_condition = @config['skip_condition']
     return false unless skip_condition
@@ -53,13 +61,5 @@ class StepProcessor
     end
 
     result
-  end
-
-  private
-
-  def context
-    @context ||= {
-      row: @row.data
-    }
   end
 end

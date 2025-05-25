@@ -37,21 +37,21 @@ RSpec.describe StepProcessor do
 
   describe '#should_skip?' do
     it 'returns false when no skip_condition is configured' do
-      expect(step_processor.should_skip?).to be false
+      expect(step_processor.send(:should_skip?)).to be false
     end
 
     it 'evaluates skip_condition and returns boolean result' do
       step.config = { skip_condition: "{{row.email | present?}}" }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.should_skip?).to be true
+      expect(step_processor.send(:should_skip?)).to be true
     end
 
     it 'returns false when skip_condition evaluates to false' do
       step.config = { skip_condition: "{{row.email | blank?}}" }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.should_skip?).to be false
+      expect(step_processor.send(:should_skip?)).to be false
     end
   end
 
@@ -64,7 +64,7 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.render_template_field('url')).to eq('https://api.example.com/users/John/Doe')
+      expect(step_processor.send(:render_template_field, 'url')).to eq('https://api.example.com/users/John/Doe')
     end
 
     it 'handles missing variables in URL template' do
@@ -75,7 +75,7 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.render_template_field('url')).to eq('https://api.example.com/users/')
+      expect(step_processor.send(:render_template_field, 'url')).to eq('https://api.example.com/users/')
     end
 
     it 'processes method with Liquid templates' do
@@ -86,12 +86,12 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.render_template_field('method')).to eq('get')
+      expect(step_processor.send(:render_template_field, 'method')).to eq('get')
 
       # Create a new row with updated data
       updated_row = create(:row, data: row.data.merge('http_method' => 'post'))
       step_processor = StepProcessor.new(step, updated_row)
-      expect(step_processor.render_template_field('method')).to eq('post')
+      expect(step_processor.send(:render_template_field, 'method')).to eq('post')
     end
 
     it 'processes body with Liquid templates' do
@@ -102,7 +102,7 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.render_template_field('body')).to eq('{"user":{"name":"John Doe","organization":"Acme Corp"}}')
+      expect(step_processor.send(:render_template_field, 'body')).to eq('{"user":{"name":"John Doe","organization":"Acme Corp"}}')
     end
 
     it 'processes params with Liquid templates' do
@@ -113,14 +113,14 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.render_template_field('params')).to eq('{"email":"john.doe@example.com","reference":"unknown"}')
+      expect(step_processor.send(:render_template_field, 'params')).to eq('{"email":"john.doe@example.com","reference":"unknown"}')
     end
 
     it 'returns nil when template field is not configured' do
       step.config = { 'liquid_templates' => { 'url' => 'https://example.com' } }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.render_template_field('nonexistent')).to be_nil
+      expect(step_processor.send(:render_template_field, 'nonexistent')).to be_nil
     end
   end
 
@@ -136,7 +136,7 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      result = step_processor.render_request_fields
+      result = step_processor.send(:render_request_fields)
 
       expect(result[:url]).to eq('https://api.example.com/users/John')
       expect(result[:method]).to eq('post')
@@ -153,7 +153,7 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      result = step_processor.render_request_fields
+      result = step_processor.send(:render_request_fields)
 
       expect(result).to include(:url, :method)
       expect(result).not_to include(:body, :params)
@@ -163,7 +163,7 @@ RSpec.describe StepProcessor do
       step.config = {}
       step_processor = StepProcessor.new(step, row)
 
-      result = step_processor.render_request_fields
+      result = step_processor.send(:render_request_fields)
 
       expect(result).to eq({})
     end
