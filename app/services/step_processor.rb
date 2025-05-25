@@ -2,7 +2,7 @@
 
 require 'liquid'
 require_relative 'hydra_manager'
-require_relative 'liquid_processor'
+require_relative 'liquid/processor'
 require_relative 'liquid/context_builder'
 
 # StepProcessor is responsible for processing a workflow step
@@ -51,7 +51,7 @@ class StepProcessor
     condition = @config.dig('liquid_templates', condition_key)
     return false unless condition
 
-    processor = LiquidProcessor.new(condition, context)
+    processor = Liquid::Processor.new(condition, context)
     processor.render_as_boolean
   end
 
@@ -59,7 +59,7 @@ class StepProcessor
     template = @config.dig('liquid_templates', field_name)
     return nil unless template
 
-    processor = LiquidProcessor.new(template, context)
+    processor = Liquid::Processor.new(template, context)
     processor.render
   end
 
