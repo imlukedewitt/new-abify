@@ -52,6 +52,33 @@ RSpec.describe RowProcessor do
       allow(workflow).to receive(:steps).and_return([second_step, first_step])
     end
 
+    it "does not process next steps if a required step fails" do
+      required_step = build(:step, order: 1, name: "Required Step")
+      next_step = build(:step, order: 2)
+
+      allow(workflow).to receive(:steps).and_return([required_step, next_step])
+
+      required_processor = instance_double(StepProcessor)
+
+      allow(StepProcessor).to receive(:new)
+        .with(required_step, row, anything)
+        .and_return(required_processor)
+
+      allow(required_processor).to receive(:should_skip?).and_return(false)
+      allow(required_processor).to receive(:required?).and_return(true)
+      allow(required_processor).to receive(:call) do
+        processor.send(:handle_step_completion, { success: false, error: "Failure in required step" })
+      end
+
+      allow(row).to receive(:update).with(status: :failed)
+
+      expect(StepProcessor).not_to receive(:new).with(next_step, row, anything)
+
+      expect do
+        processor.call
+      end.to raise_error(RuntimeError, "Required step Required Step failed: Failure in required step")
+    end
+
     it "processes steps in sequence and completes" do
       first_processor = instance_double(StepProcessor)
       second_processor = instance_double(StepProcessor)

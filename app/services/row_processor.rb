@@ -49,7 +49,7 @@ class RowProcessor
   def handle_step_failure(error)
     current_step = @ordered_steps[@current_step_index]
 
-    if current_step.required?
+    if @current_step_processor.required?
       row.update(status: :failed)
       raise "Required step #{current_step.name} failed: #{error}"
     end
@@ -60,17 +60,17 @@ class RowProcessor
 
   def process_current_step
     current_step = @ordered_steps[@current_step_index]
-    step_processor = StepProcessor.new(
+    @current_step_processor = StepProcessor.new(
       current_step,
       row,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion)
     )
 
-    if step_processor.should_skip?
+    if @current_step_processor.should_skip?
       handle_step_completion(nil)
     else
-      step_processor.call
+      @current_step_processor.call
     end
   end
 end
