@@ -6,21 +6,21 @@ RSpec.describe DataUtils do
     it 'converts symbol keys to string keys' do
       input = { name: "John", age: 30 }
       expected = { "name" => "John", "age" => 30 }
-      
+
       expect(DataUtils.deep_stringify_keys(input)).to eq(expected)
     end
 
     it 'handles nested hashes' do
       input = { user: { name: "John", profile: { age: 30 } } }
       expected = { "user" => { "name" => "John", "profile" => { "age" => 30 } } }
-      
+
       expect(DataUtils.deep_stringify_keys(input)).to eq(expected)
     end
 
     it 'handles arrays with hashes' do
       input = [{ name: "John" }, { name: "Jane" }]
       expected = [{ "name" => "John" }, { "name" => "Jane" }]
-      
+
       expect(DataUtils.deep_stringify_keys(input)).to eq(expected)
     end
 

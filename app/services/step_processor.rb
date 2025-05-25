@@ -46,7 +46,7 @@ class StepProcessor
     return {} unless liquid_templates.is_a?(Hash)
 
     result = {}
-    
+
     %w[url method body params].each do |field|
       rendered_value = render_template_field(field)
       result[field.to_sym] = rendered_value if rendered_value
