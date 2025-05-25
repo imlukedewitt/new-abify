@@ -45,14 +45,13 @@ RSpec.describe StepProcessor do
   end
 
   describe '#call' do
-    let(:callback_spy) { spy('callback') }
-
     it 'queues request and sets up callback properly' do
       request_fields = {
         url: 'https://subdomain.domain.com/customers.json',
         method: 'post',
         body: '{"customer":{"first_name":"John","last_name":"Doe","email":"john-doe@example.email"}}'
       }
+      callback_spy = spy('callback')
       processor = described_class.new(step, row, on_complete: callback_spy, api_key: api_key)
       allow(processor).to receive(:render_request_fields).and_return(request_fields)
 
