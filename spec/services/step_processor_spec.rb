@@ -54,4 +54,28 @@ RSpec.describe StepProcessor do
       expect(step_processor.should_skip?).to be false
     end
   end
+  
+  describe '#process_url' do
+    it 'processes URL with Liquid templates' do
+      step.config = { 
+        'liquid_templates' => {
+          'url' => 'https://api.example.com/users/{{row.first_name}}/{{row.last_name}}'
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+      
+      expect(step_processor.process_url).to eq('https://api.example.com/users/John/Doe')
+    end
+
+    it 'handles missing variables in URL template' do
+      step.config = { 
+        'liquid_templates' => {
+          'url' => 'https://api.example.com/users/{{row.missing_field}}'
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+      
+      expect(step_processor.process_url).to eq('https://api.example.com/users/')
+    end
+  end
 end
