@@ -37,6 +37,11 @@ class RowProcessor
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion)
     )
-    step_processor.call
+
+    if step_processor.should_skip?
+      handle_step_completion(nil)
+    else
+      step_processor.call
+    end
   end
 end

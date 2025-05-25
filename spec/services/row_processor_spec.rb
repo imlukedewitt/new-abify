@@ -59,6 +59,7 @@ RSpec.describe RowProcessor do
       expect(StepProcessor).to receive(:new)
         .with(first_step, row, anything)
         .and_return(first_processor)
+      allow(first_processor).to receive(:should_skip?).and_return(false)
       expect(first_processor).to receive(:call)
 
       processor.call
@@ -66,10 +67,32 @@ RSpec.describe RowProcessor do
       expect(StepProcessor).to receive(:new)
         .with(second_step, row, anything)
         .and_return(second_processor)
+      allow(second_processor).to receive(:should_skip?).and_return(false)
       expect(second_processor).to receive(:call)
 
       # Simulate completion of first step
       processor.send(:handle_step_completion, double("response"))
+    end
+
+    it "skips steps when should_skip? returns true" do
+      first_processor = instance_double(StepProcessor)
+      second_processor = instance_double(StepProcessor)
+
+      # Setup first step to be skipped
+      expect(StepProcessor).to receive(:new)
+        .with(first_step, row, anything)
+        .and_return(first_processor)
+      allow(first_processor).to receive(:should_skip?).and_return(true)
+      expect(first_processor).not_to receive(:call)
+
+      # Expect second step to be processed immediately
+      expect(StepProcessor).to receive(:new)
+        .with(second_step, row, anything)
+        .and_return(second_processor)
+      allow(second_processor).to receive(:should_skip?).and_return(false)
+      expect(second_processor).to receive(:call)
+
+      processor.call
     end
   end
 end
