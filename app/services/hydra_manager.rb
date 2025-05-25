@@ -13,12 +13,12 @@ class HydraManager
     @running = false
   end
 
-  def queue(url:, method: :get, params: {}, body: nil, front: false, on_complete: nil)
+  def queue(url:, method: :get, params: {}, body: nil, front: false, on_complete: nil, api_key: nil)
     options = {
       method: method,
-      userpwd: 'abc123:x',
       headers: { 'User-Agent' => 'Agent User', 'Content-Type' => 'application/json' }
     }
+    options[:userpwd] = "#{api_key}:x" if api_key
     options[:body] = body if body
     encoded_params = url_param_string(params)
     request = Typhoeus::Request.new("#{url}?#{encoded_params}", options)

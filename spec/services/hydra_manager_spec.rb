@@ -54,5 +54,21 @@ RSpec.describe HydraManager do
 
       expect(request.url).to eq('https://api.example.com/users?name=John+Doe&email=john%40example.com')
     end
+
+    it 'uses API key for basic authentication when provided' do
+      manager = HydraManager.instance
+
+      request = manager.queue(url: 'https://api.example.com/users', api_key: 'abc123')
+
+      expect(request.options[:userpwd]).to eq('abc123:x')
+    end
+
+    it 'does not set userpwd when no API key is provided' do
+      manager = HydraManager.instance
+
+      request = manager.queue(url: 'https://api.example.com/users')
+
+      expect(request.options[:userpwd]).to be_nil
+    end
   end
 end
