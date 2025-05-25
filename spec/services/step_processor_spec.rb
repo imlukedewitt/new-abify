@@ -46,14 +46,18 @@ RSpec.describe StepProcessor do
 
   describe '#call' do
     it 'queues request and sets up callback properly' do
-      request_fields = {
-        url: 'https://subdomain.domain.com/customers.json',
-        method: 'post',
-        body: '{"customer":{"first_name":"John","last_name":"Doe","email":"john-doe@example.email"}}'
-      }
+      test_step = create(:step, config: {
+                           'liquid_templates' => {
+                             'name' => 'Test Step',
+                             'url' => 'https://api.example.com/test',
+                             'method' => 'get',
+                             'success_data' => {} # Ensure no success data is processed
+                           }
+                         })
       callback_spy = spy('callback')
-      processor = described_class.new(step, row, on_complete: callback_spy, api_key: api_key)
-      allow(processor).to receive(:render_request_fields).and_return(request_fields)
+      processor = described_class.new(test_step, row, on_complete: callback_spy, api_key: api_key)
+
+      request_fields = processor.send(:render_request_fields)
 
       expect(hydra_manager).to receive(:queue)
         .with(
@@ -63,30 +67,150 @@ RSpec.describe StepProcessor do
             on_complete: kind_of(Proc)
           )
         ) do |args|
-          response = double('response', code: 200)
+          response = double('response', body: '{}', status: 200)
           args[:on_complete].call(response)
           double('Typhoeus::Request')
         end
 
       processor.call
 
-      expect(callback_spy).to have_received(:call).once
+      expect(callback_spy).to have_received(:call)
+        .with(success: true, data: {})
+    end
+
+    it 'handles successful responses with success_data' do
+      step.config = {
+        'liquid_templates' => {
+          'name' => 'Test Step',
+          'url' => 'https://api.example.com',
+          'method' => 'get',
+          'success_data' => {
+            'customer_id' => '{{response.customer.id}}'
+          }
+        }
+      }
+      callback_spy = spy('callback')
+      processor = described_class.new(step, row, on_complete: callback_spy)
+
+      expect(hydra_manager).to receive(:queue) do |args|
+        response = double('response',
+                          body: '{"customer":{"id":"123"}}',
+                          status: 200)
+        args[:on_complete].call(response)
+      end
+
+      processor.call
+
+      expect(callback_spy).to have_received(:call)
+        .with(success: true, data: { 'customer_id' => '123' })
+    end
+
+    it 'handles failed responses' do
+      step.config = {
+        'liquid_templates' => {
+          'name' => 'Test Step',
+          'url' => 'https://api.example.com',
+          'method' => 'get'
+        }
+      }
+      callback_spy = spy('callback')
+      processor = described_class.new(step, row, on_complete: callback_spy)
+
+      expect(hydra_manager).to receive(:queue) do |args|
+        response = double('response',
+                          body: '{"error":"Not found"}',
+                          status: 404)
+        args[:on_complete].call(response)
+        double('Typhoeus::Request')
+      end
+
+      processor.call
+
+      expect(callback_spy).to have_received(:call)
+        .with(success: false, error: "Request failed with status 404")
+    end
+
+    it 'handles invalid JSON responses' do
+      step.config = {
+        'liquid_templates' => {
+          'name' => 'Test Step',
+          'url' => 'https://api.example.com',
+          'method' => 'get'
+        }
+      }
+      callback_spy = spy('callback')
+      processor = described_class.new(step, row, on_complete: callback_spy)
+
+      expect(hydra_manager).to receive(:queue) do |args|
+        response = double('response',
+                          body: 'not json',
+                          status: 200)
+        args[:on_complete].call(response)
+        double('Typhoeus::Request')
+      end
+
+      processor.call
+
+      expect(callback_spy).to have_received(:call)
+        .with(success: false, error: "Invalid JSON response")
     end
 
     it 'handles nil on_complete gracefully' do
+      step.config = {
+        'liquid_templates' => {
+          'name' => 'Test Step',
+          'url' => 'https://test.com',
+          'method' => 'post'
+        }
+      }
       processor = described_class.new(step, row) # No callback provided
-      allow(processor).to receive(:render_request_fields)
-        .and_return({
-                      url: 'https://test.com',
-                      method: 'post'
-                    })
 
       expect(hydra_manager).to receive(:queue) do |args|
-        response = double('response', code: 200)
+        response = double('response', body: '{}', status: 200)
         expect { args[:on_complete].call(response) }.not_to raise_error
       end
 
       processor.call
+    end
+  end
+
+  describe '#process_response' do
+    let(:step) do
+      create(:step, config: {
+               'liquid_templates' => {
+                 'name' => 'Test Step',
+                 'url' => 'https://api.example.com'
+               }
+             })
+    end
+    let(:row) { create(:row) }
+    let(:processor) { described_class.new(step, row) }
+
+    it 'returns success result for 2xx responses' do
+      response = double('response',
+                        body: '{"data":"value"}',
+                        status: 201)
+
+      result = processor.send(:process_response, response)
+      expect(result).to eq(success: true, data: {})
+    end
+
+    it 'extracts error message from response when available' do
+      response = double('response',
+                        body: '{"errors":"Something went wrong"}',
+                        status: 422)
+
+      result = processor.send(:process_response, response)
+      expect(result).to eq(success: false, error: "Something went wrong")
+    end
+
+    it 'handles empty responses' do
+      response = double('response',
+                        body: '',
+                        status: 204)
+
+      result = processor.send(:process_response, response)
+      expect(result).to eq(success: true, data: {})
     end
   end
 

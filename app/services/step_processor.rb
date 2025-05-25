@@ -50,6 +50,7 @@ class StepProcessor
     return { success: false, error: "No response received" } if response.nil?
 
     parsed_response = parse_json_response(response.body)
+    return { success: false, error: "Invalid JSON response" } if parsed_response.nil?
 
     if response.status.between?(200, 299)
       success_data = extract_success_data(parsed_response)
@@ -67,7 +68,7 @@ class StepProcessor
 
     JSON.parse(body)
   rescue JSON::ParserError
-    body.to_s
+    nil
   end
 
   def extract_success_data(parsed_response)
@@ -81,6 +82,8 @@ class StepProcessor
       result[key] = processor.render
     rescue StandardError => e
       raise "Failed to extract required success data '#{key}': #{e.message}" if required?
+
+      result[key] = nil
     end
   end
 
