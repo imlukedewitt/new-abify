@@ -40,6 +40,27 @@ RSpec.describe StepProcessor do
     end
   end
 
+  describe '#call' do
+    it 'calls render_request_fields' do
+      request_fields = {
+        url: 'https://subdomain.domain.com/customers.json',
+        method: 'post',
+        body: '{"customer":{"first_name":"John","last_name":"Doe","email":"john-doe@example.email"}}'
+      }
+
+      expect(step_processor).to receive(:render_request_fields).and_return(request_fields)
+      expect(hydra_manager).to receive(:queue)
+        .with(
+          url: request_fields[:url],
+          method: request_fields[:method],
+          body: request_fields[:body],
+          params: request_fields[:params]
+        )
+
+      step_processor.call
+    end
+  end
+
   describe '#should_skip?' do
     it 'returns false when no skip_condition is configured' do
       expect(step_processor.send(:should_skip?)).to be false
