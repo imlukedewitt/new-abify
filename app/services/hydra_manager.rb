@@ -20,7 +20,7 @@ class HydraManager
     }
     options[:userpwd] = "#{api_key}:x" if api_key
     options[:body] = body if body
-    encoded_params = url_param_string(params)
+    encoded_params = url_param_string(params) if params
     request = Typhoeus::Request.new("#{url}?#{encoded_params}", options)
     request.on_complete { |resp| on_complete.call(resp) } if on_complete
 
