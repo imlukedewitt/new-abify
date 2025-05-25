@@ -45,8 +45,25 @@ RSpec.describe RowProcessor do
   end
 
   describe "#call" do
+    let(:first_step) { build(:step, order: 1) }
+    let(:second_step) { build(:step, order: 2) }
+
+    before do
+      allow(workflow).to receive(:steps).and_return([second_step, first_step])
+    end
+
     it "responds to call" do
       expect(processor).to respond_to(:call)
+    end
+
+    it "processes steps in order starting with lowest order number" do
+      step_processor = instance_double(StepProcessor)
+      expect(StepProcessor).to receive(:new)
+        .with(first_step, row, anything)
+        .and_return(step_processor)
+      expect(step_processor).to receive(:call)
+
+      processor.call
     end
   end
 end

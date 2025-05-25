@@ -14,5 +14,22 @@ class RowProcessor
   end
 
   def call
+    return if workflow.steps.empty?
+
+    ordered_steps = workflow.steps.sort_by(&:order)
+    current_step = ordered_steps.first
+    step_processor = StepProcessor.new(
+      current_step,
+      row,
+      hydra_manager: HydraManager.instance,
+      on_complete: method(:handle_step_completion)
+    )
+    step_processor.call
+  end
+
+  private
+
+  def handle_step_completion(response)
+    # Will implement step completion handling in next iteration
   end
 end
