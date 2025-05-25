@@ -15,4 +15,8 @@ module WorkflowFilters
       true
     end
   end
+
+  def blank?(value)
+    !present?(value)
+  end
 end
