@@ -11,4 +11,10 @@ class BatchProcessor
     @batch = batch
     @workflow = workflow
   end
+
+  def call
+    batch.rows.each do |row|
+      RowProcessor.new(row: row, workflow: workflow).call
+    end
+  end
 end
