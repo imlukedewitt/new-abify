@@ -25,13 +25,13 @@ class HydraManager
     request.on_complete { |resp| on_complete.call(resp) } if on_complete
 
     @requests << request
-    front ? @hydra.queue_front(request) : @hydra.queue(request)
+    front ? hydra.queue_front(request) : hydra.queue(request)
     request
   end
 
   def run
     @running = true
-    @hydra.run
+    hydra.run
     @running = false
   end
 
