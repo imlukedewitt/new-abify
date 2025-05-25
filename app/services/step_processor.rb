@@ -33,11 +33,11 @@ class StepProcessor
     processor.process_as_boolean
   end
 
-  def process_url
-    url_template = @config.dig('liquid_templates', 'url')
-    return nil unless url_template
+  def process_template_field(field_name)
+    template = @config.dig('liquid_templates', field_name)
+    return nil unless template
 
-    processor = LiquidProcessor.new(url_template, context)
+    processor = LiquidProcessor.new(template, context)
     processor.process
   end
 

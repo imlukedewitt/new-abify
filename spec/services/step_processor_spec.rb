@@ -54,28 +54,73 @@ RSpec.describe StepProcessor do
       expect(step_processor.should_skip?).to be false
     end
   end
-  
-  describe '#process_url' do
+
+  describe '#process_template_field' do
     it 'processes URL with Liquid templates' do
-      step.config = { 
+      step.config = {
         'liquid_templates' => {
           'url' => 'https://api.example.com/users/{{row.first_name}}/{{row.last_name}}'
         }
       }
       step_processor = StepProcessor.new(step, row)
-      
-      expect(step_processor.process_url).to eq('https://api.example.com/users/John/Doe')
+
+      expect(step_processor.process_template_field('url')).to eq('https://api.example.com/users/John/Doe')
     end
 
     it 'handles missing variables in URL template' do
-      step.config = { 
+      step.config = {
         'liquid_templates' => {
           'url' => 'https://api.example.com/users/{{row.missing_field}}'
         }
       }
       step_processor = StepProcessor.new(step, row)
-      
-      expect(step_processor.process_url).to eq('https://api.example.com/users/')
+
+      expect(step_processor.process_template_field('url')).to eq('https://api.example.com/users/')
+    end
+
+    it 'processes method with Liquid templates' do
+      step.config = {
+        'liquid_templates' => {
+          'method' => '{{ row.http_method | default: "get" }}'
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.process_template_field('method')).to eq('get')
+
+      # Create a new row with updated data
+      updated_row = create(:row, data: row.data.merge('http_method' => 'post'))
+      step_processor = StepProcessor.new(step, updated_row)
+      expect(step_processor.process_template_field('method')).to eq('post')
+    end
+
+    it 'processes body with Liquid templates' do
+      step.config = {
+        'liquid_templates' => {
+          'body' => '{"user":{"name":"{{row.first_name}} {{row.last_name}}","organization":"{{row.organization}}"}}'
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.process_template_field('body')).to eq('{"user":{"name":"John Doe","organization":"Acme Corp"}}')
+    end
+
+    it 'processes params with Liquid templates' do
+      step.config = {
+        'liquid_templates' => {
+          'params' => '{"email":"{{row.email}}","reference":"{{row.reference | default: "unknown"}}"}'
+        }
+      }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.process_template_field('params')).to eq('{"email":"john.doe@example.com","reference":"unknown"}')
+    end
+
+    it 'returns nil when template field is not configured' do
+      step.config = { 'liquid_templates' => { 'url' => 'https://example.com' } }
+      step_processor = StepProcessor.new(step, row)
+
+      expect(step_processor.process_template_field('nonexistent')).to be_nil
     end
   end
 end
