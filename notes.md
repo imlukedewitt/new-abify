@@ -44,7 +44,7 @@ WorkflowExecutor creates a RowProcessor for each row in the data
 - has a data_source
 - has a workflow
 - the workflow has steps
-- has a method to start
+- has a method to start the execution
 
 RowProcessor creates a WorkflowStepExecutor for each WorkflowStep
 
