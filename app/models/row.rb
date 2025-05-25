@@ -3,4 +3,6 @@
 ##
 # Row model
 class Row < ApplicationRecord
+  belongs_to :workflow_execution
+  belongs_to :data_source
 end
