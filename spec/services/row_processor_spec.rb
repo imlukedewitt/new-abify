@@ -52,7 +52,7 @@ RSpec.describe RowProcessor do
       allow(workflow).to receive(:steps).and_return([second_step, first_step])
     end
 
-    it "processes steps in sequence" do
+    it "processes steps in sequence and completes" do
       first_processor = instance_double(StepProcessor)
       second_processor = instance_double(StepProcessor)
 
@@ -71,6 +71,9 @@ RSpec.describe RowProcessor do
       expect(second_processor).to receive(:call)
 
       # Simulate completion of first step
+      processor.send(:handle_step_completion, double("response"))
+
+      expect(StepProcessor).not_to receive(:new)
       processor.send(:handle_step_completion, double("response"))
     end
 
