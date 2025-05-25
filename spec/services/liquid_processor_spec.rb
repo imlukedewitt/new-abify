@@ -1,13 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe LiquidProcessor do
-  describe '#process' do
+  describe '#render' do
     it 'processes a simple liquid template' do
       template = "Hello {{name}}!"
       context_data = { name: "World" }
 
       processor = LiquidProcessor.new(template, context_data)
-      result = processor.process
+      result = processor.render
 
       expect(result).to eq("Hello World!")
     end
@@ -22,7 +22,7 @@ RSpec.describe LiquidProcessor do
       }
 
       processor = LiquidProcessor.new(template, context_data)
-      result = processor.process
+      result = processor.render
 
       expect(result).to eq("Customer ID: 12345")
     end
@@ -37,7 +37,7 @@ RSpec.describe LiquidProcessor do
       }
 
       processor = LiquidProcessor.new(template, context_data)
-      result = processor.process
+      result = processor.render
 
       expect(result).to eq("First payment profile ID: pp_123")
     end
@@ -48,7 +48,7 @@ RSpec.describe LiquidProcessor do
         context_data = { value: "hello" }
 
         processor = LiquidProcessor.new(template, context_data)
-        result = processor.process
+        result = processor.render
 
         expect(result).to eq("true")
       end
@@ -58,20 +58,20 @@ RSpec.describe LiquidProcessor do
         context_data = { value: "" }
 
         processor = LiquidProcessor.new(template, context_data)
-        result = processor.process
+        result = processor.render
 
         expect(result).to eq("true")
       end
     end
   end
 
-  describe '#process_as_boolean' do
+  describe '#render_as_boolean' do
     it 'returns true when liquid processes to "true"' do
       template = "{{ value | present? }}"
       context_data = { value: "hello" }
 
       processor = LiquidProcessor.new(template, context_data)
-      result = processor.process_as_boolean
+      result = processor.render_as_boolean
 
       expect(result).to be true
     end
@@ -81,7 +81,7 @@ RSpec.describe LiquidProcessor do
       context_data = { value: nil }
 
       processor = LiquidProcessor.new(template, context_data)
-      result = processor.process_as_boolean
+      result = processor.render_as_boolean
 
       expect(result).to be false
     end
@@ -91,7 +91,7 @@ RSpec.describe LiquidProcessor do
       processor = LiquidProcessor.new(template)
 
       expect(DataUtils).to receive(:to_boolean).with("some_value").and_return(true)
-      expect(processor.process_as_boolean).to be true
+      expect(processor.render_as_boolean).to be true
     end
   end
 

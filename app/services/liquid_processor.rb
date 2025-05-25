@@ -10,13 +10,13 @@ class LiquidProcessor
     @environment = create_liquid_environment
   end
 
-  def process
+  def render
     template = Liquid::Template.parse(@template_string, environment: @environment)
     template.render(DataUtils.deep_stringify_keys(@context_data))
   end
 
-  def process_as_boolean
-    result = process
+  def render_as_boolean
+    result = render
     DataUtils.to_boolean(result)
   end
 

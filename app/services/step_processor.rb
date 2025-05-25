@@ -30,26 +30,26 @@ class StepProcessor
     return false unless skip_condition
 
     processor = LiquidProcessor.new(skip_condition, context)
-    processor.process_as_boolean
+    processor.render_as_boolean
   end
 
-  def process_template_field(field_name)
+  def render_template_field(field_name)
     template = @config.dig('liquid_templates', field_name)
     return nil unless template
 
     processor = LiquidProcessor.new(template, context)
-    processor.process
+    processor.render
   end
 
-  def process_request_fields
+  def render_request_fields
     liquid_templates = @config['liquid_templates']
     return {} unless liquid_templates.is_a?(Hash)
 
     result = {}
     
     %w[url method body params].each do |field|
-      processed_value = process_template_field(field)
-      result[field.to_sym] = processed_value if processed_value
+      rendered_value = render_template_field(field)
+      result[field.to_sym] = rendered_value if rendered_value
     end
 
     result
