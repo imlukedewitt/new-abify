@@ -3,6 +3,7 @@
 require_relative '../liquid/filters/workflow_filters'
 require_relative '../../lib/data_utils'
 
+# LiquidProcessor class
 class LiquidProcessor
   def initialize(template_string, context_data = {})
     @template_string = template_string
