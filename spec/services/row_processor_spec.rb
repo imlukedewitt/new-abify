@@ -81,14 +81,12 @@ RSpec.describe RowProcessor do
       first_processor = instance_double(StepProcessor)
       second_processor = instance_double(StepProcessor)
 
-      # Setup first step to be skipped
       expect(StepProcessor).to receive(:new)
         .with(first_step, row, anything)
         .and_return(first_processor)
       allow(first_processor).to receive(:should_skip?).and_return(true)
       expect(first_processor).not_to receive(:call)
 
-      # Expect second step to be processed immediately
       expect(StepProcessor).to receive(:new)
         .with(second_step, row, anything)
         .and_return(second_processor)
@@ -121,6 +119,37 @@ RSpec.describe RowProcessor do
       expect do
         processor.send(:handle_step_completion, { success: true, data: {} })
       end.not_to raise_error
+    end
+
+    it "saves success data to the row" do
+      customer_lookup = build(:step, order: 1, config: {
+                                'liquid_templates' => {
+                                  'method' => 'get',
+                                  'url' => '{{base}}/customers/lookup.json?reference={{row.customer_reference}}',
+                                  'success_data' => {
+                                    'customer_id' => '{{response.customer.id}}'
+                                  }
+                                }
+                              })
+
+      allow(workflow).to receive(:steps).and_return([customer_lookup])
+
+      customer_processor = instance_double(StepProcessor)
+
+      expect(StepProcessor).to receive(:new)
+        .with(customer_lookup, row, anything)
+        .and_return(customer_processor)
+      allow(customer_processor).to receive(:should_skip?).and_return(false)
+      expect(customer_processor).to receive(:call)
+
+      processor.call
+      row.data = {}
+      processor.send(:handle_step_completion, {
+                       success: true,
+                       data: { 'customer_id' => '123' }
+                     })
+
+      expect(row.data).to include('customer_id' => '123')
     end
   end
 end
