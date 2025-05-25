@@ -74,7 +74,7 @@ LiquidProcessor and ContextBuilder
 - Custom workflow filters for template processing
 
 Example Workflow YAML:
-
+```yaml
 name: "Create Subscriptions Workflow"
 batch:
   group_by: >
@@ -131,68 +131,4 @@ steps:
     success_key: "subscription_id"
     success_value: "{{response.subscription.id}}"
     success_text: "{{base}}/subscriptions/{{response.subscription.id}}"
-
-AI rough sketch of a RowProcessor based on my scratch pad tests:
-```rb
-class RowProcessor
-  def initialize(row, workflow)
-    @row = row
-    @workflow = workflow
-    @current_step_index = 0
-    @step_results = {}
-  end
-
-  def call
-    process_next_step
-  end
-
-  private
-
-  def process_next_step
-    return if @current_step_index >= @workflow.steps.count
-
-    current_step = @workflow.steps[@current_step_index]
-    step_processor = StepProcessor.new(
-      current_step,
-      @row,
-      on_complete: method(:handle_step_completion)
-    )
-
-    if step_processor.should_skip?
-      # Move to next step immediately if this one should be skipped
-      @current_step_index += 1
-      process_next_step
-    else
-      # Process the step normally
-      step_processor.call
-    end
-  end
-
-  def handle_step_completion(step, response)
-    success_data = extract_success_data(step, response)
-    @step_results[step.id] = success_data
-    update_row_with_success_values(step, success_data)
-
-    @current_step_index += 1
-    process_next_step
-  end
-end
-
-class StepProcessor
-  # Make should_skip? public since RowProcessor needs it
-  def should_skip?
-    evaluate_boolean_condition('skip_condition')
-  end
-
-  def call
-    # No need to check should_skip? here anymore
-    # since RowProcessor handles that
-    @hydra_manager.queue(
-      **request_fields,
-      on_complete: ->(response) {
-        @on_complete.call(self, response) if @on_complete
-      }
-    )
-  end
-end
 ```
