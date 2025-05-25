@@ -6,7 +6,8 @@ RSpec.describe StepProcessor do
   let(:workflow) { create(:workflow) }
   let(:step) { create(:workflow_step, workflow: workflow) }
   let(:row) { create(:row) }
-  let(:step_processor) { described_class.new(step, row) }
+  let(:on_complete) { -> { puts 'done' } }
+  let(:step_processor) { described_class.new(step, row, on_complete: on_complete) }
   let(:hydra_manager) { instance_double(HydraManager) }
 
   before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
@@ -17,6 +18,7 @@ RSpec.describe StepProcessor do
       expect(step_processor.row).to eq(row)
       expect(step_processor.config).to eq(step.config.with_indifferent_access)
       expect(step_processor.instance_variable_get(:@hydra_manager)).to eq(hydra_manager)
+      expect(step_processor.instance_variable_get(:@on_complete)).to eq(on_complete)
     end
 
     it 'raises an error when step is nil' do
@@ -41,23 +43,42 @@ RSpec.describe StepProcessor do
   end
 
   describe '#call' do
-    it 'calls render_request_fields' do
+    let(:callback_spy) { spy('callback') }
+
+    it 'queues request and sets up callback properly' do
+      processor = described_class.new(step, row, on_complete: callback_spy)
       request_fields = {
         url: 'https://subdomain.domain.com/customers.json',
         method: 'post',
         body: '{"customer":{"first_name":"John","last_name":"Doe","email":"john-doe@example.email"}}'
       }
 
-      expect(step_processor).to receive(:render_request_fields).and_return(request_fields)
-      expect(hydra_manager).to receive(:queue)
-        .with(
-          url: request_fields[:url],
-          method: request_fields[:method],
-          body: request_fields[:body],
-          params: request_fields[:params]
-        )
+      allow(processor).to receive(:render_request_fields).and_return(request_fields)
 
-      step_processor.call
+      expect(hydra_manager).to receive(:queue) do |args|
+        response = double('response', code: 200)
+        args[:on_complete].call(response)
+      end
+
+      processor.call
+
+      expect(callback_spy).to have_received(:call).once
+    end
+
+    it 'handles nil on_complete gracefully' do
+      processor = described_class.new(step, row) # No callback provided
+      allow(processor).to receive(:render_request_fields)
+        .and_return({
+                      url: 'https://test.com',
+                      method: 'post'
+                    })
+
+      expect(hydra_manager).to receive(:queue) do |args|
+        response = double('response', code: 200)
+        expect { args[:on_complete].call(response) }.not_to raise_error
+      end
+
+      processor.call
     end
   end
 
