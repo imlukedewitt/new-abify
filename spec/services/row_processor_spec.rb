@@ -31,15 +31,15 @@ RSpec.describe RowProcessor do
 
     context "when arguments are missing" do
       it "raises an ArgumentError for missing row" do
-        expect {
+        expect do
           described_class.new(workflow: workflow)
-        }.to raise_error(ArgumentError)
+        end.to raise_error(ArgumentError)
       end
 
       it "raises an ArgumentError for missing workflow" do
-        expect {
+        expect do
           described_class.new(row: row)
-        }.to raise_error(ArgumentError)
+        end.to raise_error(ArgumentError)
       end
     end
   end
