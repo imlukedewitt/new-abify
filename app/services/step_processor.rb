@@ -59,9 +59,16 @@ class StepProcessor
     processor.render
   end
 
+  # TODO: should this live elsewhere?
   def context
+    # TODO: temporary stubbing subdomain and domain. this should be configured at the workflow execution level?
+    subdomain = 'acme'
+    domain = 'application.com'
     @context ||= {
-      row: @row.data
+      row: @row.data,
+      subdomain: subdomain,
+      domain: domain,
+      base_url: "https://#{subdomain}.#{domain}"
     }
   end
 
