@@ -48,19 +48,26 @@ RSpec.describe StepProcessor do
     let(:callback_spy) { spy('callback') }
 
     it 'queues request and sets up callback properly' do
-      processor = described_class.new(step, row, on_complete: callback_spy)
       request_fields = {
         url: 'https://subdomain.domain.com/customers.json',
         method: 'post',
         body: '{"customer":{"first_name":"John","last_name":"Doe","email":"john-doe@example.email"}}'
       }
-
+      processor = described_class.new(step, row, on_complete: callback_spy, api_key: api_key)
       allow(processor).to receive(:render_request_fields).and_return(request_fields)
 
-      expect(hydra_manager).to receive(:queue) do |args|
-        response = double('response', code: 200)
-        args[:on_complete].call(response)
-      end
+      expect(hydra_manager).to receive(:queue)
+        .with(
+          hash_including(
+            **request_fields,
+            api_key: api_key,
+            on_complete: kind_of(Proc)
+          )
+        ) do |args|
+          response = double('response', code: 200)
+          args[:on_complete].call(response)
+          double('Typhoeus::Request')
+        end
 
       processor.call
 

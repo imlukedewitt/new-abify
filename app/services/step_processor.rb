@@ -28,6 +28,7 @@ class StepProcessor
     # TODO: where does the API key come from?
     url, method, body, params = render_request_fields.values_at(:url, :method, :body, :params)
     @hydra_manager.queue(
+      api_key: @api_key,
       url: url,
       method: method,
       body: body,
