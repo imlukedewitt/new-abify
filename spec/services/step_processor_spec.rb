@@ -9,9 +9,14 @@ RSpec.describe StepProcessor do
   let(:step_processor) { described_class.new(step, row) }
 
   describe '#initialize' do
+    let(:hydra_manager) { instance_double(HydraManager) }
+    before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
+
     it 'assigns the class variables' do
       expect(step_processor.step).to eq(step)
       expect(step_processor.row).to eq(row)
+      expect(step_processor.config).to eq(step.config.with_indifferent_access)
+      expect(step_processor.instance_variable_get(:@hydra_manager)).to eq(hydra_manager)
     end
 
     it 'raises an error when step is nil' do
