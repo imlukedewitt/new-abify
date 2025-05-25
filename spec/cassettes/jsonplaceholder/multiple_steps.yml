@@ -1,0 +1,172 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/posts/1
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Sun, 25 May 2025 22:24:05 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '292'
+      Server:
+      - cloudflare
+      Accept-Ranges:
+      - bytes
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"124-yiKdLzqO5gfBrJFrcdJ8Yq0LGnU"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=7sX4xVUi4hh4vM6oW%2FYSGJBWeeggc53AKaMNFziil7g%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1748193978"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=7sX4xVUi4hh4vM6oW%2FYSGJBWeeggc53AKaMNFziil7g%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1748193978"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '999'
+      X-Ratelimit-Reset:
+      - '1748193999'
+      Cf-Cache-Status:
+      - HIT
+      Age:
+      - '17867'
+      Cf-Ray:
+      - 945870e04f876c54-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "userId": 1,
+          "id": 1,
+          "title": "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
+          "body": "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto"
+        }
+  recorded_at: Sun, 25 May 2025 22:24:05 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/users/1
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Sun, 25 May 2025 22:24:05 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '509'
+      Server:
+      - cloudflare
+      Accept-Ranges:
+      - bytes
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"1fd-+2Y3G3w049iSZtw5t1mzSnunngE"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=zDRS7X8QaMHQiebqyxTuV7f5i7MUc9Uh97%2Fg0NSuD1A%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1748210379"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=zDRS7X8QaMHQiebqyxTuV7f5i7MUc9Uh97%2Fg0NSuD1A%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1748210379"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '999'
+      X-Ratelimit-Reset:
+      - '1748210439'
+      Cf-Cache-Status:
+      - HIT
+      Age:
+      - '1466'
+      Cf-Ray:
+      - 945870e07fcd6c54-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "id": 1,
+          "name": "Leanne Graham",
+          "username": "Bret",
+          "email": "Sincere@april.biz",
+          "address": {
+            "street": "Kulas Light",
+            "suite": "Apt. 556",
+            "city": "Gwenborough",
+            "zipcode": "92998-3874",
+            "geo": {
+              "lat": "-37.3159",
+              "lng": "81.1496"
+            }
+          },
+          "phone": "1-770-736-8031 x56442",
+          "website": "hildegard.org",
+          "company": {
+            "name": "Romaguera-Crona",
+            "catchPhrase": "Multi-layered client-server neural-net",
+            "bs": "harness real-time e-markets"
+          }
+        }
+  recorded_at: Sun, 25 May 2025 22:24:05 GMT
+recorded_with: VCR 6.3.1
