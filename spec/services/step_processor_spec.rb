@@ -41,14 +41,22 @@ RSpec.describe StepProcessor do
     end
 
     it 'evaluates skip_condition and returns boolean result' do
-      step.config = { skip_condition: "{{row.email | present?}}" }
+      step.config = {
+        'liquid_templates' => {
+          'skip_condition' => "{{row.email | present?}}"
+        }
+      }
       step_processor = StepProcessor.new(step, row)
 
       expect(step_processor.send(:should_skip?)).to be true
     end
 
     it 'returns false when skip_condition evaluates to false' do
-      step.config = { skip_condition: "{{row.email | blank?}}" }
+      step.config = {
+        'liquid_templates' => {
+          'skip_condition' => "{{row.email | blank?}}"
+        }
+      }
       step_processor = StepProcessor.new(step, row)
 
       expect(step_processor.send(:should_skip?)).to be false
@@ -102,7 +110,8 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.send(:render_template_field, 'body')).to eq('{"user":{"name":"John Doe","organization":"Acme Corp"}}')
+      expect(step_processor.send(:render_template_field,
+                                 'body')).to eq('{"user":{"name":"John Doe","organization":"Acme Corp"}}')
     end
 
     it 'processes params with Liquid templates' do
@@ -113,7 +122,8 @@ RSpec.describe StepProcessor do
       }
       step_processor = StepProcessor.new(step, row)
 
-      expect(step_processor.send(:render_template_field, 'params')).to eq('{"email":"john.doe@example.com","reference":"unknown"}')
+      expect(step_processor.send(:render_template_field,
+                                 'params')).to eq('{"email":"john.doe@example.com","reference":"unknown"}')
     end
 
     it 'returns nil when template field is not configured' do

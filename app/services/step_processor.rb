@@ -34,7 +34,7 @@ class StepProcessor
   end
 
   def should_skip?
-    skip_condition = @config['skip_condition']
+    skip_condition = @config.dig('liquid_templates', 'skip_condition')
     return false unless skip_condition
 
     processor = LiquidProcessor.new(skip_condition, context)
