@@ -55,6 +55,36 @@ RSpec.describe LiquidProcessor do
     end
   end
 
+  describe '#process_as_boolean' do
+    it 'returns true when liquid processes to "true"' do
+      template = "{{ value | present? }}"
+      context_data = { value: "hello" }
+      
+      processor = LiquidProcessor.new(template, context_data)
+      result = processor.process_as_boolean
+      
+      expect(result).to be true
+    end
+
+    it 'returns false when liquid processes to "false"' do
+      template = "{{ value | present? }}"
+      context_data = { value: nil }
+      
+      processor = LiquidProcessor.new(template, context_data)
+      result = processor.process_as_boolean
+      
+      expect(result).to be false
+    end
+
+    it 'delegates boolean conversion to DataUtils' do
+      template = "some_value"
+      processor = LiquidProcessor.new(template)
+      
+      expect(DataUtils).to receive(:to_boolean).with("some_value").and_return(true)
+      expect(processor.process_as_boolean).to be true
+    end
+  end
+
   describe '#valid?' do
     it 'returns true for valid liquid template' do
       template = "Hello {{name}}!"
