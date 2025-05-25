@@ -5,4 +5,5 @@
 class Row < ApplicationRecord
   belongs_to :workflow_execution
   belongs_to :data_source
+  belongs_to :batch, optional: true
 end
