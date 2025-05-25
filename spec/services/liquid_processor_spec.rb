@@ -52,6 +52,26 @@ RSpec.describe LiquidProcessor do
         
         expect(result).to eq("true")
       end
+
+      it 'processes blank? filter for empty string' do
+        template = "{{ value | blank? }}"
+        context_data = { value: "" }
+        
+        processor = LiquidProcessor.new(template, context_data)
+        result = processor.process
+        
+        expect(result).to eq("true")
+      end
+
+      it 'processes blank? filter for non-empty string' do
+        template = "{{ value | blank? }}"
+        context_data = { value: "hello" }
+        
+        processor = LiquidProcessor.new(template, context_data)
+        result = processor.process
+        
+        expect(result).to eq("false")
+      end
     end
   end
 
