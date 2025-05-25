@@ -52,18 +52,24 @@ RSpec.describe RowProcessor do
       allow(workflow).to receive(:steps).and_return([second_step, first_step])
     end
 
-    it "responds to call" do
-      expect(processor).to respond_to(:call)
-    end
+    it "processes steps in sequence" do
+      first_processor = instance_double(StepProcessor)
+      second_processor = instance_double(StepProcessor)
 
-    it "processes steps in order starting with lowest order number" do
-      step_processor = instance_double(StepProcessor)
       expect(StepProcessor).to receive(:new)
         .with(first_step, row, anything)
-        .and_return(step_processor)
-      expect(step_processor).to receive(:call)
+        .and_return(first_processor)
+      expect(first_processor).to receive(:call)
 
       processor.call
+
+      expect(StepProcessor).to receive(:new)
+        .with(second_step, row, anything)
+        .and_return(second_processor)
+      expect(second_processor).to receive(:call)
+
+      # Simulate completion of first step
+      processor.send(:handle_step_completion, double("response"))
     end
   end
 end

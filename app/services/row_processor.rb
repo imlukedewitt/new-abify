@@ -11,13 +11,26 @@ class RowProcessor
 
     @row = row
     @workflow = workflow
+    @ordered_steps = workflow.steps.sort_by(&:order)
+    @current_step_index = 0
   end
 
   def call
-    return if workflow.steps.empty?
+    return if @ordered_steps.empty?
+    return if @current_step_index >= @ordered_steps.length
 
-    ordered_steps = workflow.steps.sort_by(&:order)
-    current_step = ordered_steps.first
+    process_current_step
+  end
+
+  private
+
+  def handle_step_completion(response)
+    @current_step_index += 1
+    call
+  end
+
+  def process_current_step
+    current_step = @ordered_steps[@current_step_index]
     step_processor = StepProcessor.new(
       current_step,
       row,
@@ -25,11 +38,5 @@ class RowProcessor
       on_complete: method(:handle_step_completion)
     )
     step_processor.call
-  end
-
-  private
-
-  def handle_step_completion(response)
-    # Will implement step completion handling in next iteration
   end
 end
