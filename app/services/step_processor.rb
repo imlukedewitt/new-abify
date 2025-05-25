@@ -26,13 +26,9 @@ class StepProcessor
   end
 
   def call
-    url, method, body, params = render_request_fields.values_at(:url, :method, :body, :params)
     @hydra_manager.queue(
+      **render_request_fields,
       api_key: @api_key,
-      url: url,
-      method: method,
-      body: body,
-      params: params,
       on_complete: ->(response) { @on_complete&.call(response) }
     )
   end
