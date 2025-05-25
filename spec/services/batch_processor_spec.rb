@@ -11,5 +11,23 @@ RSpec.describe BatchProcessor do
       processor = described_class.new(batch: batch, workflow: workflow)
       expect(processor).to be_a(BatchProcessor)
     end
+
+    context "when batch is nil" do
+      let(:batch) { nil }
+
+      it "raises an ArgumentError" do
+        expect { described_class.new(batch: batch, workflow: workflow) }
+          .to raise_error(ArgumentError, "batch is required")
+      end
+    end
+
+    context "when workflow is nil" do
+      let(:workflow) { nil }
+
+      it "raises an ArgumentError" do
+        expect { described_class.new(batch: batch, workflow: workflow) }
+          .to raise_error(ArgumentError, "workflow is required")
+      end
+    end
   end
 end
