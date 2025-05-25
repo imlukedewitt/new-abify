@@ -3,6 +3,7 @@
 require 'liquid'
 require_relative 'hydra_manager'
 require_relative 'liquid_processor'
+require_relative 'liquid/context_builder'
 
 # StepProcessor is responsible for processing a workflow step
 class StepProcessor
@@ -62,17 +63,11 @@ class StepProcessor
     processor.render
   end
 
-  # TODO: should this live elsewhere? it seems more related to Liquid than to Step
   def context
-    # TODO: temporary stubbing subdomain and domain. this should be configured at the workflow execution level?
-    subdomain = 'acme'
-    domain = 'application.com'
-    @context ||= {
-      row: @row.data,
-      subdomain: subdomain,
-      domain: domain,
-      base_url: "https://#{subdomain}.#{domain}"
-    }
+    @context ||= Liquid::ContextBuilder.new(
+      row: @row,
+      workflow: @step.workflow
+    ).build
   end
 
   def render_request_fields
