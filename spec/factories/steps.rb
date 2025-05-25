@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :workflow_step do
+  factory :step do
     workflow
 
     sequence(:name) { |n| "Step #{n}" }

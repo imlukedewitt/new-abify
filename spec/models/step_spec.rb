@@ -2,11 +2,11 @@
 
 require 'rails_helper'
 
-RSpec.describe WorkflowStep, type: :model do
+RSpec.describe Step, type: :model do
   describe '#initialize' do
-    let(:step) { create(:workflow_step) }
+    let(:step) { create(:step) }
 
-    it 'creates a new WorkflowStep with valid attributes' do
+    it 'creates a new Step with valid attributes' do
       expect(step).to be_valid
       expect(step.name).to be_a(String)
       expect(step.order).to be_a(Integer)
@@ -34,34 +34,34 @@ RSpec.describe WorkflowStep, type: :model do
 
   describe '#config' do
     it 'validates config is present and is a hash' do
-      step = build(:workflow_step, config: 'not a hash')
+      step = build(:step, config: 'not a hash')
       expect(step).not_to be_valid
       expect(step.errors[:config]).to include('must be a hash')
 
-      step = build(:workflow_step, config: nil)
+      step = build(:step, config: nil)
       expect(step).not_to be_valid
       expect(step.errors[:config]).to include("can't be blank")
 
-      step = build(:workflow_step, config: {})
+      step = build(:step, config: {})
       expect(step).not_to be_valid
       expect(step.errors[:config]).to include("can't be blank")
     end
 
     it 'validates liquid_templates is present in config' do
-      step = build(:workflow_step, config: { foo: 'bar' })
+      step = build(:step, config: { foo: 'bar' })
       expect(step).not_to be_valid
       expect(step.errors[:config]).to include('must include liquid_templates hash')
     end
 
     it 'validates required liquid_template fields' do
-      step = build(:workflow_step, config: { 'liquid_templates' => {} })
+      step = build(:step, config: { 'liquid_templates' => {} })
       expect(step).not_to be_valid
       expect(step.errors[:config]).to include('must include name')
       expect(step.errors[:config]).to include('must include url')
     end
 
     it 'checks for unsupported keys in liquid_templates' do
-      step = build(:workflow_step, config: {
+      step = build(:step, config: {
                      'liquid_templates' => {
                        'name' => '1',
                        'url' => '{{base_url}}/customers/lookup.json?reference={{row.customer_reference}}',
@@ -74,7 +74,7 @@ RSpec.describe WorkflowStep, type: :model do
   end
 
   describe '#process' do
-    let(:step) { create(:workflow_step) }
+    let(:step) { create(:step) }
     let(:row) { create(:row) }
 
     it 'calls the service StepProcessor' do

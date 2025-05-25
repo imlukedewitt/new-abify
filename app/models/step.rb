@@ -9,7 +9,7 @@
 # @attr_reader [Integer] order The position of this step in the workflow sequence
 #
 # @attr [Workflow] workflow The workflow this step belongs to
-class WorkflowStep < ApplicationRecord
+class Step < ApplicationRecord
   belongs_to :workflow
   default_scope { order(order: :asc) }
 

@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe StepProcessor, :integration, :vcr do
   let(:workflow) { create(:workflow) }
   let(:step) do
-    create(:workflow_step, workflow: workflow, config: {
+    create(:step, workflow: workflow, config: {
              'liquid_templates' => {
                'name' => 'Get Post',
                'url' => 'https://jsonplaceholder.typicode.com/posts/1',

@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe StepProcessor do
   let(:api_key) { 'abc123' }
   let(:workflow) { create(:workflow) }
-  let(:step) { create(:workflow_step, workflow: workflow) }
+  let(:step) { create(:step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:on_complete) { -> { puts 'done' } }
   let(:step_processor) { described_class.new(step, row, on_complete: on_complete, api_key: api_key) }
@@ -34,7 +34,7 @@ RSpec.describe StepProcessor do
 
   describe '::call' do
     it 'initializes a new instance and calls execute' do
-      step = create(:workflow_step)
+      step = create(:step)
       row = create(:row)
       expect(described_class).to receive(:new)
         .with(step, row)

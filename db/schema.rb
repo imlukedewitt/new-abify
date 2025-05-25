@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_25_175326) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_25_191112) do
   create_table "batches", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -46,6 +46,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_25_175326) do
     t.index ["workflow_execution_id"], name: "index_rows_on_workflow_execution_id"
   end
 
+  create_table "steps", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "workflow_id", null: false
+    t.json "config"
+    t.integer "order"
+    t.string "name"
+    t.index ["workflow_id"], name: "index_steps_on_workflow_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email"
     t.string "first_name"
@@ -59,16 +69,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_25_175326) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "workflow_steps", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "workflow_id", null: false
-    t.json "config"
-    t.integer "order"
-    t.string "name"
-    t.index ["workflow_id"], name: "index_workflow_steps_on_workflow_id"
-  end
-
   create_table "workflows", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -77,5 +77,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_25_175326) do
 
   add_foreign_key "rows", "data_sources"
   add_foreign_key "rows", "workflow_executions"
-  add_foreign_key "workflow_steps", "workflows"
+  add_foreign_key "steps", "workflows"
 end

@@ -3,5 +3,5 @@
 ##
 # Workflow model
 class Workflow < ApplicationRecord
-  has_many :workflow_steps
+  has_many :steps
 end
