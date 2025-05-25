@@ -31,8 +31,8 @@ class WorkflowStep < ApplicationRecord
     success_data
   ].freeze
 
-  def process
-    StepProcessor.call(self)
+  def process(row)
+    StepProcessor.call(self, row)
   end
 
   private
