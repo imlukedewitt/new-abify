@@ -75,10 +75,11 @@ RSpec.describe WorkflowStep, type: :model do
 
   describe '#process' do
     let(:step) { create(:workflow_step) }
+    let(:row) { create(:row) }
 
     it 'calls the service StepProcessor' do
-      expect(StepProcessor).to receive(:call).with(step)
-      step.process
+      expect(StepProcessor).to receive(:call).with(step, row)
+      step.process(row)
     end
   end
 end
