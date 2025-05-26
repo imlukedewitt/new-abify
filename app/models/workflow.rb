@@ -9,7 +9,6 @@ class Workflow < ApplicationRecord
 
   validates :name, presence: true
 
-  # Helper for creating a workflow execution
   def create_execution(data_source)
     workflow_executions.create(data_source: data_source)
   end
