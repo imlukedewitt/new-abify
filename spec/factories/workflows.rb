@@ -2,6 +2,10 @@
 
 FactoryBot.define do
   factory :workflow do
-    # nothing to add here yet
+    #   steps { [create(:step)] }
   end
+
+  # trait :with_multiple_steps do
+  #   steps { create_list(:step, 3) }
+  # end
 end

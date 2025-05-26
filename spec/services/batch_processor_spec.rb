@@ -35,6 +35,15 @@ RSpec.describe BatchProcessor do
           .to raise_error(ArgumentError, "workflow is required")
       end
     end
+
+    context "when the workflow does not have steps" do
+      let(:workflow) { build(:workflow, steps: []) }
+
+      xit "raises an ArgumentError" do
+        expect { described_class.new(batch: batch_object, workflow: workflow) }
+          .to raise_error(ArgumentError, "workflow must contain at least one step")
+      end
+    end
   end
 
   describe "#call" do
