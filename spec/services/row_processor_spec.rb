@@ -178,5 +178,126 @@ RSpec.describe RowProcessor do
 
       expect(row.data).to include('customer_id' => '123')
     end
+
+    context "with @in_progress and priority logic" do
+      let(:hydra_manager_double) { instance_double(HydraManager) }
+      let(:on_complete_method) { processor.method(:handle_step_completion) } # Memoized for consistent object in mocks
+
+      before do
+        allow(HydraManager).to receive(:instance).and_return(hydra_manager_double)
+      end
+
+      it "initializes the first StepProcessor with priority: false and sets @in_progress to true" do
+        allow(workflow).to receive(:steps).and_return([first_step])
+        step_processor_double = instance_double(StepProcessor, should_skip?: false)
+        allow(step_processor_double).to receive(:call)
+
+        expect(StepProcessor).to receive(:new).with(
+          first_step,
+          row,
+          hash_including(
+            priority: false,
+            on_complete: on_complete_method,
+            hydra_manager: hydra_manager_double
+          )
+        ).and_return(step_processor_double)
+
+        processor.call
+        expect(processor.instance_variable_get(:@in_progress)).to be true
+      end
+
+      it "initializes subsequent StepProcessors with priority: true" do
+        allow(workflow).to receive(:steps).and_return([first_step, second_step])
+        first_sp_double = instance_double(StepProcessor, should_skip?: false)
+        allow(first_sp_double).to receive(:call)
+        second_sp_double = instance_double(StepProcessor, should_skip?: false)
+        allow(second_sp_double).to receive(:call)
+
+        expect(StepProcessor).to receive(:new).with(
+          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
+        ).ordered.and_return(first_sp_double)
+
+        expect(StepProcessor).to receive(:new).with(
+          second_step, row, hash_including(priority: true, on_complete: on_complete_method)
+        ).ordered.and_return(second_sp_double)
+
+        processor.call
+        processor.send(:handle_step_completion, { success: true, data: {} })
+      end
+
+      it "sets @in_progress to false when called with no steps" do
+        allow(workflow).to receive(:steps).and_return([])
+        processor.instance_variable_set(:@in_progress, true)
+
+        expect(StepProcessor).not_to receive(:new)
+        processor.call
+        expect(processor.instance_variable_get(:@in_progress)).to be false
+      end
+
+      it "sets @in_progress to false after all steps are processed" do
+        allow(workflow).to receive(:steps).and_return([first_step])
+        step_processor_double = instance_double(StepProcessor, should_skip?: false)
+        allow(step_processor_double).to receive(:call)
+
+        expect(StepProcessor).to receive(:new).with(
+          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
+        ).and_return(step_processor_double)
+
+        processor.call
+        expect(processor.instance_variable_get(:@in_progress)).to be true
+
+        processor.send(:handle_step_completion, { success: true, data: {} })
+
+        expect(processor.instance_variable_get(:@current_step_index)).to eq 1
+        expect(processor.instance_variable_get(:@in_progress)).to be false
+
+        processor.call
+        expect(processor.instance_variable_get(:@in_progress)).to be false
+      end
+
+      it "uses priority: false for the next step if the first step is skipped" do
+        allow(workflow).to receive(:steps).and_return([first_step, second_step])
+        first_sp_double = instance_double(StepProcessor, should_skip?: true)
+        second_sp_double = instance_double(StepProcessor, should_skip?: false)
+        allow(second_sp_double).to receive(:call)
+
+        expect(StepProcessor).to receive(:new).with(
+          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
+        ).ordered.and_return(first_sp_double)
+
+        expect(StepProcessor).to receive(:new).with(
+          second_step, row, hash_including(priority: false, on_complete: on_complete_method)
+        ).ordered.and_return(second_sp_double)
+
+        processor.call
+        expect(processor.instance_variable_get(:@in_progress)).to be true
+      end
+
+      it "uses priority: true for a step after a skipped step, if processing was already in progress" do
+        third_step = build(:step, order: 3)
+        allow(workflow).to receive(:steps).and_return([first_step, second_step, third_step])
+
+        first_sp = instance_double(StepProcessor, should_skip?: false)
+        allow(first_sp).to receive(:call)
+        second_sp = instance_double(StepProcessor, should_skip?: true)
+        third_sp = instance_double(StepProcessor, should_skip?: false)
+        allow(third_sp).to receive(:call)
+
+        expect(StepProcessor).to receive(:new).with(
+          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
+        ).ordered.and_return(first_sp)
+
+        expect(StepProcessor).to receive(:new).with(
+          second_step, row, hash_including(priority: true, on_complete: on_complete_method)
+        ).ordered.and_return(second_sp)
+
+        expect(StepProcessor).to receive(:new).with(
+          third_step, row, hash_including(priority: true, on_complete: on_complete_method)
+        ).ordered.and_return(third_sp)
+
+        processor.call
+        processor.send(:handle_step_completion, { success: true, data: {} })
+      end
+    end
   end
 end

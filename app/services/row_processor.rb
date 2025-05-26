@@ -13,16 +13,37 @@ class RowProcessor
     @workflow = workflow
     @ordered_steps = workflow.steps.sort_by(&:order)
     @current_step_index = 0
+    @in_progress = false
   end
 
   def call
-    return if @ordered_steps.empty?
-    return if @current_step_index >= @ordered_steps.length
+    if @ordered_steps.empty? || @current_step_index >= @ordered_steps.length
+      @in_progress = false
+      return
+    end
 
     process_current_step
   end
 
   private
+
+  def process_current_step
+    current_step = @ordered_steps[@current_step_index]
+    @current_step_processor = StepProcessor.new(
+      current_step,
+      row,
+      hydra_manager: HydraManager.instance,
+      on_complete: method(:handle_step_completion),
+      priority: @in_progress
+    )
+
+    if @current_step_processor.should_skip?
+      handle_step_completion(nil)
+    else
+      @in_progress = true
+      @current_step_processor.call
+    end
+  end
 
   def handle_step_completion(result)
     # Handle skipped steps (nil result)
@@ -56,21 +77,5 @@ class RowProcessor
 
     # For non-required steps, we just continue processing
     Rails.logger.warn("Non-required step #{current_step.name} failed: #{error}")
-  end
-
-  def process_current_step
-    current_step = @ordered_steps[@current_step_index]
-    @current_step_processor = StepProcessor.new(
-      current_step,
-      row,
-      hydra_manager: HydraManager.instance,
-      on_complete: method(:handle_step_completion)
-    )
-
-    if @current_step_processor.should_skip?
-      handle_step_completion(nil)
-    else
-      @current_step_processor.call
-    end
   end
 end

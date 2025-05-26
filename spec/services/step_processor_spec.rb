@@ -8,8 +8,9 @@ RSpec.describe StepProcessor do
   let(:step) { create(:step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:on_complete) { -> { puts 'done' } }
-  let(:step_processor) { described_class.new(step, row, on_complete: on_complete, api_key: api_key) }
   let(:hydra_manager) { instance_double(HydraManager) }
+  let(:default_options) { { on_complete: on_complete, api_key: api_key, hydra_manager: hydra_manager } }
+  let(:step_processor) { described_class.new(step, row, **default_options) }
 
   before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
 
@@ -21,6 +22,19 @@ RSpec.describe StepProcessor do
       expect(step_processor.instance_variable_get(:@hydra_manager)).to eq(hydra_manager)
       expect(step_processor.instance_variable_get(:@on_complete)).to eq(on_complete)
       expect(step_processor.instance_variable_get(:@api_key)).to eq(api_key)
+      expect(step_processor.instance_variable_get(:@priority)).to be false
+    end
+
+    context 'with priority option' do
+      it 'initializes with priority true when specified' do
+        processor_with_priority = described_class.new(step, row, **default_options, priority: true)
+        expect(processor_with_priority.instance_variable_get(:@priority)).to be true
+      end
+
+      it 'initializes with priority false when specified' do
+        processor_with_priority = described_class.new(step, row, **default_options, priority: false)
+        expect(processor_with_priority.instance_variable_get(:@priority)).to be false
+      end
     end
 
     it 'raises an error when step is nil' do
@@ -64,6 +78,41 @@ RSpec.describe StepProcessor do
           hash_including(
             **request_fields,
             api_key: api_key,
+            front: false,
+            on_complete: kind_of(Proc)
+          )
+        ) do |args|
+          response = double('response', body: '{}', code: 200)
+          args[:on_complete].call(response)
+          double('Typhoeus::Request')
+        end
+
+      processor.call
+
+      expect(callback_spy).to have_received(:call)
+        .with(success: true, data: {})
+    end
+
+    it 'queues request with front: true when priority is true' do
+      test_step = create(:step, config: {
+                           'liquid_templates' => {
+                             'name' => 'Priority Step',
+                             'url' => 'https://priority.example.com/test',
+                             'method' => 'post'
+                           }
+                         })
+      callback_spy = spy('callback')
+      processor = described_class.new(test_step, row, **default_options.except(:hydra_manager),
+        on_complete: callback_spy, api_key: api_key, priority: true)
+
+      request_fields = processor.send(:render_request_fields)
+
+      expect(hydra_manager).to receive(:queue)
+        .with(
+          hash_including(
+            **request_fields,
+            api_key: api_key,
+            front: true,
             on_complete: kind_of(Proc)
           )
         ) do |args|
