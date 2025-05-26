@@ -13,12 +13,12 @@ class RowProcessor
     @workflow = workflow
     @ordered_steps = workflow.steps.sort_by(&:order)
     @current_step_index = 0
-    @in_progress = false
+    @status = :pending
   end
 
   def call
     if @ordered_steps.empty? || @current_step_index >= @ordered_steps.length
-      @in_progress = false
+      @status = :complete
       return
     end
 
@@ -34,13 +34,13 @@ class RowProcessor
       row,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
-      priority: @in_progress
+      priority: @status == :in_progress
     )
 
     if @current_step_processor.should_skip?
       handle_step_completion(nil)
     else
-      @in_progress = true
+      @status = :in_progress
       @current_step_processor.call
     end
   end
@@ -71,6 +71,7 @@ class RowProcessor
     current_step = @ordered_steps[@current_step_index]
 
     if @current_step_processor.required?
+      @status = :failed
       row.update(status: :failed)
       raise "Required step #{current_step.name} failed: #{error}"
     end
