@@ -2,7 +2,6 @@
 
 ##
 # WorkflowExecution model represents a specific run of a Workflow
-# Also known as "An Import" or "A Run"
 class WorkflowExecution < ApplicationRecord
   belongs_to :workflow
   belongs_to :data_source
