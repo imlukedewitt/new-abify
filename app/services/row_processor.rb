@@ -34,7 +34,7 @@ class RowProcessor
       row,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
-      priority: @status == :in_progress
+      priority: @status == :in_progress # prioritize completing in-progress rows
     )
 
     if @current_step_processor.should_skip?
