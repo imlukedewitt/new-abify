@@ -4,6 +4,35 @@ FactoryBot.define do
   factory :row do
     workflow_execution
     data_source
+    status { 'pending' }
+    source_index { rand(100) }  # Random index for testing
     data { { first_name: "John", last_name: "Doe", email: "john.doe@example.com", organization: "Acme Corp" } }
+    original_data { data.dup }  # Original data starts as a copy of data
+
+    trait :with_batch do
+      association :batch
+    end
+
+    trait :with_custom_data do
+      transient do
+        custom_fields { {} }
+      end
+
+      data do
+        { first_name: "John", last_name: "Doe", email: "john.doe@example.com" }.merge(custom_fields)
+      end
+    end
+
+    trait :processed do
+      status { 'processed' }
+    end
+
+    trait :failed do
+      status { 'failed' }
+    end
+
+    trait :skipped do
+      status { 'skipped' }
+    end
   end
 end
