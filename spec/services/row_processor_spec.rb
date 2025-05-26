@@ -187,7 +187,7 @@ RSpec.describe RowProcessor do
         allow(HydraManager).to receive(:instance).and_return(hydra_manager_double)
       end
 
-      it "initializes the first StepProcessor with priority: false and sets @in_progress to true" do
+      it "initializes the first StepProcessor with priority: false and sets @status to :in_progress" do
         allow(workflow).to receive(:steps).and_return([first_step])
         step_processor_double = instance_double(StepProcessor, should_skip?: false)
         allow(step_processor_double).to receive(:call)
@@ -203,7 +203,7 @@ RSpec.describe RowProcessor do
         ).and_return(step_processor_double)
 
         processor.call
-        expect(processor.instance_variable_get(:@in_progress)).to be true
+        expect(processor.instance_variable_get(:@status)).to eq(:in_progress)
       end
 
       it "initializes subsequent StepProcessors with priority: true" do
@@ -225,16 +225,16 @@ RSpec.describe RowProcessor do
         processor.send(:handle_step_completion, { success: true, data: {} })
       end
 
-      it "sets @in_progress to false when called with no steps" do
+      it "sets @status to :complete when called with no steps" do
         allow(workflow).to receive(:steps).and_return([])
-        processor.instance_variable_set(:@in_progress, true)
+        processor.instance_variable_set(:@status, :in_progress)
 
         expect(StepProcessor).not_to receive(:new)
         processor.call
-        expect(processor.instance_variable_get(:@in_progress)).to be false
+        expect(processor.instance_variable_get(:@status)).to eq(:complete)
       end
 
-      it "sets @in_progress to false after all steps are processed" do
+      it "sets @status to :complete after all steps are processed" do
         allow(workflow).to receive(:steps).and_return([first_step])
         step_processor_double = instance_double(StepProcessor, should_skip?: false)
         allow(step_processor_double).to receive(:call)
@@ -244,15 +244,15 @@ RSpec.describe RowProcessor do
         ).and_return(step_processor_double)
 
         processor.call
-        expect(processor.instance_variable_get(:@in_progress)).to be true
+        expect(processor.instance_variable_get(:@status)).to eq(:in_progress)
 
         processor.send(:handle_step_completion, { success: true, data: {} })
 
         expect(processor.instance_variable_get(:@current_step_index)).to eq 1
-        expect(processor.instance_variable_get(:@in_progress)).to be false
+        expect(processor.instance_variable_get(:@status)).to eq(:complete)
 
         processor.call
-        expect(processor.instance_variable_get(:@in_progress)).to be false
+        expect(processor.instance_variable_get(:@status)).to eq(:complete)
       end
 
       it "uses priority: false for the next step if the first step is skipped" do
@@ -270,7 +270,7 @@ RSpec.describe RowProcessor do
         ).ordered.and_return(second_sp_double)
 
         processor.call
-        expect(processor.instance_variable_get(:@in_progress)).to be true
+        expect(processor.instance_variable_get(:@status)).to eq(:in_progress)
       end
 
       it "uses priority: true for a step after a skipped step, if processing was already in progress" do
