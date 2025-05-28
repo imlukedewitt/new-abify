@@ -76,7 +76,6 @@ class RowProcessor
       raise "Required step #{current_step.name} failed: #{error}"
     end
 
-    # For non-required steps, we just continue processing
     Rails.logger.warn("Non-required step #{current_step.name} failed: #{error}")
   end
 end

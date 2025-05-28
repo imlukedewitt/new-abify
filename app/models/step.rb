@@ -11,6 +11,7 @@
 # @attr [Workflow] workflow The workflow this step belongs to
 class Step < ApplicationRecord
   belongs_to :workflow
+  has_many :step_executions, dependent: :destroy
   default_scope { order(order: :asc) }
 
   validates :config, presence: true
