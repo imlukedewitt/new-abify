@@ -7,7 +7,7 @@ require_relative 'liquid/context_builder'
 
 # StepProcessor is responsible for processing a workflow step
 class StepProcessor
-  attr_reader :step, :row, :config
+  attr_reader :step, :row, :config, :execution
 
   def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, api_key: nil, priority: false)
     raise ArgumentError, 'step is required' unless step
@@ -20,6 +20,7 @@ class StepProcessor
     @on_complete = on_complete
     @api_key = api_key
     @priority = priority
+    @execution = find_or_create_execution
   end
 
   def self.call(step, row)
@@ -27,6 +28,13 @@ class StepProcessor
   end
 
   def call
+    if should_skip?
+      @execution.skip!
+      return
+    end
+
+    @execution.start!
+
     @hydra_manager.queue(
       **render_request_fields,
       front: @priority,
@@ -49,19 +57,28 @@ class StepProcessor
   private
 
   def process_response(response)
-    return { success: false, error: "No response received" } if response.nil?
+    if response.nil?
+      @execution.fail!("No response received")
+      return { success: false, error: "No response received" }
+    end
 
     parsed_response = parse_json_response(response.body)
-    return { success: false, error: "Invalid JSON response" } if parsed_response.nil?
+    if parsed_response.nil?
+      @execution.fail!("Invalid JSON response")
+      return { success: false, error: "Invalid JSON response" }
+    end
 
     if response.code.between?(200, 299)
       success_data = extract_success_data(parsed_response)
+      @execution.succeed!(success_data)
       { success: true, data: success_data }
     else
       error = parsed_response["errors"] || "Request failed with status #{response.code}"
+      @execution.fail!(error)
       { success: false, error: error }
     end
   rescue StandardError => e
+    @execution.fail!(e.message)
     { success: false, error: e.message }
   end
 
@@ -124,5 +141,9 @@ class StepProcessor
     end
 
     result
+  end
+
+  def find_or_create_execution
+    StepExecution.find_or_create_by(step: @step, row: @row)
   end
 end
