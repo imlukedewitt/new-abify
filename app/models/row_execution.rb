@@ -14,7 +14,6 @@ class RowExecution < ApplicationRecord
   belongs_to :row
   has_many :step_executions, through: :row
 
-  # TODO: add other methods for succeed! etc?
   def fail!(error_messages)
     error_list = error_messages.is_a?(Array) ? error_messages : [error_messages]
     update!(
