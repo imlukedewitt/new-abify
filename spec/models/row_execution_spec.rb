@@ -74,7 +74,7 @@ RSpec.describe RowExecution, type: :model do
         end.to change(row_execution, :status).from('processing').to('failed')
                                              .and change(row_execution, :completed_at).from(nil)
 
-        expect(row_execution.error_message).to eq(error_message)
+        expect(row_execution.error_messages).to eq([error_message])
       end
     end
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_28_013043) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_28_043042) do
   create_table "batches", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -31,6 +31,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_28_013043) do
   create_table "imports", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "row_executions", force: :cascade do |t|
+    t.integer "row_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.json "error_messages"
+    t.json "responses"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["row_id"], name: "index_row_executions_on_row_id"
+    t.index ["status"], name: "index_row_executions_on_status"
   end
 
   create_table "rows", force: :cascade do |t|
@@ -96,6 +109,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_28_013043) do
     t.string "name"
   end
 
+  add_foreign_key "row_executions", "rows"
   add_foreign_key "rows", "batches"
   add_foreign_key "rows", "data_sources"
   add_foreign_key "rows", "workflow_executions"

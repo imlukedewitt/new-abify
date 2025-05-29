@@ -29,7 +29,7 @@ module Executable
     errors = error.is_a?(Array) ? error : [error]
     update!(
       status: FAILED,
-      error_message: errors.join(", "),
+      error_messages: errors,
       completed_at: Time.current
     )
   end
