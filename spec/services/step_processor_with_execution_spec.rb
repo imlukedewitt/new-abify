@@ -8,7 +8,7 @@ RSpec.describe StepProcessor, type: :service do
     let(:row) { create(:row) }
     let(:hydra_manager) { instance_double(HydraManager) }
     let(:step_execution) { create(:step_execution, step: step, row: row) }
-    let(:callback) { ->(result) { puts "Result: #{result}" } }
+    let(:callback) { ->(result) {} }
     let(:processor) { described_class.new(step, row, on_complete: callback, hydra_manager: hydra_manager) }
 
     before do
