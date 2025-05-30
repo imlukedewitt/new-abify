@@ -13,6 +13,12 @@ RSpec.describe RowProcessor do
       expect(processor).to be_a(RowProcessor)
     end
 
+    it "finds or creates a RowExecution" do
+      execution_double = instance_double(RowExecution)
+      expect(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+      expect(processor.execution).to eq(execution_double)
+    end
+
     context "when row is nil" do
       let(:row) { nil }
 
@@ -69,6 +75,12 @@ RSpec.describe RowProcessor do
       allow(required_processor).to receive(:call) do
         processor.send(:handle_step_completion, { success: false, error: "Failure in required step" })
       end
+
+      execution_double = instance_double(RowExecution)
+      allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+      allow(execution_double).to receive(:start!)
+      allow(execution_double).to receive(:processing?).and_return(false)
+      expect(execution_double).to receive(:fail!).with("Failure in required step")
 
       allow(row).to receive(:update).with(status: :failed)
 
@@ -187,10 +199,14 @@ RSpec.describe RowProcessor do
         allow(HydraManager).to receive(:instance).and_return(hydra_manager_double)
       end
 
-      it "initializes the first StepProcessor with priority: false and sets @status to :in_progress" do
+      it "initializes the first StepProcessor with priority: false and starts execution" do
         allow(workflow).to receive(:steps).and_return([first_step])
         step_processor_double = instance_double(StepProcessor, should_skip?: false)
         allow(step_processor_double).to receive(:call)
+
+        execution_double = instance_double(RowExecution, processing?: false)
+        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(execution_double).to receive(:start!)
 
         expect(StepProcessor).to receive(:new).with(
           first_step,
@@ -203,7 +219,7 @@ RSpec.describe RowProcessor do
         ).and_return(step_processor_double)
 
         processor.call
-        expect(processor.instance_variable_get(:@status)).to eq(:in_progress)
+        expect(execution_double).to have_received(:start!)
       end
 
       it "initializes subsequent StepProcessors with priority: true" do
@@ -212,6 +228,11 @@ RSpec.describe RowProcessor do
         allow(first_sp_double).to receive(:call)
         second_sp_double = instance_double(StepProcessor, should_skip?: false)
         allow(second_sp_double).to receive(:call)
+
+        execution_double = instance_double(RowExecution)
+        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(execution_double).to receive(:start!)
+        allow(execution_double).to receive(:processing?).and_return(false, true)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -225,34 +246,41 @@ RSpec.describe RowProcessor do
         processor.send(:handle_step_completion, { success: true, data: {} })
       end
 
-      it "sets @status to :complete when called with no steps" do
+      it "completes the execution when called with no steps" do
         allow(workflow).to receive(:steps).and_return([])
-        processor.instance_variable_set(:@status, :in_progress)
+
+        execution_double = instance_double(RowExecution)
+        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(execution_double).to receive(:complete!)
+
+        # Create processor after setting up the mocks
+        row_processor = described_class.new(row: row, workflow: workflow)
 
         expect(StepProcessor).not_to receive(:new)
-        processor.call
-        expect(processor.instance_variable_get(:@status)).to eq(:complete)
+        row_processor.call
+        expect(execution_double).to have_received(:complete!)
       end
 
-      it "sets @status to :complete after all steps are processed" do
+      it "completes the execution after all steps are processed" do
         allow(workflow).to receive(:steps).and_return([first_step])
         step_processor_double = instance_double(StepProcessor, should_skip?: false)
         allow(step_processor_double).to receive(:call)
+
+        execution_double = instance_double(RowExecution, processing?: false)
+        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(execution_double).to receive(:start!)
+        allow(execution_double).to receive(:complete!)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
         ).and_return(step_processor_double)
 
         processor.call
-        expect(processor.instance_variable_get(:@status)).to eq(:in_progress)
 
         processor.send(:handle_step_completion, { success: true, data: {} })
 
         expect(processor.instance_variable_get(:@current_step_index)).to eq 1
-        expect(processor.instance_variable_get(:@status)).to eq(:complete)
-
-        processor.call
-        expect(processor.instance_variable_get(:@status)).to eq(:complete)
+        expect(execution_double).to have_received(:complete!)
       end
 
       it "uses priority: false for the next step if the first step is skipped" do
@@ -260,6 +288,11 @@ RSpec.describe RowProcessor do
         first_sp_double = instance_double(StepProcessor, should_skip?: true)
         second_sp_double = instance_double(StepProcessor, should_skip?: false)
         allow(second_sp_double).to receive(:call)
+
+        execution_double = instance_double(RowExecution)
+        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(execution_double).to receive(:processing?).and_return(false)
+        allow(execution_double).to receive(:start!)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -270,7 +303,6 @@ RSpec.describe RowProcessor do
         ).ordered.and_return(second_sp_double)
 
         processor.call
-        expect(processor.instance_variable_get(:@status)).to eq(:in_progress)
       end
 
       it "uses priority: true for a step after a skipped step, if processing was already in progress" do
@@ -282,6 +314,11 @@ RSpec.describe RowProcessor do
         second_sp = instance_double(StepProcessor, should_skip?: true)
         third_sp = instance_double(StepProcessor, should_skip?: false)
         allow(third_sp).to receive(:call)
+
+        execution_double = instance_double(RowExecution)
+        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(execution_double).to receive(:start!)
+        allow(execution_double).to receive(:processing?).and_return(false, true, true)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)

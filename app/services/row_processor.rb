@@ -3,7 +3,7 @@
 # Runs a Workflow on a single Row,
 # creating WorkflowStepExecutors for each step
 class RowProcessor
-  attr_reader :row, :workflow
+  attr_reader :row, :workflow, :execution
 
   def initialize(row:, workflow:)
     raise ArgumentError, "row is required" if row.nil?
@@ -13,12 +13,12 @@ class RowProcessor
     @workflow = workflow
     @ordered_steps = workflow.steps.sort_by(&:order)
     @current_step_index = 0
-    @status = :pending
+    @execution = find_or_create_execution
   end
 
   def call
     if @ordered_steps.empty? || @current_step_index >= @ordered_steps.length
-      @status = :complete
+      @execution.complete!
       return
     end
 
@@ -27,6 +27,10 @@ class RowProcessor
 
   private
 
+  def find_or_create_execution
+    RowExecution.find_or_create_by(row: @row)
+  end
+
   def process_current_step
     current_step = @ordered_steps[@current_step_index]
     @current_step_processor = StepProcessor.new(
@@ -34,13 +38,13 @@ class RowProcessor
       row,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
-      priority: @status == :in_progress # prioritize completing in-progress rows
+      priority: @execution.processing? # prioritize completing in-progress rows
     )
 
     if @current_step_processor.should_skip?
       handle_step_completion(nil)
     else
-      @status = :in_progress
+      @execution.start!
       @current_step_processor.call
     end
   end
@@ -71,7 +75,7 @@ class RowProcessor
     current_step = @ordered_steps[@current_step_index]
 
     if @current_step_processor.required?
-      @status = :failed
+      @execution.fail!(error)
       row.update(status: :failed)
       raise "Required step #{current_step.name} failed: #{error}"
     end
