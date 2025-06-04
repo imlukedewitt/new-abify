@@ -39,7 +39,7 @@ class BatchExecution < ApplicationRecord
 
     if all_rows_complete?
       if row_executions.where(status: Executable::FAILED).any?
-        fail!("Some rows failed processing")
+        fail!
       else
         complete!
       end
@@ -47,5 +47,12 @@ class BatchExecution < ApplicationRecord
     end
 
     false
+  end
+
+  def fail!
+    update!(
+      status: Executable::FAILED,
+      completed_at: Time.current
+    )
   end
 end
