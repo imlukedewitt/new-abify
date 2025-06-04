@@ -17,6 +17,8 @@ class RowProcessor
   end
 
   def call
+    return if @execution.complete?
+
     if @ordered_steps.empty? || @current_step_index >= @ordered_steps.length
       @execution.complete!
       return
@@ -77,7 +79,6 @@ class RowProcessor
     if @current_step_processor.required?
       @execution.fail!(error)
       row.update(status: :failed)
-      raise "Required step #{current_step.name} failed: #{error}"
     end
 
     Rails.logger.warn("Non-required step #{current_step.name} failed: #{error}")
