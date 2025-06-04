@@ -51,7 +51,7 @@ class StepProcessor
   end
 
   def required?
-    evaluate_boolean_condition('required_condition')
+    evaluate_boolean_condition('required')
   end
 
   private
