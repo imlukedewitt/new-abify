@@ -1,0 +1,117 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://httpbin.org/delay/1?row_id=?
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 03:18:40 GMT
+      Content-Type:
+      - application/json
+      Content-Length:
+      - '378'
+      Server:
+      - gunicorn/19.9.0
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Allow-Credentials:
+      - 'true'
+    body:
+      encoding: ASCII-8BIT
+      string: "{\n  \"args\": {\n    \"row_id\": \"?\"\n  }, \n  \"data\": \"\", \n
+        \ \"files\": {}, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\",
+        \n    \"Content-Type\": \"application/json\", \n    \"Host\": \"httpbin.org\",
+        \n    \"User-Agent\": \"Agent User\", \n    \"X-Amzn-Trace-Id\": \"Root=1-68410c8f-457792a33c0684ac161ded7d\"\n
+        \ }, \n  \"origin\": \"199.247.151.47\", \n  \"url\": \"https://httpbin.org/delay/1?row_id=%3F\"\n}\n"
+  recorded_at: Thu, 05 Jun 2025 03:18:40 GMT
+- request:
+    method: get
+    uri: https://httpbin.org/delay/1?row_id=?
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 03:18:40 GMT
+      Content-Type:
+      - application/json
+      Content-Length:
+      - '378'
+      Server:
+      - gunicorn/19.9.0
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Allow-Credentials:
+      - 'true'
+    body:
+      encoding: ASCII-8BIT
+      string: "{\n  \"args\": {\n    \"row_id\": \"?\"\n  }, \n  \"data\": \"\", \n
+        \ \"files\": {}, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\",
+        \n    \"Content-Type\": \"application/json\", \n    \"Host\": \"httpbin.org\",
+        \n    \"User-Agent\": \"Agent User\", \n    \"X-Amzn-Trace-Id\": \"Root=1-68410c8f-05c1b45c73043b6f40b86705\"\n
+        \ }, \n  \"origin\": \"199.247.151.47\", \n  \"url\": \"https://httpbin.org/delay/1?row_id=%3F\"\n}\n"
+  recorded_at: Thu, 05 Jun 2025 03:18:40 GMT
+- request:
+    method: get
+    uri: https://httpbin.org/delay/1?row_id=?
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 03:18:40 GMT
+      Content-Type:
+      - application/json
+      Content-Length:
+      - '378'
+      Server:
+      - gunicorn/19.9.0
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Allow-Credentials:
+      - 'true'
+    body:
+      encoding: ASCII-8BIT
+      string: "{\n  \"args\": {\n    \"row_id\": \"?\"\n  }, \n  \"data\": \"\", \n
+        \ \"files\": {}, \n  \"form\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\",
+        \n    \"Content-Type\": \"application/json\", \n    \"Host\": \"httpbin.org\",
+        \n    \"User-Agent\": \"Agent User\", \n    \"X-Amzn-Trace-Id\": \"Root=1-68410c8f-24bfb6f256a15da12955fc0d\"\n
+        \ }, \n  \"origin\": \"199.247.151.47\", \n  \"url\": \"https://httpbin.org/delay/1?row_id=%3F\"\n}\n"
+  recorded_at: Thu, 05 Jun 2025 03:18:41 GMT
+recorded_with: VCR 6.3.1

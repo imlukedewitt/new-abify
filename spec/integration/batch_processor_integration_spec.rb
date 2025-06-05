@@ -156,5 +156,44 @@ RSpec.describe BatchProcessor, :integration, :vcr do
 
       expect(processor.monitor_thread).to be_nil
     end
+
+    # this test isn't very good...
+    # the VCR makes it useless since it plays back without a delay
+    # I'm not worried about this for now
+    it 'processes rows concurrently' do
+      step1.config = {
+        'liquid_templates' => {
+          'name' => 'Slow Request',
+          'url' => 'https://httpbin.org/delay/1?row_id={{row.id}}',
+          'method' => 'get',
+          'success_data' => {
+            'processed_at': '{{response.url}}'
+          }
+        }
+      }
+      step1.save!
+
+      workflow.steps.where.not(id: step1.id).destroy_all
+      workflow.reload
+
+      processor = described_class.new(batch: batch, workflow: workflow)
+
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      processor.call
+
+      HydraManager.instance.run
+      processor.check_completion
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+      total_time = end_time - start_time
+
+      expect(total_time).to be < batch.rows.count * 0.9 # Less than 90% of sequential time
+
+      batch.rows.reload.each do |row|
+        expect(row.data).to include('processed_at')
+      end
+
+      expect(BatchExecution.find_by(batch: batch).status).to eq(Executable::COMPLETE)
+    end
   end
 end
