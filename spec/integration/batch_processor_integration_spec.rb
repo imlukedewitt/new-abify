@@ -157,9 +157,9 @@ RSpec.describe BatchProcessor, :integration, :vcr do
       expect(processor.monitor_thread).to be_nil
     end
 
-    # this test isn't very good...
+    # TODO: this test isn't very good...
     # the VCR makes it useless since it plays back without a delay
-    # I'm not worried about this for now
+    # I'm not worried about this for now. I'm convinced it works.
     it 'processes rows concurrently' do
       step1.config = {
         'liquid_templates' => {
