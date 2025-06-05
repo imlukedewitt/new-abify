@@ -17,5 +17,5 @@ VCR.configure do |config|
   }
 
   # Enable debug logging to see what VCR is doing
-  config.debug_logger = $stderr
+  # config.debug_logger = $stderr
 end
