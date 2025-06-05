@@ -292,14 +292,16 @@ RSpec.describe StepProcessor do
   end
 
   describe '#required?' do
-    it 'returns false when no required_condition is configured' do
+    it 'returns false when no required is configured' do
+      step.config = { 'liquid_templates' => {} }
+      step_processor = StepProcessor.new(step, row)
       expect(step_processor.send(:required?)).to be false
     end
 
-    it 'evaluates required_condition and returns boolean result' do
+    it 'evaluates required and returns boolean result' do
       step.config = {
         'liquid_templates' => {
-          'required_condition' => "{{row.organization | present?}}"
+          'required' => "{{row.organization | present?}}"
         }
       }
       step_processor = StepProcessor.new(step, row)
@@ -307,10 +309,10 @@ RSpec.describe StepProcessor do
       expect(step_processor.send(:required?)).to be true
     end
 
-    it 'returns false when required_condition evaluates to false' do
+    it 'returns false when required evaluates to false' do
       step.config = {
         'liquid_templates' => {
-          'required_condition' => "{{row.missing_field | present?}}"
+          'required' => "{{row.missing_field | present?}}"
         }
       }
       step_processor = StepProcessor.new(step, row)
