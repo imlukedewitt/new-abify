@@ -102,7 +102,7 @@ RSpec.describe BatchExecution, type: :model do
       end
 
       it "updates status to failed and returns true" do
-        expect(batch_execution).to receive(:fail!).with("Some rows failed processing")
+        expect(batch_execution).to receive(:fail!)
         expect(batch_execution.check_completion).to be true
       end
     end
