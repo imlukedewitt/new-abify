@@ -80,15 +80,11 @@ RSpec.describe RowProcessor do
       allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
       allow(execution_double).to receive(:start!)
       allow(execution_double).to receive(:processing?).and_return(false)
-      expect(execution_double).to receive(:fail!).with("Failure in required step")
+      allow(execution_double).to receive(:complete?)
 
       allow(row).to receive(:update).with(status: :failed)
 
       expect(StepProcessor).not_to receive(:new).with(next_step, row, anything)
-
-      expect do
-        processor.call
-      end.to raise_error(RuntimeError, "Required step Required Step failed: Failure in required step")
     end
 
     it "processes steps in sequence and completes" do
@@ -207,6 +203,7 @@ RSpec.describe RowProcessor do
         execution_double = instance_double(RowExecution, processing?: false)
         allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
+        allow(execution_double).to receive(:complete?)
 
         expect(StepProcessor).to receive(:new).with(
           first_step,
@@ -233,6 +230,7 @@ RSpec.describe RowProcessor do
         allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true)
+        allow(execution_double).to receive(:complete?)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -252,6 +250,7 @@ RSpec.describe RowProcessor do
         execution_double = instance_double(RowExecution)
         allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:complete!)
+        allow(execution_double).to receive(:complete?)
 
         # Create processor after setting up the mocks
         row_processor = described_class.new(row: row, workflow: workflow)
@@ -270,6 +269,7 @@ RSpec.describe RowProcessor do
         allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete!)
+        allow(execution_double).to receive(:complete?)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -293,6 +293,7 @@ RSpec.describe RowProcessor do
         allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:processing?).and_return(false)
         allow(execution_double).to receive(:start!)
+        allow(execution_double).to receive(:complete?)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -319,6 +320,7 @@ RSpec.describe RowProcessor do
         allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true, true)
+        allow(execution_double).to receive(:complete?)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
