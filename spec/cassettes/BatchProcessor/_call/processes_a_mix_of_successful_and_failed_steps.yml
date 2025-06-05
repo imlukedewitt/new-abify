@@ -1,0 +1,441 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/posts/2
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 02:31:28 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '278'
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - 94ac41055a5cf0b4-DFW
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"116-jnDuMpjju89+9j7e0BqkdFsVRjs"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=ahax%2BJWMRnK%2B1TmKWX%2BvHTymDovHFQ07wDyWpN5LcCA%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1749008304"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=ahax%2BJWMRnK%2B1TmKWX%2BvHTymDovHFQ07wDyWpN5LcCA%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1749008304"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '998'
+      X-Ratelimit-Reset:
+      - '1749008360'
+      Age:
+      - '5440'
+      Cf-Cache-Status:
+      - HIT
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      Server-Timing:
+      - cfL4;desc="?proto=TCP&rtt=21127&min_rtt=20966&rtt_var=8184&sent=5&recv=8&lost=0&retrans=0&sent_bytes=2889&recv_bytes=580&delivery_rate=130122&cwnd=251&unsent_bytes=0&cid=3d7e495be9961c84&ts=36&x=0"
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "userId": 1,
+          "id": 2,
+          "title": "qui est esse",
+          "body": "est rerum tempore vitae\nsequi sint nihil reprehenderit dolor beatae ea dolores neque\nfugiat blanditiis voluptate porro vel nihil molestiae ut reiciendis\nqui aperiam non debitis possimus qui neque nisi nulla"
+        }
+  recorded_at: Thu, 05 Jun 2025 02:31:28 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/posts/3
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 02:31:28 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '283'
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - 94ac410568e6c871-DFW
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"11b-USacuIw5a/iXAGdNKBvqr/TbMTc"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=f6vRKWbBysrfoSUW6F%2FMXyn4zZ4Ni6vbAjNoB3y%2B7KE%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1749008428"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=f6vRKWbBysrfoSUW6F%2FMXyn4zZ4Ni6vbAjNoB3y%2B7KE%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1749008428"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '999'
+      X-Ratelimit-Reset:
+      - '1749008480'
+      Age:
+      - '5440'
+      Cf-Cache-Status:
+      - HIT
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      Server-Timing:
+      - cfL4;desc="?proto=TCP&rtt=21166&min_rtt=20940&rtt_var=8305&sent=5&recv=8&lost=0&retrans=0&sent_bytes=2889&recv_bytes=580&delivery_rate=127285&cwnd=251&unsent_bytes=0&cid=f74955a87949320a&ts=39&x=0"
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "userId": 1,
+          "id": 3,
+          "title": "ea molestias quasi exercitationem repellat qui ipsa sit aut",
+          "body": "et iusto sed quo iure\nvoluptatem occaecati omnis eligendi aut ad\nvoluptatem doloribus vel accusantium quis pariatur\nmolestiae porro eius odio et labore et velit aut"
+        }
+  recorded_at: Thu, 05 Jun 2025 02:31:28 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/posts/1
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 02:31:28 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '292'
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - 94ac410569a16b05-DFW
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"124-yiKdLzqO5gfBrJFrcdJ8Yq0LGnU"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=XAvvgK6NrI7MtHTzoKiqZoMYPrZTQ6C6sHAE%2F%2Fi5nNU%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1749007342"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=XAvvgK6NrI7MtHTzoKiqZoMYPrZTQ6C6sHAE%2F%2Fi5nNU%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1749007342"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '999'
+      X-Ratelimit-Reset:
+      - '1749007400'
+      Age:
+      - '5440'
+      Cf-Cache-Status:
+      - HIT
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      Server-Timing:
+      - cfL4;desc="?proto=TCP&rtt=21059&min_rtt=20806&rtt_var=6141&sent=5&recv=9&lost=0&retrans=0&sent_bytes=2888&recv_bytes=580&delivery_rate=132874&cwnd=250&unsent_bytes=0&cid=03b7bb3b6313cc2f&ts=40&x=0"
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "userId": 1,
+          "id": 1,
+          "title": "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
+          "body": "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto"
+        }
+  recorded_at: Thu, 05 Jun 2025 02:31:28 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/nonexistent
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 02:31:28 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2'
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - 94ac410599e06b05-DFW
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"2-vyGp6PvFo4RvsFtPoIWeCReyIC8"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=bw4vGv%2Fmu43jfgkHISw7BgoxDP5A4Qdx5bZhBLKkUyY%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1749085249"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=bw4vGv%2Fmu43jfgkHISw7BgoxDP5A4Qdx5bZhBLKkUyY%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1749085249"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '993'
+      X-Ratelimit-Reset:
+      - '1749085291'
+      Age:
+      - '5439'
+      Cf-Cache-Status:
+      - HIT
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      Server-Timing:
+      - cfL4;desc="?proto=TCP&rtt=21161&min_rtt=20806&rtt_var=3614&sent=9&recv=15&lost=0&retrans=0&sent_bytes=4201&recv_bytes=758&delivery_rate=132874&cwnd=253&unsent_bytes=0&cid=03b7bb3b6313cc2f&ts=75&x=0"
+    body:
+      encoding: ASCII-8BIT
+      string: "{}"
+  recorded_at: Thu, 05 Jun 2025 02:31:28 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/nonexistent
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 02:31:28 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2'
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - 94ac410599ea6b05-DFW
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"2-vyGp6PvFo4RvsFtPoIWeCReyIC8"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=bw4vGv%2Fmu43jfgkHISw7BgoxDP5A4Qdx5bZhBLKkUyY%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1749085249"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=bw4vGv%2Fmu43jfgkHISw7BgoxDP5A4Qdx5bZhBLKkUyY%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1749085249"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '993'
+      X-Ratelimit-Reset:
+      - '1749085291'
+      Age:
+      - '5439'
+      Cf-Cache-Status:
+      - HIT
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      Server-Timing:
+      - cfL4;desc="?proto=TCP&rtt=21161&min_rtt=20806&rtt_var=3614&sent=12&recv=15&lost=0&retrans=0&sent_bytes=4824&recv_bytes=758&delivery_rate=132874&cwnd=253&unsent_bytes=0&cid=03b7bb3b6313cc2f&ts=78&x=0"
+    body:
+      encoding: ASCII-8BIT
+      string: "{}"
+  recorded_at: Thu, 05 Jun 2025 02:31:28 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/nonexistent
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Agent User
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Date:
+      - Thu, 05 Jun 2025 02:31:28 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2'
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - 94ac410599e66b05-DFW
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"2-vyGp6PvFo4RvsFtPoIWeCReyIC8"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=bw4vGv%2Fmu43jfgkHISw7BgoxDP5A4Qdx5bZhBLKkUyY%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1749085249"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=bw4vGv%2Fmu43jfgkHISw7BgoxDP5A4Qdx5bZhBLKkUyY%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1749085249"
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '993'
+      X-Ratelimit-Reset:
+      - '1749085291'
+      Age:
+      - '5439'
+      Cf-Cache-Status:
+      - HIT
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      Server-Timing:
+      - cfL4;desc="?proto=TCP&rtt=21161&min_rtt=20806&rtt_var=3614&sent=14&recv=15&lost=0&retrans=0&sent_bytes=5111&recv_bytes=758&delivery_rate=132874&cwnd=253&unsent_bytes=0&cid=03b7bb3b6313cc2f&ts=88&x=0"
+    body:
+      encoding: ASCII-8BIT
+      string: "{}"
+  recorded_at: Thu, 05 Jun 2025 02:31:28 GMT
+recorded_with: VCR 6.3.1
