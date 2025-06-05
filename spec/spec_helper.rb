@@ -28,6 +28,17 @@ RSpec.configure do |config|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
   end
 
+  # we have to do this because HydraManager is a singleton (for now)
+  # should probably be moved to a different file somewhere
+  config.before(:each) do
+    if defined?(HydraManager)
+      HydraManager.instance.instance_eval do
+        @requests = []
+        @hydra = nil
+      end
+    end
+  end
+
   # rspec-mocks config goes here. You can use an alternate test double
   # library (such as bogus or mocha) by changing the `mock_with` option here.
   config.mock_with :rspec do |mocks|
