@@ -50,8 +50,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_30_030016) do
     t.string "status", default: "pending", null: false
     t.datetime "started_at"
     t.datetime "completed_at"
-    t.json "error_messages"
-    t.json "responses"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["row_id"], name: "index_row_executions_on_row_id"

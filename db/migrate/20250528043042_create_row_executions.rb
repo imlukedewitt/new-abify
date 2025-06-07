@@ -5,8 +5,6 @@ class CreateRowExecutions < ActiveRecord::Migration[8.0]
       t.string :status, null: false, default: 'pending'
       t.datetime :started_at
       t.datetime :completed_at
-      t.json :error_messages
-      t.json :responses
 
       t.timestamps
     end

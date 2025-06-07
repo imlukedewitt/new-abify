@@ -66,15 +66,11 @@ RSpec.describe RowExecution, type: :model do
     describe '#fail!' do
       before { row_execution.start! }
 
-      it 'changes status to failed and sets completed_at with error message' do
-        error_message = "Failed to process row"
-
+      it 'changes status to failed and sets completed_at' do
         expect do
-          row_execution.fail!(error_message)
+          row_execution.fail!
         end.to change(row_execution, :status).from('processing').to('failed')
                                              .and change(row_execution, :completed_at).from(nil)
-
-        expect(row_execution.error_messages).to eq([error_message])
       end
     end
   end

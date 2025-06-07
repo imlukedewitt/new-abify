@@ -77,7 +77,7 @@ class RowProcessor
     current_step = @ordered_steps[@current_step_index]
 
     if @current_step_processor.required?
-      @execution.fail!(error)
+      @execution.fail!
       row.update(status: :failed)
     end
 

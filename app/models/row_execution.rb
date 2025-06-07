@@ -14,11 +14,9 @@ class RowExecution < ApplicationRecord
   belongs_to :row
   has_many :step_executions, through: :row
 
-  def fail!(error_messages)
-    error_list = error_messages.is_a?(Array) ? error_messages : [error_messages]
+  def fail!
     update!(
       status: Executable::FAILED,
-      error_messages: error_list,
       completed_at: Time.current
     )
   end
