@@ -16,4 +16,17 @@ RSpec.describe WorkflowExecutor do
       expect(workflow_executor.hydra_manager).to be_a(HydraManager)
     end
   end
+
+  describe '#call' do
+    let(:workflow) { create(:workflow) }
+    let(:data_source) { create(:data_source) }
+    let(:workflow_executor) { described_class.new(workflow, data_source) }
+
+    it 'creates a workflow execution' do
+      expect(WorkflowExecution).to receive(:find_or_create_by)
+        .with(workflow: workflow, data_source: data_source)
+
+      workflow_executor.call
+    end
+  end
 end

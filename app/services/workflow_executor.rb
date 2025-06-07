@@ -13,4 +13,8 @@ class WorkflowExecutor
     @workflow = workflow
     @data_source = data_source
   end
+
+  def call
+    WorkflowExecution.find_or_create_by(workflow: workflow, data_source: data_source)
+  end
 end
