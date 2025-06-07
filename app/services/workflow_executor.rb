@@ -3,7 +3,7 @@
 ##
 # WorkflowExecutor creates a RowProcessor for every Row in the Data Source
 class WorkflowExecutor
-  attr_reader :workflow, :data_source, :hydra_manager, :response
+  attr_reader :workflow, :data_source, :hydra_manager, :response, :execution
 
   def initialize(workflow, data_source, hydra_manager = HydraManager.instance)
     raise ArgumentError, 'workflow is required' unless workflow
@@ -15,6 +15,8 @@ class WorkflowExecutor
   end
 
   def call
-    WorkflowExecution.find_or_create_by(workflow: workflow, data_source: data_source)
+    @execution = WorkflowExecution.find_or_create_by(workflow: workflow, data_source: data_source)
+    @execution.start!
+    @execution
   end
 end

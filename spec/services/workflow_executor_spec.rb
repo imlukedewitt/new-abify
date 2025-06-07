@@ -22,11 +22,19 @@ RSpec.describe WorkflowExecutor do
     let(:data_source) { create(:data_source) }
     let(:workflow_executor) { described_class.new(workflow, data_source) }
 
-    it 'creates a workflow execution' do
+    it 'creates and starts a workflow execution' do
+      workflow_execution_double = instance_double(WorkflowExecution)
+
       expect(WorkflowExecution).to receive(:find_or_create_by)
         .with(workflow: workflow, data_source: data_source)
+        .and_return(workflow_execution_double)
 
-      workflow_executor.call
+      expect(workflow_execution_double).to receive(:start!)
+
+      result = workflow_executor.call
+      expect(result).to eq(workflow_execution_double)
+
+      expect(workflow_executor.execution).to eq(workflow_execution_double)
     end
   end
 end
