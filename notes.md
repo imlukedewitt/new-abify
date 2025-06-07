@@ -83,7 +83,7 @@ batch:
     {% else %}
       {{row.group_primary_reference}}
     {% endif %}
-  sort_by: "{% if row.group_primary %}0{% else %}1%}"
+  sort_by: "{% if row.group_primary %}0{% else %}1{% endif %}"
 
 
 steps:
