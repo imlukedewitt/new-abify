@@ -17,9 +17,19 @@ class BatchProcessor
   def call
     @execution.start!
 
-    batch.rows.each do |row|
-      RowProcessor.new(row: row, workflow: workflow).call
+    # Create all row processors first
+    row_processors = batch.rows.map do |row|
+      RowProcessor.new(row: row, workflow: workflow)
     end
+
+    # Call all row processors (this queues HTTP requests but doesn't execute them)
+    row_processors.each(&:call)
+
+    # Execute all queued HTTP requests
+    HydraManager.instance.run
+
+    # Wait for all rows to complete processing
+    row_processors.each(&:wait_for_completion)
 
     check_completion
 
@@ -30,7 +40,7 @@ class BatchProcessor
     @execution.check_completion
   end
 
-  # TODO: replace with background job
+  # TODO: remove this
   def start_monitor(interval: 5, max_runtime: 3600)
     return if @monitor_thread&.alive?
 

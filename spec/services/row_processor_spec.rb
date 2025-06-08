@@ -48,6 +48,73 @@ RSpec.describe RowProcessor do
         end.to raise_error(ArgumentError)
       end
     end
+
+    describe "#wait_for_completion" do
+      let(:execution_double) { instance_double(RowExecution) }
+
+      before do
+        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+      end
+
+      it "blocks until the row processing is complete" do
+        allow(workflow).to receive(:steps).and_return([])
+        allow(execution_double).to receive(:complete!)
+        allow(execution_double).to receive(:complete?)
+        allow(execution_double).to receive(:failed?).and_return(false)
+
+        # Track completion order
+        completion_order = []
+
+        # Create processor and start processing in a separate thread
+        completion_thread = Thread.new do
+          processor.call
+          completion_order << :processing_done
+        end
+
+        # Start waiting for completion in another thread
+        wait_thread = Thread.new do
+          processor.wait_for_completion
+          completion_order << :wait_done
+        end
+
+        # Wait for both threads to complete
+        completion_thread.join
+        wait_thread.join
+
+        # Verify that processing completed before wait returned
+        expect(completion_order).to eq([:processing_done, :wait_done])
+      end
+
+      it "returns immediately if already completed" do
+        allow(workflow).to receive(:steps).and_return([])
+        allow(execution_double).to receive(:complete!)
+        allow(execution_double).to receive(:complete?)
+        allow(execution_double).to receive(:failed?).and_return(false)
+
+        # Complete the processing first
+        processor.call
+
+        # wait_for_completion should return immediately
+        start_time = Time.current
+        processor.wait_for_completion
+        end_time = Time.current
+
+        expect(end_time - start_time).to be < 0.1
+      end
+
+      it "handles completion when execution is already complete" do
+        allow(execution_double).to receive(:complete?).and_return(true)
+        allow(execution_double).to receive(:failed?).and_return(false)
+
+        # Should mark as completed and return immediately
+        start_time = Time.current
+        processor.call
+        processor.wait_for_completion
+        end_time = Time.current
+
+        expect(end_time - start_time).to be < 0.1
+      end
+    end
   end
 
   describe "#call" do
@@ -231,6 +298,7 @@ RSpec.describe RowProcessor do
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true)
         allow(execution_double).to receive(:complete?)
+        allow(execution_double).to receive(:failed?).and_return(false)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -251,6 +319,7 @@ RSpec.describe RowProcessor do
         allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:complete!)
         allow(execution_double).to receive(:complete?)
+        allow(execution_double).to receive(:failed?).and_return(false)
 
         # Create processor after setting up the mocks
         row_processor = described_class.new(row: row, workflow: workflow)
@@ -270,6 +339,7 @@ RSpec.describe RowProcessor do
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete!)
         allow(execution_double).to receive(:complete?)
+        allow(execution_double).to receive(:failed?).and_return(false)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -294,6 +364,7 @@ RSpec.describe RowProcessor do
         allow(execution_double).to receive(:processing?).and_return(false)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete?)
+        allow(execution_double).to receive(:failed?).and_return(false)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)
@@ -321,6 +392,7 @@ RSpec.describe RowProcessor do
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true, true)
         allow(execution_double).to receive(:complete?)
+        allow(execution_double).to receive(:failed?).and_return(false)
 
         expect(StepProcessor).to receive(:new).with(
           first_step, row, hash_including(priority: false, on_complete: on_complete_method)

@@ -54,15 +54,9 @@ RSpec.describe BatchProcessor, :integration, :vcr do
       processor = described_class.new(batch: batch, workflow: workflow)
       processor.call
 
-      HydraManager.instance.run
-
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)
       expect(execution).to be_present
-      expect(execution.status).to eq(Executable::PROCESSING)
-
-      processor.check_completion
-
-      execution.reload
+      expect(execution.status).to eq(Executable::COMPLETE)
 
       batch.rows.reload.each.with_index(1) do |row, idx|
         expect(row.data).to include(
@@ -74,8 +68,6 @@ RSpec.describe BatchProcessor, :integration, :vcr do
           'company' => be_a(String)
         )
       end
-
-      expect(execution.status).to eq(Executable::COMPLETE)
     end
 
     it 'handles failures in the batch' do
@@ -96,13 +88,7 @@ RSpec.describe BatchProcessor, :integration, :vcr do
       processor = described_class.new(batch: batch, workflow: workflow)
       processor.call
 
-      HydraManager.instance.run
-
-      processor.check_completion
-
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)
-      execution.reload
-
       expect(execution.status).to eq(Executable::FAILED)
 
       batch.rows.reload.each do |row|
@@ -119,7 +105,7 @@ RSpec.describe BatchProcessor, :integration, :vcr do
                  'name' => 'Test 404',
                  'url' => 'https://jsonplaceholder.typicode.com/nonexistent',
                  'method' => 'get',
-                 'required' => false # Mark as not required so it doesn't fail the whole row
+                 'required' => false
                }
              })
       workflow.reload
@@ -127,13 +113,7 @@ RSpec.describe BatchProcessor, :integration, :vcr do
       processor = described_class.new(batch: batch, workflow: workflow)
       processor.call
 
-      HydraManager.instance.run
-
-      processor.check_completion
-
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)
-      execution.reload
-
       expect(execution.status).to eq(Executable::COMPLETE)
 
       batch.rows.reload.each.with_index(1) do |row, idx|
@@ -145,55 +125,15 @@ RSpec.describe BatchProcessor, :integration, :vcr do
       end
     end
 
-    it 'stops the monitor thread when requested' do
+    it 'completes processing synchronously without monitor thread' do
       processor = described_class.new(batch: batch, workflow: workflow)
+
       processor.call
-
-      expect(processor.monitor_thread).to be_present
-      expect(processor.monitor_thread).to be_alive
-
-      processor.stop_monitor
 
       expect(processor.monitor_thread).to be_nil
-    end
 
-    # TODO: this test isn't very good...
-    # the VCR makes it useless since it plays back without a delay
-    # I'm not worried about this for now. I'm convinced it works.
-    it 'processes rows concurrently' do
-      step1.config = {
-        'liquid_templates' => {
-          'name' => 'Slow Request',
-          'url' => 'https://httpbin.org/delay/1?row_id={{row.id}}',
-          'method' => 'get',
-          'success_data' => {
-            'processed_at': '{{response.url}}'
-          }
-        }
-      }
-      step1.save!
-
-      workflow.steps.where.not(id: step1.id).destroy_all
-      workflow.reload
-
-      processor = described_class.new(batch: batch, workflow: workflow)
-
-      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      processor.call
-
-      HydraManager.instance.run
-      processor.check_completion
-      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-
-      total_time = end_time - start_time
-
-      expect(total_time).to be < batch.rows.count * 0.9 # Less than 90% of sequential time
-
-      batch.rows.reload.each do |row|
-        expect(row.data).to include('processed_at')
-      end
-
-      expect(BatchExecution.find_by(batch: batch).status).to eq(Executable::COMPLETE)
+      execution = BatchExecution.find_by(batch: batch, workflow: workflow)
+      expect(execution.status).to eq(Executable::COMPLETE)
     end
   end
 end
