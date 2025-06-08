@@ -58,35 +58,27 @@ RSpec.describe BatchProcessor do
     it "processes rows sequentially and waits for completion" do
       execution_double = instance_double(BatchExecution)
       allow(BatchExecution).to receive(:find_or_create_by).and_return(execution_double)
-      expect(execution_double).to receive(:start!)
-      expect(execution_double).to receive(:check_completion)
       allow(execution_double).to receive(:complete?).and_return(true)
 
-      # Create doubles for each row processor
-      row_processor_doubles = rows.map do |row|
+      row_processor_doubles = rows.map do
         instance_double(RowProcessor)
       end
 
-      # Expect all RowProcessors to be created first
+      expect(execution_double).to receive(:start!).ordered
+
       rows.each_with_index do |row, index|
+        row_processor_double = row_processor_doubles[index]
+
         expect(RowProcessor).to receive(:new)
           .with(row: row, workflow: workflow)
-          .and_return(row_processor_doubles[index])
+          .and_return(row_processor_double)
           .ordered
+        expect(row_processor_double).to receive(:call).ordered
+        expect(HydraManager.instance).to receive(:run).ordered # Called per row
+        expect(row_processor_double).to receive(:wait_for_completion).ordered
       end
 
-      # Then expect all to be called
-      row_processor_doubles.each do |double|
-        expect(double).to receive(:call).ordered
-      end
-
-      # Expect HydraManager to run
-      expect(HydraManager.instance).to receive(:run).ordered
-
-      # Then expect all to wait for completion
-      row_processor_doubles.each do |double|
-        expect(double).to receive(:wait_for_completion).ordered
-      end
+      expect(execution_double).to receive(:check_completion).ordered
 
       processor.call
     end

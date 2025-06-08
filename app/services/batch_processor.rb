@@ -17,19 +17,12 @@ class BatchProcessor
   def call
     @execution.start!
 
-    # Create all row processors first
-    row_processors = batch.rows.map do |row|
-      RowProcessor.new(row: row, workflow: workflow)
+    batch.rows.each do |row|
+      row_processor = RowProcessor.new(row: row, workflow: workflow)
+      row_processor.call
+      HydraManager.instance.run # TODO: should this live on the row processor?
+      row_processor.wait_for_completion
     end
-
-    # Call all row processors (this queues HTTP requests but doesn't execute them)
-    row_processors.each(&:call)
-
-    # Execute all queued HTTP requests
-    HydraManager.instance.run
-
-    # Wait for all rows to complete processing
-    row_processors.each(&:wait_for_completion)
 
     check_completion
 
