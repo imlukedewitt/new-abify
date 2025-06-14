@@ -104,11 +104,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_144544) do
   end
 
   create_table "workflow_executions", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.integer "workflow_id", null: false
     t.integer "data_source_id", null: false
     t.string "status", default: "pending"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["data_source_id"], name: "index_workflow_executions_on_data_source_id"
     t.index ["workflow_id"], name: "index_workflow_executions_on_workflow_id"
   end
