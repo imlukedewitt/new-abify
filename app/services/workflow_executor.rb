@@ -19,7 +19,13 @@ class WorkflowExecutor
     @execution.start!
 
     # Process rows in batches
-    process_batches
+    begin
+      process_batches
+      @execution.complete!
+    rescue StandardError => e
+      @execution.fail!(e.message)
+      raise
+    end
 
     @execution
   end
