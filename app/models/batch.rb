@@ -4,6 +4,7 @@
 class Batch < ApplicationRecord
   PROCESSING_MODES = %w[sequential parallel].freeze
 
+  belongs_to :workflow_execution, optional: true
   has_many :rows
   has_many :row_executions, through: :rows
 

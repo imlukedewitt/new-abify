@@ -8,7 +8,7 @@ class WorkflowExecution < ApplicationRecord
   belongs_to :workflow
   belongs_to :data_source
   has_many :rows, dependent: :destroy
-  has_many :batches, through: :rows
+  has_many :batches, dependent: :destroy
 
   validates :workflow, presence: true
   validates :data_source, presence: true

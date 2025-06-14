@@ -100,7 +100,10 @@ class WorkflowExecutor
   def create_and_process_batch(rows, processing_mode)
     return if rows.blank? # Prevent creating batches for no rows
 
-    batch = Batch.create!(processing_mode: processing_mode)
+    batch = Batch.create!(
+      processing_mode: processing_mode,
+      workflow_execution: @execution
+    )
 
     if rows.respond_to?(:update_all)
       rows.update_all(batch_id: batch.id)
