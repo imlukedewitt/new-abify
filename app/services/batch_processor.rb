@@ -11,7 +11,6 @@ class BatchProcessor
     @batch = batch
     @workflow = workflow
     @execution = find_or_create_execution
-    @monitor_thread = nil
   end
 
   def call
