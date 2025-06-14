@@ -82,6 +82,31 @@ RSpec.describe BatchProcessor do
 
       processor.call
     end
+
+    it "processes rows in parallel and runs hydra only once" do
+      execution_double = instance_double(BatchExecution)
+      allow(BatchExecution).to receive(:find_or_create_by).and_return(execution_double)
+      allow(execution_double).to receive(:complete?).and_return(true)
+      allow(batch_object).to receive(:processing_mode).and_return("parallel")
+
+      row_processor_doubles = rows.map { instance_double(RowProcessor) }
+
+      rows.each_with_index do |row, index|
+        row_processor_double = row_processor_doubles[index]
+        expect(RowProcessor).to receive(:new)
+          .with(row: row, workflow: workflow)
+          .and_return(row_processor_double)
+        expect(row_processor_double).to receive(:call)
+        expect(row_processor_double).to receive(:wait_for_completion)
+      end
+
+      expect(HydraManager.instance).to receive(:run).once
+
+      expect(execution_double).to receive(:start!).once
+      expect(execution_double).to receive(:check_completion).once
+
+      processor.call
+    end
   end
 
   describe "#check_completion" do
@@ -91,66 +116,6 @@ RSpec.describe BatchProcessor do
       expect(execution_double).to receive(:check_completion).and_return(true)
 
       expect(processor.check_completion).to eq(true)
-    end
-  end
-
-  describe "#start_monitor" do
-    let(:execution_double) { instance_double(BatchExecution) }
-
-    before do
-      allow(BatchExecution).to receive(:find_or_create_by).and_return(execution_double)
-      allow(execution_double).to receive(:complete?).and_return(false)
-    end
-
-    it "starts a monitoring thread" do
-      # Allow the thread to exit immediately
-      allow(Thread).to receive(:new).and_yield
-      allow(processor).to receive(:check_completion).and_return(true)
-      allow(Rails.logger).to receive(:info)
-
-      processor.start_monitor
-
-      expect(Rails.logger).to have_received(:info).with(/completed processing/)
-    end
-
-    it "doesn't start a new thread if one is already running" do
-      thread_double = double("Thread", alive?: true)
-      processor.instance_variable_set(:@monitor_thread, thread_double)
-
-      expect(Thread).not_to receive(:new)
-
-      processor.start_monitor
-    end
-
-    it "logs a warning if monitoring times out" do
-      # Allow the thread to exit immediately after simulating timeout
-      allow(Time).to receive(:current).and_return(Time.now, Time.now + 3601)
-      allow(Thread).to receive(:new).and_yield
-      allow(processor).to receive(:sleep)
-      allow(Rails.logger).to receive(:warn)
-      allow(execution_double).to receive(:complete?).and_return(false)
-
-      processor.start_monitor
-
-      expect(Rails.logger).to have_received(:warn).with(/monitor timed out/)
-    end
-  end
-
-  describe "#stop_monitor" do
-    it "stops the monitoring thread if running" do
-      thread_double = double("Thread", alive?: true)
-      expect(thread_double).to receive(:exit)
-      processor.instance_variable_set(:@monitor_thread, thread_double)
-
-      processor.stop_monitor
-
-      expect(processor.monitor_thread).to be_nil
-    end
-
-    it "does nothing if no thread is running" do
-      processor.instance_variable_set(:@monitor_thread, nil)
-
-      expect { processor.stop_monitor }.not_to raise_error
     end
   end
 end
