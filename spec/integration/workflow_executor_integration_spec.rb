@@ -29,29 +29,21 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
 
   describe '#call' do
     it 'successfully processes all rows in the data source through the workflow' do
-      # Expectations before call
       expect(data_source.rows.count).to eq(2)
-      initial_workflow_execution_count = WorkflowExecution.count
       initial_batch_count = Batch.count
 
-      # Execute the workflow
       workflow_execution_result = workflow_executor.call
 
-      # Assertions for WorkflowExecution
       expect(workflow_execution_result).to be_a(WorkflowExecution)
       expect(workflow_execution_result.status).to eq(Executable::COMPLETE)
       expect(workflow_execution_result.workflow).to eq(workflow)
       expect(workflow_execution_result.data_source).to eq(data_source)
 
-      # Assertions for Batches (assuming no grouping, one parallel batch)
       expect(Batch.count).to eq(initial_batch_count + 1)
-      batch = Batch.last # Assuming the new batch is the last one created
-      expect(batch.processing_mode).to eq('parallel') # Default if no grouping
+      batch = Batch.last
+      expect(batch.processing_mode).to eq('parallel')
       expect(batch.rows.count).to eq(2)
 
-      # Assertions for Rows (data should be updated)
-      # Reload rows from the batch to ensure they are the ones processed
-      # Order by the original input to ensure consistent assertion order
       processed_rows = batch.rows.sort_by { |r| r.data['post_id_input'] }
 
       expect(processed_rows[0].data).to include(
@@ -65,7 +57,6 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
         'original_id' => '2'
       )
 
-      # Optional: Deeper assertions for RowExecutions and StepExecutions if needed
       processed_rows.each do |row|
         expect(row.row_executions.count).to eq(1)
         row_execution = row.row_executions.first
@@ -74,7 +65,5 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
         expect(row_execution.step_executions.first.status).to eq(Executable::SUCCESS)
       end
     end
-
-    # Future: Add tests for workflows with grouping/sorting, error handling, etc.
   end
 end
