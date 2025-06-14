@@ -47,7 +47,7 @@ RSpec.describe WorkflowExecutor do
         # Workflow config without liquid_templates or with empty liquid_templates
         allow(workflow).to receive(:config).and_return({ 'liquid_templates' => {} })
         allow(data_source).to receive(:rows).and_return(rows_relation)
-        allow(Batch).to receive(:create!).and_return(batch_double)
+        expect(Batch).to receive(:create!).with(hash_including(processing_mode: "parallel")).and_return(batch_double)
         allow(BatchProcessor).to receive(:new).with(batch: batch_double,
                                                     workflow: workflow).and_return(batch_processor_double)
         allow(WorkflowExecution).to receive(:find_or_create_by).and_return(workflow_execution_double)
@@ -60,7 +60,6 @@ RSpec.describe WorkflowExecutor do
         workflow_executor.call
 
         expect(batch_processor_double).to have_received(:call)
-        expect(Batch).to have_received(:create!)
       end
     end
 
@@ -86,26 +85,26 @@ RSpec.describe WorkflowExecutor do
       before do
         allow(workflow).to receive(:config).and_return(workflow_config)
         allow(data_source).to receive(:rows).and_return(rows)
-        allow(Batch).to receive(:create!).and_return(batch_a, batch_b)
         allow(BatchProcessor).to receive(:new).with(batch: batch_a, workflow: workflow).and_return(batch_processor_a)
         allow(BatchProcessor).to receive(:new).with(batch: batch_b, workflow: workflow).and_return(batch_processor_b)
         allow(WorkflowExecution).to receive(:find_or_create_by).and_return(workflow_execution_double)
         allow(workflow_execution_double).to receive(:start!)
       end
 
-      xit 'groups rows by group_by template and creates separate batches' do
+      it 'groups rows by group_by template and creates separate batches' do
         # Mock row updates for each batch
         expect(row1).to receive(:update!).with(batch_id: batch_a.id)
         expect(row2).to receive(:update!).with(batch_id: batch_a.id)
         expect(row3).to receive(:update!).with(batch_id: batch_b.id)
+
+        expect(Batch).to receive(:create!).with(hash_including(processing_mode: "sequential")).and_return(batch_a)
+        expect(Batch).to receive(:create!).with(hash_including(processing_mode: "sequential")).and_return(batch_b)
 
         workflow_executor.call
 
         # Verify that both batch processors were called
         expect(batch_processor_a).to have_received(:call)
         expect(batch_processor_b).to have_received(:call)
-        # Verify that two batches were created
-        expect(Batch).to have_received(:create!).twice
       end
     end
   end
