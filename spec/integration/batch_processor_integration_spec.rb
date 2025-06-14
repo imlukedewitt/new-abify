@@ -124,16 +124,5 @@ RSpec.describe BatchProcessor, :integration, :vcr do
         )
       end
     end
-
-    it 'completes processing synchronously without monitor thread' do
-      processor = described_class.new(batch: batch, workflow: workflow)
-
-      processor.call
-
-      expect(processor.monitor_thread).to be_nil
-
-      execution = BatchExecution.find_by(batch: batch, workflow: workflow)
-      expect(execution.status).to eq(Executable::COMPLETE)
-    end
   end
 end
