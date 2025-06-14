@@ -7,7 +7,9 @@ RSpec.describe WorkflowExecutor do
     let(:workflow) { create(:workflow) }
     let(:data_source) { create(:data_source) }
     let(:workflow_executor) { described_class.new(workflow, data_source) }
-    let(:workflow_execution_double) { instance_double(WorkflowExecution, start!: true) }
+    let(:workflow_execution_double) do
+      instance_double(WorkflowExecution, start!: true, complete!: true, fail!: true)
+    end
 
     before do
       allow(WorkflowExecution).to receive(:find_or_create_by)
