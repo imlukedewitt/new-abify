@@ -34,32 +34,66 @@ class WorkflowExecutor
     rows = data_source.rows
 
     if group_by_template
-      process_grouped_rows(rows)
+      process_grouped_rows(rows, group_by_template)
     else
       process_single_batch(rows)
     end
   end
 
-  def process_grouped_rows(rows)
-    grouped = group_rows_by_reference(rows)
-    grouped.each_value do |group_rows|
-      create_and_process_batch(group_rows, "sequential")
+  def process_grouped_rows(rows, group_by_template)
+    row_groups = group_rows_by_template(rows, group_by_template)
+
+    row_groups.each do |group_key, current_group_rows|
+      next if group_key == :default
+
+      create_and_process_batch(current_group_rows, "sequential")
     end
+
+    default_rows = row_groups[:default]
+    create_and_process_batch(default_rows, "parallel") if default_rows.present?
+  end
+
+  def group_rows_by_template(rows, group_by_template)
+    grouped_rows = group_rows_by_key(rows, group_by_template)
+    sort_grouped_rows(grouped_rows)
+  end
+
+  def group_rows_by_key(rows, group_by_template)
+    rows.group_by do |row|
+      key = evaluate_template_for_row(row, group_by_template)
+      key.present? ? key : :default
+    end
+  end
+
+  def sort_grouped_rows(grouped_rows)
+    sort_by_template = workflow.config.dig('liquid_templates', 'sort_by')
+    return grouped_rows unless sort_by_template
+
+    grouped_rows.each do |group_key, group_rows|
+      grouped_rows[group_key] = sort_rows_by_template(group_rows, sort_by_template)
+    end
+
+    grouped_rows
+  end
+
+  def sort_rows_by_template(rows, sort_by_template)
+    rows.sort_by do |row|
+      evaluate_template_for_row(row, sort_by_template)
+    end
+  end
+
+  def evaluate_template_for_row(row, template)
+    context = Liquid::ContextBuilder.new(row: row, workflow: workflow).build
+    Liquid::Processor.new(template, context).render
   end
 
   def process_single_batch(rows)
     create_and_process_batch(rows, "parallel")
   end
 
-  def group_rows_by_reference(rows)
-    rows.group_by do |row|
-      # For now, just use the value directly from row.data as in the test
-      # In a real implementation, you'd render the template with Liquid
-      row.data['reference']
-    end
-  end
-
   def create_and_process_batch(rows, processing_mode)
+    return if rows.blank? # Prevent creating batches for no rows
+
     batch = Batch.create!(processing_mode: processing_mode)
 
     if rows.respond_to?(:update_all)
