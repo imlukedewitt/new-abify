@@ -3,13 +3,13 @@
 require 'rails_helper'
 
 RSpec.describe StepProcessor do
-  let(:api_key) { 'abc123' }
+  let(:auth_config) { { type: :basic, username: 'abc123', password: 'x' } }
   let(:workflow) { create(:workflow) }
   let(:step) { create(:step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:on_complete) { -> { puts 'done' } }
   let(:hydra_manager) { instance_double(HydraManager) }
-  let(:default_options) { { on_complete: on_complete, api_key: api_key, hydra_manager: hydra_manager } }
+  let(:default_options) { { on_complete: on_complete, auth_config: auth_config, hydra_manager: hydra_manager } }
   let(:step_processor) { described_class.new(step, row, **default_options) }
 
   before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
@@ -21,7 +21,7 @@ RSpec.describe StepProcessor do
       expect(step_processor.config).to eq(step.config.with_indifferent_access)
       expect(step_processor.instance_variable_get(:@hydra_manager)).to eq(hydra_manager)
       expect(step_processor.instance_variable_get(:@on_complete)).to eq(on_complete)
-      expect(step_processor.instance_variable_get(:@api_key)).to eq(api_key)
+      expect(step_processor.instance_variable_get(:@auth_config)).to eq(auth_config)
       expect(step_processor.instance_variable_get(:@priority)).to be false
     end
 
@@ -69,7 +69,7 @@ RSpec.describe StepProcessor do
                            }
                          })
       callback_spy = spy('callback')
-      processor = described_class.new(test_step, row, on_complete: callback_spy, api_key: api_key)
+      processor = described_class.new(test_step, row, on_complete: callback_spy, auth_config: auth_config)
 
       request_fields = processor.send(:render_request_fields)
 
@@ -77,7 +77,7 @@ RSpec.describe StepProcessor do
         .with(
           hash_including(
             **request_fields,
-            api_key: api_key,
+            auth_config: auth_config,
             front: false,
             on_complete: kind_of(Proc)
           )
@@ -103,7 +103,7 @@ RSpec.describe StepProcessor do
                          })
       callback_spy = spy('callback')
       processor = described_class.new(test_step, row, **default_options.except(:hydra_manager),
-        on_complete: callback_spy, api_key: api_key, priority: true)
+        on_complete: callback_spy, auth_config: auth_config, priority: true)
 
       request_fields = processor.send(:render_request_fields)
 
@@ -111,7 +111,7 @@ RSpec.describe StepProcessor do
         .with(
           hash_including(
             **request_fields,
-            api_key: api_key,
+            auth_config: auth_config,
             front: true,
             on_complete: kind_of(Proc)
           )

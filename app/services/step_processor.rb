@@ -9,7 +9,7 @@ require_relative 'liquid/context_builder'
 class StepProcessor
   attr_reader :step, :row, :config, :execution
 
-  def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, api_key: nil, priority: false)
+  def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, auth_config: nil, priority: false)
     raise ArgumentError, 'step is required' unless step
     raise ArgumentError, 'row is required' unless row
 
@@ -18,7 +18,7 @@ class StepProcessor
     @config = @step.config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
-    @api_key = api_key
+    @auth_config = auth_config || @config.dig('auth')
     @priority = priority
     @execution = find_or_create_execution
   end
@@ -38,7 +38,7 @@ class StepProcessor
     @hydra_manager.queue(
       **render_request_fields,
       front: @priority,
-      api_key: @api_key,
+      auth_config: @auth_config,
       on_complete: lambda { |response|
         result = process_response(response)
         @on_complete&.call(result)
