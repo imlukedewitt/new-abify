@@ -34,15 +34,73 @@ RSpec.describe HydraManager do
         url: 'https://api.example.com/users',
         method: :post,
         params: { name: 'John Doe', email: 'john@example.com' },
-        body: body_data,
-        api_key: 'abc123'
+        body: body_data
       )
 
       expect(request).to be_a(Typhoeus::Request)
       expect(request.url).to eq('https://api.example.com/users?name=John+Doe&email=john%40example.com')
       expect(request.options[:method]).to eq(:post)
       expect(request.options[:body]).to eq(body_data)
-      expect(request.options[:userpwd]).to eq('abc123:x')
+    end
+
+    it 'sets basic auth when auth_config is provided with type :basic' do
+      manager = HydraManager.instance
+      auth_config = { type: :basic, username: 'testuser', password: 'password123' }
+
+      request = manager.queue(
+        url: 'https://api.example.com/users',
+        auth_config: auth_config
+      )
+
+      expect(request.options[:userpwd]).to eq('testuser:password123')
+      expect(request.options[:headers]['Authorization']).to be_nil
+    end
+
+    it 'sets bearer token when auth_config is provided with type :bearer' do
+      manager = HydraManager.instance
+      auth_config = { type: :bearer, token: 'secrettoken123' }
+
+      request = manager.queue(
+        url: 'https://api.example.com/data',
+        method: :get,
+        auth_config: auth_config
+      )
+
+      expect(request.options[:headers]['Authorization']).to eq('Bearer secrettoken123')
+      expect(request.options[:userpwd]).to be_nil
+    end
+
+    it 'sets custom api key header when auth_config is provided with type :api_key' do
+      manager = HydraManager.instance
+      auth_config = { type: :api_key, header_name: 'X-API-KEY', value: 'abc123key' }
+
+      request = manager.queue(
+        url: 'https://api.example.com/data',
+        auth_config: auth_config
+      )
+
+      expect(request.options[:headers]['X-API-KEY']).to eq('abc123key')
+      expect(request.options[:userpwd]).to be_nil
+    end
+
+    it 'sets multiple custom headers when auth_config is provided with type :custom' do
+      manager = HydraManager.instance
+      auth_config = {
+        type: :custom,
+        headers: {
+          'X-Client-ID' => 'client123',
+          'X-App-Version' => '1.0.0'
+        }
+      }
+
+      request = manager.queue(
+        url: 'https://api.example.com/data',
+        auth_config: auth_config
+      )
+
+      expect(request.options[:headers]['X-Client-ID']).to eq('client123')
+      expect(request.options[:headers]['X-App-Version']).to eq('1.0.0')
+      expect(request.options[:userpwd]).to be_nil
     end
 
     it 'uses defaults when optional parameters not provided' do
