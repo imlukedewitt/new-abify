@@ -56,6 +56,21 @@ RSpec.describe HydraManager do
       expect(request.options[:headers]['Authorization']).to be_nil
     end
 
+    it 'uses basic auth credentials from environment when env_key is provided' do
+      manager = HydraManager.instance
+      auth_config = { type: :basic, env_key: 'TEST_DB', username: 'default_user', password: 'default_pass' }
+
+      allow(ENV).to receive(:[]).with('AUTH_BASIC_USER_TEST_DB').and_return('env_username')
+      allow(ENV).to receive(:[]).with('AUTH_BASIC_PASS_TEST_DB').and_return('env_password')
+
+      request = manager.queue(
+        url: 'https://api.example.com/users',
+        auth_config: auth_config
+      )
+
+      expect(request.options[:userpwd]).to eq('env_username:env_password')
+    end
+
     it 'sets bearer token when auth_config is provided with type :bearer' do
       manager = HydraManager.instance
       auth_config = { type: :bearer, token: 'secrettoken123' }
@@ -70,6 +85,20 @@ RSpec.describe HydraManager do
       expect(request.options[:userpwd]).to be_nil
     end
 
+    it 'uses bearer token from environment when env_key is provided' do
+      manager = HydraManager.instance
+      auth_config = { type: :bearer, env_key: 'TEST_API', token: 'fallback_token' }
+
+      allow(ENV).to receive(:[]).with('AUTH_BEARER_TEST_API').and_return('env_token_123')
+
+      request = manager.queue(
+        url: 'https://api.example.com/data',
+        auth_config: auth_config
+      )
+
+      expect(request.options[:headers]['Authorization']).to eq('Bearer env_token_123')
+    end
+
     it 'sets custom api key header when auth_config is provided with type :api_key' do
       manager = HydraManager.instance
       auth_config = { type: :api_key, header_name: 'X-API-KEY', value: 'abc123key' }
@@ -81,6 +110,20 @@ RSpec.describe HydraManager do
 
       expect(request.options[:headers]['X-API-KEY']).to eq('abc123key')
       expect(request.options[:userpwd]).to be_nil
+    end
+
+    it 'uses api key from environment when env_key is provided' do
+      manager = HydraManager.instance
+      auth_config = { type: :api_key, header_name: 'X-API-KEY', env_key: 'TEST_SERVICE', value: 'fallback_key' }
+
+      allow(ENV).to receive(:[]).with('AUTH_APIKEY_TEST_SERVICE').and_return('env_api_key_456')
+
+      request = manager.queue(
+        url: 'https://api.example.com/data',
+        auth_config: auth_config
+      )
+
+      expect(request.options[:headers]['X-API-KEY']).to eq('env_api_key_456')
     end
 
     it 'sets multiple custom headers when auth_config is provided with type :custom' do
@@ -101,6 +144,20 @@ RSpec.describe HydraManager do
       expect(request.options[:headers]['X-Client-ID']).to eq('client123')
       expect(request.options[:headers]['X-App-Version']).to eq('1.0.0')
       expect(request.options[:userpwd]).to be_nil
+    end
+
+    it 'uses oauth2 token from environment when env_key is provided' do
+      manager = HydraManager.instance
+      auth_config = { type: :oauth2, env_key: 'OAUTH_SERVICE', token: 'fallback_oauth_token' }
+
+      allow(ENV).to receive(:[]).with('AUTH_OAUTH_OAUTH_SERVICE').and_return('env_oauth_token_789')
+
+      request = manager.queue(
+        url: 'https://api.example.com/data',
+        auth_config: auth_config
+      )
+
+      expect(request.options[:headers]['Authorization']).to eq('Bearer env_oauth_token_789')
     end
 
     it 'uses defaults when optional parameters not provided' do

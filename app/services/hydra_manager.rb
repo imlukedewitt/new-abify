@@ -3,7 +3,15 @@
 require 'typhoeus'
 require 'uri'
 
-# a singleton class to run requests with Typhoeus / Hydra queue
+# A singleton class to run requests with Typhoeus / Hydra queue
+# Authentication tokens can be provided via environment variables:
+# - AUTH_BASIC_USER_[ENV_KEY] - For basic auth username
+# - AUTH_BASIC_PASS_[ENV_KEY] - For basic auth password
+# - AUTH_BEARER_[ENV_KEY] - For bearer token authentication
+# - AUTH_APIKEY_[ENV_KEY] - For API key authentication
+# - AUTH_OAUTH_[ENV_KEY] - For OAuth2 token authentication
+#
+# Where [ENV_KEY] is a value provided in the auth_config hash
 class HydraManager
   include Singleton
 
@@ -69,19 +77,24 @@ class HydraManager
   end
 
   def apply_basic_auth(options, config)
-    options[:userpwd] = "#{config[:username]}:#{config[:password]}"
+    username = ENV["AUTH_BASIC_USER_#{config[:env_key]}"] || config[:username]
+    password = ENV["AUTH_BASIC_PASS_#{config[:env_key]}"] || config[:password]
+    options[:userpwd] = "#{username}:#{password}"
   end
 
   def apply_bearer_auth(options, config)
-    options[:headers]['Authorization'] = "Bearer #{config[:token]}"
+    token = ENV["AUTH_BEARER_#{config[:env_key]}"] || config[:token]
+    options[:headers]['Authorization'] = "Bearer #{token}"
   end
 
   def apply_api_key_auth(options, config)
-    options[:headers][config[:header_name]] = config[:value]
+    api_key = ENV["AUTH_APIKEY_#{config[:env_key]}"] || config[:value]
+    options[:headers][config[:header_name]] = api_key
   end
 
   def apply_oauth2_auth(options, config)
-    options[:headers]['Authorization'] = "Bearer #{config[:token]}"
+    token = ENV["AUTH_OAUTH_#{config[:env_key]}"] || config[:token]
+    options[:headers]['Authorization'] = "Bearer #{token}"
   end
 
   def apply_custom_auth(options, config)
