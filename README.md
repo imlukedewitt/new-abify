@@ -10,6 +10,7 @@ Things you may want to cover:
 * System dependencies
 
 * Configuration
+  * [Authentication with Environment Variables](./docs/auth_config.md) - Secure way to handle API keys and tokens
 
 * Database creation
 
