@@ -47,7 +47,7 @@ class WorkflowExecutor
   end
 
   def process_grouped_rows(rows, group_by_template)
-    row_groups = group_rows_by_template(rows, group_by_template)
+    row_groups = prepare_row_groups(rows, group_by_template)
 
     row_groups.each do |group_key, current_group_rows|
       next if group_key == :default
@@ -59,7 +59,7 @@ class WorkflowExecutor
     create_and_process_batch(default_rows, "parallel") if default_rows.present?
   end
 
-  def group_rows_by_template(rows, group_by_template)
+  def prepare_row_groups(rows, group_by_template)
     grouped_rows = group_rows_by_key(rows, group_by_template)
     sort_grouped_rows(grouped_rows)
   end
