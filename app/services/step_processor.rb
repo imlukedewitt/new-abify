@@ -15,7 +15,7 @@ class StepProcessor
 
     @step = step
     @row = row
-    @config = @step.config.with_indifferent_access
+    @config = @step.step_config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
     @auth_config = auth_config || @config['auth']
