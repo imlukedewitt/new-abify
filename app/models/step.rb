@@ -19,48 +19,33 @@ class Step < ApplicationRecord
   validates :order, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validate :validate_config
 
-  CONFIG_REQUIRED_KEYS = %w[
-    name
-    url
-  ].freeze
-  CONFIG_OPTIONAL_KEYS = %w[
-    required
-    method
-    body
-    params
-    skip_condition
-    success_data
-  ].freeze
-
   def process(row)
     StepProcessor.call(self, row)
+  end
+
+  def step_config
+    return nil if config.nil?
+    return config['steps'][name] if config.key?('steps') && config['steps'].is_a?(Hash)
+
+    config
   end
 
   private
 
   def validate_config
+    if config.nil?
+      errors.add(:config, "can't be blank")
+      return
+    end
+
     unless config.is_a?(Hash)
       errors.add(:config, 'must be a hash')
       return
     end
 
-    unless config.key?('liquid_templates') && config['liquid_templates'].is_a?(Hash)
-      errors.add(:config, 'must include liquid_templates hash')
-      return
-    end
+    validator = StepConfigValidator.new(step_config)
+    return if validator.valid?
 
-    validate_required_keys
-    validate_no_extra_keys
-  end
-
-  def validate_required_keys
-    CONFIG_REQUIRED_KEYS.each do |key|
-      errors.add(:config, "must include #{key}") unless config['liquid_templates'].key?(key)
-    end
-  end
-
-  def validate_no_extra_keys
-    extra_keys = config['liquid_templates'].keys - (CONFIG_REQUIRED_KEYS + CONFIG_OPTIONAL_KEYS)
-    extra_keys.each { |key| errors.add(:config, "unexpected key in liquid_templates: #{key}") }
+    validator.errors.each { |error| errors.add(:config, error) }
   end
 end
