@@ -18,7 +18,7 @@ module Liquid
     private
 
     def connection_info
-      config = @workflow.config || {}
+      config = @workflow.workflow_config || {}
       subdomain = config.dig('connection', 'subdomain') || 'acme'
       domain = config.dig('connection', 'domain') || 'application.com'
 
