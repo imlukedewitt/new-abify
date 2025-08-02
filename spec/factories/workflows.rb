@@ -3,8 +3,20 @@
 FactoryBot.define do
   factory :workflow do
     sequence(:name) { |n| "Workflow #{n}" }
-    # Default configuration, can be overridden
-    config { { 'batch' => { 'group_by' => nil, 'sort_by' => nil } } }
+    config do
+      {
+        'workflow' => {
+          'liquid_templates' => {
+            'group_by' => nil,
+            'sort_by' => nil
+          },
+          'connection' => {
+            'subdomain' => 'acme',
+            'domain' => 'application.com'
+          }
+        }
+      }
+    end
 
     trait :with_step do
       after(:create) do |workflow|

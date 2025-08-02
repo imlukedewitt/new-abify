@@ -33,7 +33,7 @@ class WorkflowExecutor
   private
 
   def process_batches
-    config = workflow.config || {}
+    config = workflow.workflow_config || {}
     liquid_templates = config['liquid_templates'] || {}
     group_by_template = liquid_templates['group_by']
 
@@ -72,7 +72,7 @@ class WorkflowExecutor
   end
 
   def sort_grouped_rows(grouped_rows)
-    sort_by_template = workflow.config.dig('liquid_templates', 'sort_by')
+    sort_by_template = workflow.workflow_config&.dig('liquid_templates', 'sort_by')
     return grouped_rows unless sort_by_template
 
     grouped_rows.each do |group_key, group_rows|
