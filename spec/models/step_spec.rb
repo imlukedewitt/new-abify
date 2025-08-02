@@ -58,14 +58,14 @@ RSpec.describe Step, type: :model do
     it 'validates liquid_templates is present in config' do
       step = build(:step, config: { foo: 'bar' })
       expect(step).not_to be_valid
-      expect(step.errors[:config]).to include('must include liquid_templates hash')
+      expect(step.errors[:config]).to include('step config must include liquid_templates hash')
     end
 
     it 'validates required liquid_template fields' do
       step = build(:step, config: { 'liquid_templates' => {} })
       expect(step).not_to be_valid
-      expect(step.errors[:config]).to include('must include name')
-      expect(step.errors[:config]).to include('must include url')
+      expect(step.errors[:config]).to include('step config must include name in liquid_templates')
+      expect(step.errors[:config]).to include('step config must include url in liquid_templates')
     end
 
     it 'checks for unsupported keys in liquid_templates' do
@@ -77,7 +77,7 @@ RSpec.describe Step, type: :model do
                      }
                    })
       expect(step).not_to be_valid
-      expect(step.errors[:config]).to include('unexpected key in liquid_templates: unsupported_key')
+      expect(step.errors[:config]).to include('unexpected key in step liquid_templates: unsupported_key')
     end
   end
 
