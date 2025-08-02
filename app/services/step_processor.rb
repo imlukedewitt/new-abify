@@ -18,7 +18,7 @@ class StepProcessor
     @config = @step.config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
-    @auth_config = auth_config || @config.dig('auth')
+    @auth_config = auth_config || @config['auth']
     @priority = priority
     @execution = find_or_create_execution
   end
