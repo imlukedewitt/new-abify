@@ -34,13 +34,13 @@ RSpec.describe DataSource, type: :model do
     it 'has a valid csv factory trait' do
       data_source = build(:data_source, :csv)
       expect(data_source).to be_valid
-      expect(data_source.type).to eq('CsvData')
+      expect(data_source.type).to eq('DataSources::Csv')
     end
 
     it 'has a valid json factory trait' do
       data_source = build(:data_source, :json)
       expect(data_source).to be_valid
-      expect(data_source.type).to eq('JsonData')
+      expect(data_source.type).to eq('DataSources::Json')
     end
 
     it 'has a valid mock factory trait' do
@@ -91,7 +91,7 @@ RSpec.describe DataSource, type: :model do
     end
 
     it 'is valid with name and type' do
-      data_source = build(:data_source, name: 'Test Source', type: 'CsvData')
+      data_source = build(:data_source, name: 'Test Source', type: 'DataSources::Csv')
       expect(data_source).to be_valid
     end
   end
