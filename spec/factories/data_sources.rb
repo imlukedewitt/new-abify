@@ -7,11 +7,11 @@ FactoryBot.define do
 
     # Maintain backward compatibility with old tests
     trait :csv do
-      type { 'CsvData' }
+      type { 'DataSources::Csv' }
     end
 
     trait :json do
-      type { 'JsonData' }
+      type { 'DataSources::Json' }
     end
 
     trait :mock do
@@ -19,12 +19,12 @@ FactoryBot.define do
     end
   end
 
-  factory :csv_data, parent: :data_source, class: 'CsvData' do
-    type { 'CsvData' }
+  factory :csv, parent: :data_source, class: 'DataSources::Csv' do
+    type { 'DataSources::Csv' }
   end
 
-  factory :json_data, parent: :data_source, class: 'JsonData' do
-    type { 'JsonData' }
+  factory :json, parent: :data_source, class: 'DataSources::Json' do
+    type { 'DataSources::Json' }
   end
 
   factory :mock_data, parent: :data_source, class: 'MockData' do
