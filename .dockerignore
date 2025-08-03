@@ -1,0 +1,14 @@
+# Ignore local development artifacts
+.git
+.gitignore
+.dockerignore
+node_modules
+tmp/
+log/
+
+# Ignore local environment files
+.env
+
+# Ignore SQLite databases
+*.sqlite3
+*.sqlite3-journal
