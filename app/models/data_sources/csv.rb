@@ -37,15 +37,19 @@ module DataSources
 
     def process_csv_from_io(io)
       index = 1
-      CSV.new(
-        io,
-        headers: true,
-        header_converters: ->(h) { h.downcase.strip },
-        encoding: 'utf-8'
-      ).each do |csv_row|
-        row_data = csv_row.to_h
-        build_row(row_data, index)
-        index += 1
+      begin
+        CSV.new(
+          io,
+          headers: true,
+          header_converters: ->(h) { h.downcase.strip },
+          encoding: 'utf-8'
+        ).each do |csv_row|
+          row_data = csv_row.to_h
+          build_row(row_data, index)
+          index += 1
+        end
+      rescue CSV::MalformedCSVError => e
+        raise CSV::MalformedCSVError, "Malformed CSV: #{e.message}"
       end
 
       io.rewind if io.respond_to?(:rewind)
@@ -54,14 +58,18 @@ module DataSources
     def process_csv_from_string(content)
       index = 1
 
-      CSV.parse(
-        content.strip,
-        headers: true,
-        header_converters: ->(h) { h.downcase.strip },
-        encoding: 'utf-8'
-      ).each do |csv_row|
-        build_row(csv_row.to_h, index)
-        index += 1
+      begin
+        CSV.parse(
+          content.strip,
+          headers: true,
+          header_converters: ->(h) { h.downcase.strip },
+          encoding: 'utf-8'
+        ).each do |csv_row|
+          build_row(csv_row.to_h, index)
+          index += 1
+        end
+      rescue CSV::MalformedCSVError => e
+        raise CSV::MalformedCSVError, "Malformed CSV: #{e.message}"
       end
     end
   end
