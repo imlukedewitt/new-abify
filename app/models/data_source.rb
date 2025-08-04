@@ -4,6 +4,8 @@
 # DataSource model represents a source of data for a workflow execution
 # This could be a CSV file, JSON data, API response, etc.
 class DataSource < ApplicationRecord
+  attr_accessor :source
+
   has_many :rows
   has_many :workflow_executions
 
@@ -19,15 +21,40 @@ class DataSource < ApplicationRecord
     stream
   ].freeze
 
-  def load_data(source, options = {})
+  def load_data(source = self.source)
+    return unless source
+
     source_type = determine_source_type(source)
-    send("load_from_#{source_type}", source, options)
+    send("load_from_#{source_type}", source)
   end
 
   SOURCE_TYPES.each do |source_type|
-    define_method("load_from_#{source_type}") do |_source, _options|
+    define_method("load_from_#{source_type}") do |_source|
       raise NotImplementedError, "Loading from #{source_type} is not implemented"
     end
+  end
+
+  protected
+
+  def build_row(row_data, default_index)
+    source_index = default_index
+
+    if row_data.is_a?(Hash) && (row_data.key?('source_index') || row_data.key?(:source_index))
+      source_index = row_data['source_index'] || row_data[:source_index]
+
+      row_data = row_data.dup
+      ['source_index', :source_index].each { |key| row_data.delete(key) }
+    end
+
+    rows.build(
+      data: row_data,
+      source_index: source_index,
+      data_source_id: id
+    )
+  end
+
+  def save_rows!
+    rows.select(&:new_record?).each(&:save!)
   end
 
   private

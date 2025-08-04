@@ -31,11 +31,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_200844) do
     t.index ["workflow_execution_id"], name: "index_batches_on_workflow_execution_id"
   end
 
-  create_table "configs", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "data_sources", force: :cascade do |t|
     t.string "name"
     t.string "type"
@@ -60,7 +55,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_200844) do
   end
 
   create_table "rows", force: :cascade do |t|
-    t.integer "workflow_execution_id", null: false
+    t.integer "workflow_execution_id"
     t.integer "data_source_id", null: false
     t.json "original_data"
     t.json "data"

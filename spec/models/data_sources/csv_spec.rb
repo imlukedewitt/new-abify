@@ -15,27 +15,22 @@ RSpec.describe DataSources::Csv, type: :model do
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
     let(:csv_content) { "name,age\nJohn,30\nJane,25" }
     let(:file_path) { 'test.csv' }
-    let(:options) { { workflow_execution: workflow_execution } }
 
     before do
       allow(File).to receive(:read).with(file_path).and_return(csv_content)
     end
 
     it 'reads the file and processes the CSV content' do
-      expect(csv).to receive(:process_csv).with(csv_content, options).and_call_original
-      expect { csv.load_from_file_path(file_path, options) }.to change { csv.rows.length }.by(2)
+      expect(csv).to receive(:process_csv).with(csv_content).and_call_original
+      expect { csv.load_from_file_path(file_path) }.to change { csv.rows.length }.by(2)
     end
 
     it 'creates rows with the correct data' do
-      csv.load_from_file_path(file_path, options)
+      csv.load_from_file_path(file_path)
 
       expect(csv.rows.length).to eq(2)
       expect(csv.rows.first.data).to eq({ 'name' => 'John', 'age' => '30' })
       expect(csv.rows.last.data).to eq({ 'name' => 'Jane', 'age' => '25' })
-    end
-
-    it 'raises an error when workflow_execution is not provided' do
-      expect { csv.load_from_file_path(file_path) }.to raise_error(ArgumentError, 'workflow_execution is required')
     end
   end
 
@@ -45,17 +40,10 @@ RSpec.describe DataSources::Csv, type: :model do
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
     let(:csv_content) { "name,age\nJohn,30\nJane,25" }
     let(:uploaded_file) { double('UploadedFile', read: csv_content) }
-    let(:options) { { workflow_execution: workflow_execution } }
 
     it 'reads the uploaded file and processes the CSV content' do
-      expect(csv).to receive(:process_csv).with(csv_content, options).and_call_original
-      expect { csv.load_from_uploaded_file(uploaded_file, options) }.to change { csv.rows.length }.by(2)
-    end
-
-    it 'raises an error when workflow_execution is not provided' do
-      expect do
-        csv.load_from_uploaded_file(uploaded_file)
-      end.to raise_error(ArgumentError, 'workflow_execution is required')
+      expect(csv).to receive(:process_csv).with(csv_content).and_call_original
+      expect { csv.load_from_uploaded_file(uploaded_file) }.to change { csv.rows.length }.by(2)
     end
   end
 
@@ -64,15 +52,10 @@ RSpec.describe DataSources::Csv, type: :model do
     let(:workflow) { create(:workflow) }
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
     let(:csv_content) { "name,age\nJohn,30\nJane,25" }
-    let(:options) { { workflow_execution: workflow_execution } }
 
     it 'processes the CSV string directly' do
-      expect(csv).to receive(:process_csv).with(csv_content, options).and_call_original
-      expect { csv.load_from_string(csv_content, options) }.to change { csv.rows.length }.by(2)
-    end
-
-    it 'raises an error when workflow_execution is not provided' do
-      expect { csv.load_from_string(csv_content) }.to raise_error(ArgumentError, 'workflow_execution is required')
+      expect(csv).to receive(:process_csv).with(csv_content).and_call_original
+      expect { csv.load_from_string(csv_content) }.to change { csv.rows.length }.by(2)
     end
   end
 
@@ -82,15 +65,10 @@ RSpec.describe DataSources::Csv, type: :model do
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
     let(:csv_content) { "name,age\nJohn,30\nJane,25" }
     let(:stream) { StringIO.new(csv_content) }
-    let(:options) { { workflow_execution: workflow_execution } }
 
     it 'reads from the stream and processes the CSV content' do
-      expect(csv).to receive(:process_csv).with(csv_content, options).and_call_original
-      expect { csv.load_from_stream(stream, options) }.to change { csv.rows.length }.by(2)
-    end
-
-    it 'raises an error when workflow_execution is not provided' do
-      expect { csv.load_from_stream(stream) }.to raise_error(ArgumentError, 'workflow_execution is required')
+      expect(csv).to receive(:process_csv).with(csv_content).and_call_original
+      expect { csv.load_from_stream(stream) }.to change { csv.rows.length }.by(2)
     end
   end
 
@@ -100,24 +78,24 @@ RSpec.describe DataSources::Csv, type: :model do
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
     let(:csv_content) { "name,age\nJohn,30\nJane,25" }
     let(:stream) { StringIO.new(csv_content) }
-    let(:csv_options) { { headers: true, encoding: 'utf-8', header_converters: ->(h) { h.downcase.strip } } }
 
     it 'creates rows directly from the IO stream' do
-      expect { csv.send(:process_csv_from_io, stream, csv_options, workflow_execution) }.to change {
+      expect { csv.send(:process_csv_from_io, stream) }.to change {
         csv.rows.length
       }.by(2)
     end
 
     it 'sets source_index based on row position' do
-      csv.send(:process_csv_from_io, stream, csv_options, workflow_execution)
+      csv.send(:process_csv_from_io, stream)
+      csv.rows.each(&:save!)
 
-      expect(csv.rows.order(:id).first.source_index).to eq(0)
-      expect(csv.rows.order(:id).last.source_index).to eq(1)
+      expect(csv.rows.order(:source_index).first.source_index).to eq(1)
+      expect(csv.rows.order(:source_index).last.source_index).to eq(2)
     end
 
     it 'rewinds the stream after processing' do
       expect(stream).to receive(:rewind).once
-      csv.send(:process_csv_from_io, stream, csv_options, workflow_execution)
+      csv.send(:process_csv_from_io, stream)
     end
   end
 
@@ -126,15 +104,12 @@ RSpec.describe DataSources::Csv, type: :model do
     let(:workflow) { create(:workflow) }
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
     let(:csv_content) { "name,age\nJohn,30\nJane,25" }
-    let(:csv_options) { { headers: true, encoding: 'utf-8', header_converters: ->(h) { h.downcase.strip } } }
 
-    it 'processes string content and passes to create_rows' do
-      expect(csv).to receive(:create_rows).with(
-        [{ 'name' => 'John', 'age' => '30' }, { 'name' => 'Jane', 'age' => '25' }],
-        workflow_execution
-      )
+    it 'builds rows from CSV content' do
+      expect(csv).to receive(:build_row).with({ 'name' => 'John', 'age' => '30' }, 1).ordered
+      expect(csv).to receive(:build_row).with({ 'name' => 'Jane', 'age' => '25' }, 2).ordered
 
-      csv.send(:process_csv_from_string, csv_content, csv_options, workflow_execution)
+      csv.send(:process_csv_from_string, csv_content)
     end
   end
 
@@ -143,111 +118,87 @@ RSpec.describe DataSources::Csv, type: :model do
     let(:workflow) { create(:workflow) }
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
     let(:csv_content) { "name,age\nJohn,30\nJane,25" }
-    let(:options) { { workflow_execution: workflow_execution } }
     let(:stream) { StringIO.new(csv_content) }
 
-    it 'validates workflow_execution is required' do
-      expect do
-        csv.send(:process_csv, csv_content, {})
-      end.to raise_error(ArgumentError, 'workflow_execution is required')
-    end
-
     it 'handles string content by calling process_csv_from_string' do
-      expect(csv).to receive(:process_csv_from_string).with(csv_content, kind_of(Hash), workflow_execution)
-      csv.send(:process_csv, csv_content, options)
+      expect(csv).to receive(:process_csv_from_string).with(csv_content)
+      csv.send(:process_csv, csv_content)
     end
 
     it 'handles IO content by calling process_csv_from_io' do
-      expect(csv).to receive(:process_csv_from_io).with(stream, kind_of(Hash), workflow_execution)
-      csv.send(:process_csv, stream, options)
-    end
-
-    it 'builds CSV options with correct defaults' do
-      expected_options = {
-        headers: true,
-        encoding: 'utf-8',
-        header_converters: instance_of(Proc)
-      }
-
-      expect(csv).to receive(:process_csv_from_string) do |_content, options, workflow_exec|
-        expect(options).to include(expected_options)
-        expect(workflow_exec).to eq(workflow_execution)
-      end
-
-      csv.send(:process_csv, csv_content, options)
-    end
-
-    it 'includes custom options when provided' do
-      custom_options = { col_sep: ';', workflow_execution: workflow_execution }
-
-      expect(csv).to receive(:process_csv_from_string) do |_content, options, _workflow_exec|
-        expect(options[:headers]).to eq(true)
-        expect(options[:col_sep]).to eq(';')
-      end
-
-      csv.send(:process_csv, csv_content, custom_options)
-    end
-
-    context 'when headers have extra spaces and mixed case' do
-      let(:csv_content) { " NAME , AGE \nJohn,30\nJane,25" }
-
-      it 'normalizes headers to lowercase and strips whitespace' do
-        csv.send(:process_csv, csv_content, options)
-        expect(csv.rows.first.data.keys).to contain_exactly('name', 'age')
-      end
+      expect(csv).to receive(:process_csv_from_io).with(stream)
+      csv.send(:process_csv, stream)
     end
   end
 
-  describe '#create_rows' do
+  describe '#build_row' do
     let(:csv) { create(:csv) }
     let(:workflow) { create(:workflow) }
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: csv) }
-    let(:rows_data) { [{ 'name' => 'John', 'age' => '30' }, { 'name' => 'Jane', 'age' => '25' }] }
+    let(:row_data) { { 'name' => 'John', 'age' => '30' } }
 
-    it 'creates a row for each data item' do
-      expect { csv.send(:create_rows, rows_data, workflow_execution) }.to change { csv.rows.length }.by(2)
+    it 'builds a row with the provided data' do
+      expect { csv.send(:build_row, row_data, 1) }.to change { csv.rows.length }.by(1)
+      expect(csv.rows.last).to be_new_record
     end
 
-    it 'sets the correct data for each row' do
-      csv.send(:create_rows, rows_data, workflow_execution)
-
-      expect(csv.rows.first.data).to eq({ 'name' => 'John', 'age' => '30' })
-      expect(csv.rows.last.data).to eq({ 'name' => 'Jane', 'age' => '25' })
+    it 'sets the correct data for the row' do
+      csv.send(:build_row, row_data, 1)
+      expect(csv.rows.last.data).to eq({ 'name' => 'John', 'age' => '30' })
     end
 
-    it 'associates rows with the workflow execution' do
-      csv.send(:create_rows, rows_data, workflow_execution)
-
-      expect(csv.rows.all? { |row| row.workflow_execution_id == workflow_execution.id }).to be true
-    end
-
-    it 'sets source_index based on position when not provided' do
-      csv.send(:create_rows, rows_data, workflow_execution)
-
-      expect(csv.rows.order(:id).first.source_index).to eq(0)
-      expect(csv.rows.order(:id).last.source_index).to eq(1)
+    it 'sets source_index from the provided default_index' do
+      csv.send(:build_row, row_data, 42)
+      expect(csv.rows.last.source_index).to eq(42)
     end
 
     it 'uses provided source_index when available' do
-      rows_with_source_index = [
-        { 'name' => 'John', 'age' => '30', 'source_index' => 100 },
-        { 'name' => 'Jane', 'age' => '25', source_index: 200 }
-      ]
+      row_with_source_index = { 'name' => 'John', 'age' => '30', 'source_index' => 100 }
+      csv.send(:build_row, row_with_source_index, 1)
+      expect(csv.rows.last.source_index).to eq(100)
+    end
 
-      csv.send(:create_rows, rows_with_source_index, workflow_execution)
-
-      expect(csv.rows.order(:id).first.source_index).to eq(100)
-      expect(csv.rows.order(:id).last.source_index).to eq(200)
+    it 'handles source_index as a symbol' do
+      row_with_source_index = { 'name' => 'John', 'age' => '30', source_index: 200 }
+      csv.send(:build_row, row_with_source_index, 1)
+      expect(csv.rows.last.source_index).to eq(200)
     end
 
     it 'removes source_index from the data hash' do
-      rows_with_source_index = [
-        { 'name' => 'John', 'age' => '30', 'source_index' => 100 }
-      ]
+      row_with_source_index = { 'name' => 'John', 'age' => '30', 'source_index' => 100 }
+      csv.send(:build_row, row_with_source_index, 1)
+      expect(csv.rows.last.data).not_to have_key('source_index')
+    end
+  end
 
-      csv.send(:create_rows, rows_with_source_index, workflow_execution)
+  describe '#save_rows!' do
+    let(:csv) { create(:csv) }
 
-      expect(csv.rows.first.data).not_to have_key('source_index')
+    it 'saves all built rows' do
+      row1 = csv.rows.build(data: { 'name' => 'John' }, source_index: 1)
+      row2 = csv.rows.build(data: { 'name' => 'Jane' }, source_index: 2)
+
+      expect(row1).to be_new_record
+      expect(row2).to be_new_record
+
+      csv.send(:save_rows!)
+
+      expect(row1).not_to be_new_record
+      expect(row2).not_to be_new_record
+    end
+
+    it 'only saves new records' do
+      # Create a persisted row
+      persisted_row = csv.rows.create!(data: { 'name' => 'Existing' }, source_index: 0)
+
+      # Build a new row
+      new_row = csv.rows.build(data: { 'name' => 'New' }, source_index: 1)
+
+      # Only the new_row should receive save!
+      expect(persisted_row).not_to receive(:save!)
+      expect(new_row).to receive(:save!).once
+
+      csv.send(:save_rows!)
     end
   end
 end

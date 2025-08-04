@@ -15,7 +15,8 @@ class WorkflowExecutor
   end
 
   def call
-    @execution = WorkflowExecution.find_or_create_by(workflow: workflow, data_source: data_source)
+    @execution = WorkflowExecution.create!(workflow: workflow, data_source: data_source)
+    data_source.rows.update_all(workflow_execution_id: @execution.id)
     @execution.start!
 
     # Process rows in batches

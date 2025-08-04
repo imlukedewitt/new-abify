@@ -6,88 +6,70 @@ module DataSources
   ##
   # CsvData model represents a CSV data source for workflow execution
   class Csv < DataSource
-    def load_from_file_path(source, options = {})
-      process_csv(File.read(source), options)
+    def load_from_file_path(source)
+      process_csv(File.read(source))
     end
 
-    def load_from_uploaded_file(source, options = {})
-      process_csv(source.read, options)
+    def load_from_uploaded_file(source)
+      process_csv(source.read)
     end
 
-    def load_from_string(source, options = {})
-      process_csv(source, options)
+    def load_from_string(source)
+      process_csv(source)
     end
 
-    def load_from_stream(source, options = {})
-      process_csv(source.read, options)
+    def load_from_stream(source)
+      process_csv(source.read)
     end
 
     private
 
-    def process_csv(content, options = {})
-      workflow_execution = options[:workflow_execution]
-      raise ArgumentError, 'workflow_execution is required' unless workflow_execution
-
-      csv_options = {
-        headers: true,
-        encoding: 'utf-8',
-        header_converters: ->(h) { h.downcase.strip }
-      }
-
-      csv_options[:col_sep] = options[:col_sep] if options[:col_sep].present?
-
+    def process_csv(content)
       if content.is_a?(IO) || content.is_a?(StringIO)
-        process_csv_from_io(content, csv_options, workflow_execution)
+        process_csv_from_io(content)
       else
-        process_csv_from_string(content, csv_options, workflow_execution)
+        process_csv_from_string(content)
       end
 
+      save_rows!
       self
     end
 
-    def process_csv_from_io(io, csv_options, workflow_execution)
-      index = 0
-      csv_enum = CSV.new(io, **csv_options)
-
-      csv_enum.each do |csv_row|
-        row_data = csv_row.to_h
-        rows.create!(data: row_data, workflow_execution: workflow_execution, source_index: index)
-        index += 1
+    def process_csv_from_io(io)
+      index = 1
+      begin
+        CSV.new(
+          io,
+          headers: true,
+          header_converters: ->(h) { h.downcase.strip },
+          encoding: 'utf-8'
+        ).each do |csv_row|
+          row_data = csv_row.to_h
+          build_row(row_data, index)
+          index += 1
+        end
+      rescue CSV::MalformedCSVError => e
+        raise CSV::MalformedCSVError, "Malformed CSV: #{e.message}"
       end
 
       io.rewind if io.respond_to?(:rewind)
     end
 
-    def process_csv_from_string(content, csv_options, workflow_execution)
-      index = 0
-      rows_data = []
+    def process_csv_from_string(content)
+      index = 1
 
-      CSV.parse(content, **csv_options).each do |csv_row|
-        row_data = csv_row.to_h
-        rows_data << row_data
-        index += 1
-      end
-
-      create_rows(rows_data, workflow_execution)
-    end
-
-    def create_rows(rows_data, workflow_execution)
-      rows_data.each_with_index do |row_data, index|
-        source_index = index
-
-        if row_data.is_a?(Hash) && (row_data.key?('source_index') || row_data.key?(:source_index))
-          source_index = row_data['source_index'] || row_data[:source_index]
-
-          row_data = row_data.dup
-          row_data.delete('source_index')
-          row_data.delete(:source_index)
+      begin
+        CSV.parse(
+          content.strip,
+          headers: true,
+          header_converters: ->(h) { h.downcase.strip },
+          encoding: 'utf-8'
+        ).each do |csv_row|
+          build_row(csv_row.to_h, index)
+          index += 1
         end
-
-        rows.create!(
-          data: row_data,
-          workflow_execution: workflow_execution,
-          source_index: source_index
-        )
+      rescue CSV::MalformedCSVError => e
+        raise CSV::MalformedCSVError, "Malformed CSV: #{e.message}"
       end
     end
   end
