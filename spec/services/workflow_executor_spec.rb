@@ -4,17 +4,18 @@ require 'rails_helper'
 
 RSpec.describe WorkflowExecutor do
   shared_context 'basic workflow executor setup' do
-    let(:workflow) { create(:workflow) }
-    let(:data_source) { create(:data_source) }
+    let(:workflow) { build(:workflow) }
+    let(:data_source) { build(:data_source) }
     let(:workflow_executor) { described_class.new(workflow, data_source) }
-    let(:workflow_execution_double) do
-      instance_double(WorkflowExecution, start!: true, complete!: true, fail!: true)
-    end
+    let(:workflow_execution) { build(:workflow_execution, workflow: workflow, data_source: data_source) }
 
     before do
-      allow(WorkflowExecution).to receive(:find_or_create_by)
+      allow(WorkflowExecution).to receive(:create!)
         .with(workflow: workflow, data_source: data_source)
-        .and_return(workflow_execution_double)
+        .and_return(workflow_execution)
+      allow(workflow_execution).to receive(:start!)
+      allow(workflow_execution).to receive(:complete!)
+      allow(workflow_execution).to receive(:fail!)
     end
   end
 
@@ -34,9 +35,31 @@ RSpec.describe WorkflowExecutor do
     let(:batch_processor_b) { instance_double(BatchProcessor, call: true) }
     let(:batch_processor_ungrouped) { instance_double(BatchProcessor, call: true) }
 
+    let(:rows_relation) do
+      double('ActiveRecord::Relation', update_all: true).tap do |relation|
+        allow(relation).to receive(:group_by)
+          .and_yield(row1)
+          .and_yield(row2)
+          .and_yield(row3)
+          .and_yield(row_no_group_nil)
+          .and_yield(row_no_group_empty)
+          .and_return(
+            {
+              'group_a' => [
+                row1, row2
+              ],
+              'group_b' => [row3],
+              default: [
+                row_no_group_nil, row_no_group_empty
+              ]
+            }
+          )
+      end
+    end
+
     before do
-      allow(workflow).to receive(:config).and_return(workflow_config) # Assumes workflow_config is defined in including context
-      allow(data_source).to receive(:rows).and_return(rows)
+      allow(workflow).to receive(:config).and_return(workflow_config) # TODO: Assumes workflow_config is defined in including context
+      allow(data_source).to receive(:rows).and_return(rows_relation)
       allow(BatchProcessor).to receive(:new).with(batch: batch_a,
                                                   workflow: workflow).and_return(batch_processor_a)
       allow(BatchProcessor).to receive(:new).with(batch: batch_b,
@@ -88,32 +111,40 @@ RSpec.describe WorkflowExecutor do
 
   describe '#call' do
     include_context 'basic workflow executor setup'
+    let(:rows_relation) { double('ActiveRecord::Relation', update_all: true) }
 
-    it 'creates and starts a workflow execution' do
-      expect(workflow_execution_double).to receive(:start!) # Already stubbed by shared_context
+    before do
+      allow(data_source).to receive(:rows).and_return(rows_relation)
+      allow(workflow_execution).to receive(:start!)
+      allow(workflow_execution).to receive(:complete!)
+      allow(workflow_execution).to receive(:fail!)
+    end
+
+    it 'creates and starts a workflow execution and updates rows' do
+      expect(rows_relation).to receive(:update_all).with(workflow_execution_id: workflow_execution.id)
+      expect(workflow_execution).to receive(:start!)
 
       result = workflow_executor.call
-      expect(result).to eq(workflow_execution_double)
-      expect(workflow_executor.execution).to eq(workflow_execution_double)
+      expect(result).to eq(workflow_execution)
+      expect(workflow_executor.execution).to eq(workflow_execution)
     end
 
     context 'when workflow has no batching configuration' do
-      let(:rows_relation) { double('ActiveRecord::Relation') }
       let(:batch_processor_double) { instance_double(BatchProcessor, call: true) }
       let(:batch_double) { instance_double(Batch, id: 123) }
 
       before do
         # Workflow config without liquid_templates or with empty liquid_templates
         allow(workflow).to receive(:config).and_return({ 'liquid_templates' => {} })
-        allow(data_source).to receive(:rows).and_return(rows_relation)
-        expect(Batch).to receive(:create!).with(hash_including(processing_mode: "parallel")).and_return(batch_double)
+        expect(Batch).to receive(:create!).with(hash_including(processing_mode: "parallel",
+                                                               workflow_execution: workflow_execution)).and_return(batch_double)
         allow(BatchProcessor).to receive(:new).with(batch: batch_double,
                                                     workflow: workflow).and_return(batch_processor_double)
-        # WorkflowExecution find_or_create_by and start! are handled by shared_context
       end
 
       it 'processes all rows in a single batch' do
-        expect(rows_relation).to receive(:update_all).with(batch_id: batch_double.id)
+        expect(rows_relation).to receive(:update_all).with(workflow_execution_id: workflow_execution.id).ordered
+        expect(rows_relation).to receive(:update_all).with(batch_id: batch_double.id).ordered
 
         workflow_executor.call
 
@@ -169,7 +200,18 @@ RSpec.describe WorkflowExecutor do
 
         before do
           allow(workflow).to receive(:config).and_return(workflow_config)
-          allow(data_source).to receive(:rows).and_return([low_priority_row, high_priority_row, other_group_row])
+          allow(data_source).to receive(:rows).and_return(double('ActiveRecord::Relation',
+                                                                 update_all: true).tap do |relation|
+            allow(relation).to receive(:group_by).and_yield(low_priority_row).and_yield(high_priority_row).and_yield(other_group_row).and_return({
+                                                                                                                                                   'group_a' => [
+                                                                                                                                                     low_priority_row, high_priority_row
+                                                                                                                                                   ],
+                                                                                                                                                   'group_b' => [other_group_row]
+                                                                                                                                                 })
+            allow(relation).to receive(:sort_by).and_yield(low_priority_row).and_yield(high_priority_row).and_return([
+                                                                                                                       high_priority_row, low_priority_row
+                                                                                                                     ])
+          end)
           setup_liquid_mocks
           setup_batch_mocks
         end
@@ -263,7 +305,17 @@ RSpec.describe WorkflowExecutor do
           let(:identical_priority_row2) { instance_double(Row, data: { 'reference' => 'group_a', 'priority' => '1' }) }
 
           before do
-            allow(data_source).to receive(:rows).and_return([identical_priority_row2, identical_priority_row1])
+            allow(data_source).to receive(:rows).and_return(double('ActiveRecord::Relation',
+                                                                   update_all: true).tap do |relation|
+              allow(relation).to receive(:group_by).and_yield(identical_priority_row2).and_yield(identical_priority_row1).and_return({
+                                                                                                                                       'group_a' => [
+                                                                                                                                         identical_priority_row2, identical_priority_row1
+                                                                                                                                       ]
+                                                                                                                                     })
+              allow(relation).to receive(:sort_by).and_yield(identical_priority_row2).and_yield(identical_priority_row1).and_return([
+                                                                                                                                      identical_priority_row2, identical_priority_row1
+                                                                                                                                    ])
+            end)
             [identical_priority_row1, identical_priority_row2].each do |row|
               allow(row).to receive(:update!).and_return(true)
             end

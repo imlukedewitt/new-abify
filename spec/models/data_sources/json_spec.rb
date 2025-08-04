@@ -15,15 +15,14 @@ RSpec.describe DataSources::Json, type: :model do
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: json) }
     let(:json_content) { '[{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]' }
     let(:file_path) { 'test.json' }
-    let(:options) { { workflow_execution: workflow_execution } }
 
     before do
       allow(File).to receive(:read).with(file_path).and_return(json_content)
     end
 
     it 'reads the file and processes the JSON content' do
-      expect(json).to receive(:process_json).with(json_content, options).and_call_original
-      expect { json.load_from_file_path(file_path, options) }.to change { json.rows.length }.by(2)
+      expect(json).to receive(:process_json).with(json_content).and_call_original
+      expect { json.load_from_file_path(file_path) }.to change { json.rows.length }.by(2)
     end
   end
 
@@ -32,11 +31,10 @@ RSpec.describe DataSources::Json, type: :model do
     let(:workflow) { create(:workflow) }
     let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: json) }
     let(:json_content) { '[{"name": "John", "age": 30}, {"name": "Jane", "age": 25}]' }
-    let(:options) { { workflow_execution: workflow_execution } }
 
     it 'processes the JSON string directly' do
-      expect(json).to receive(:process_json).with(json_content, options).and_call_original
-      expect { json.load_from_string(json_content, options) }.to change { json.rows.length }.by(2)
+      expect(json).to receive(:process_json).with(json_content).and_call_original
+      expect { json.load_from_string(json_content) }.to change { json.rows.length }.by(2)
     end
   end
 
@@ -47,18 +45,18 @@ RSpec.describe DataSources::Json, type: :model do
 
     it 'handles a JSON array of objects' do
       json_content = '[{"name": "John"}, {"name": "Jane"}]'
-      expect { json.send(:process_json, json_content, { workflow_execution: workflow_execution }) }.to change { json.rows.count }.by(2)
+      expect { json.send(:process_json, json_content) }.to change {
+        json.rows.count
+      }.by(2)
       expect(json.rows.first.data['name']).to eq('John')
     end
 
     it 'handles a single JSON object' do
       json_content = '{"name": "John"}'
-      expect { json.send(:process_json, json_content, { workflow_execution: workflow_execution }) }.to change { json.rows.count }.by(1)
+      expect { json.send(:process_json, json_content) }.to change {
+        json.rows.count
+      }.by(1)
       expect(json.rows.first.data['name']).to eq('John')
-    end
-
-    it 'raises an error if workflow_execution is not provided' do
-      expect { json.send(:process_json, '{}', {}) }.to raise_error(ArgumentError, 'workflow_execution is required')
     end
   end
 end

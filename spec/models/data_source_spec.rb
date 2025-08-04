@@ -112,13 +112,12 @@ RSpec.describe DataSource, type: :model do
   describe '#load_data' do
     let(:data_source) { build(:data_source) }
     let(:source) { 'test_source' }
-    let(:options) { { option: 'value' } }
 
     it 'determines source type and calls appropriate load method' do
       expect(data_source).to receive(:determine_source_type).with(source).and_return('string')
-      expect(data_source).to receive(:load_from_string).with(source, options)
+      expect(data_source).to receive(:load_from_string).with(source)
 
-      data_source.load_data(source, options)
+      data_source.load_data(source)
     end
   end
 
@@ -226,11 +225,10 @@ RSpec.describe DataSource, type: :model do
   describe 'dynamically defined load methods' do
     let(:data_source) { build(:data_source) }
     let(:source) { 'test_source' }
-    let(:options) { { option: 'value' } }
 
     described_class::SOURCE_TYPES.each do |source_type|
       it "raises NotImplementedError for load_from_#{source_type}" do
-        expect { data_source.send("load_from_#{source_type}", source, options) }.to raise_error(
+        expect { data_source.send("load_from_#{source_type}", source) }.to raise_error(
           NotImplementedError, "Loading from #{source_type} is not implemented"
         )
       end
