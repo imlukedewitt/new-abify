@@ -3,7 +3,7 @@
 ##
 # Row model
 class Row < ApplicationRecord
-  belongs_to :workflow_execution
+  belongs_to :workflow_execution, optional: true
   belongs_to :data_source
   belongs_to :batch, optional: true
   has_many :step_executions, dependent: :destroy
