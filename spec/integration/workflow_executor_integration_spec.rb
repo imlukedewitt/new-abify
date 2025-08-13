@@ -137,7 +137,7 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
 
         expect(batch_a.processing_mode).to eq('sequential')
         expect(batch_a.rows.count).to eq(2)
-        batch_a.rows.order(Arel.sql('data->>\'original_id_input\' ASC')).each_with_index do |row, idx|
+        batch_a.rows.sort_by { |row| row.data['original_id_input'].to_i }.each do |row|
           expect(row.data['original_category']).to eq('A')
           expect(row.data).to have_key('fetched_todo_title')
           if row.data['original_id_input'].to_i == 1
@@ -171,7 +171,7 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
 
         expect(batch_ungrouped.processing_mode).to eq('parallel')
         expect(batch_ungrouped.rows.count).to eq(2)
-        batch_ungrouped.rows.order(Arel.sql('data->>\'original_id_input\' ASC')).each_with_index do |row, idx|
+        batch_ungrouped.rows.sort_by { |row| row.data['original_id_input'].to_i }.each do |row|
           # original_category might be nil or empty string, reflecting the input
           expect(row.data['original_category'].blank? || row.data['original_category'] == row.input_data['category']).to be true
           expect(row.data).to have_key('fetched_todo_title')
