@@ -23,9 +23,14 @@ group :development, :test do
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
   gem 'factory_bot_rails'
   gem 'rspec-rails', '~> 6.1.0'
+  gem 'pry'
+  gem "pry-byebug"
+  gem 'pry-rails'
   gem 'rubocop', require: false
   gem 'vcr'
   gem 'webmock'
 end
 
 gem "csv"
+
+gem "rspec-core", "~> 3.13"
