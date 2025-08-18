@@ -20,7 +20,7 @@ class WorkflowExecutionsController < ApplicationController
     workflow = Workflow.find_by(id: params[:workflow_id])
     return workflow if workflow
 
-    render json: { error: "Workflow not found" }, status: :unprocessable_entity
+    render json: { error: "Workflow not found" }, status: :unprocessable_content
     nil
   end
 
@@ -40,6 +40,6 @@ class WorkflowExecutionsController < ApplicationController
   rescue DataSources::Builder::InvalidSourceError, CSV::MalformedCSVError => e
     render json: { error: "Invalid data source: #{e.message}" }, status: :bad_request
   rescue StandardError => e
-    render json: { error: "Processing error: #{e.message}" }, status: :unprocessable_entity
+    render json: { error: "Processing error: #{e.message}" }, status: :unprocessable_content
   end
 end
