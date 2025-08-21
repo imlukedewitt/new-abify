@@ -136,8 +136,12 @@ RSpec.describe WorkflowExecutor do
       before do
         # Workflow config without liquid_templates or with empty liquid_templates
         allow(workflow).to receive(:config).and_return({ 'liquid_templates' => {} })
-        expect(Batch).to receive(:create!).with(hash_including(processing_mode: "parallel",
-                                                               workflow_execution: workflow_execution)).and_return(batch_double)
+        expect(Batch).to receive(:create!).with(
+          hash_including(
+            processing_mode: "parallel",
+            workflow_execution: workflow_execution
+          )
+        ).and_return(batch_double)
         allow(BatchProcessor).to receive(:new).with(batch: batch_double,
                                                     workflow: workflow).and_return(batch_processor_double)
       end
@@ -200,18 +204,16 @@ RSpec.describe WorkflowExecutor do
 
         before do
           allow(workflow).to receive(:config).and_return(workflow_config)
-          allow(data_source).to receive(:rows).and_return(double('ActiveRecord::Relation',
-                                                                 update_all: true).tap do |relation|
-            allow(relation).to receive(:group_by).and_yield(low_priority_row).and_yield(high_priority_row).and_yield(other_group_row).and_return({
-                                                                                                                                                   'group_a' => [
-                                                                                                                                                     low_priority_row, high_priority_row
-                                                                                                                                                   ],
-                                                                                                                                                   'group_b' => [other_group_row]
-                                                                                                                                                 })
-            allow(relation).to receive(:sort_by).and_yield(low_priority_row).and_yield(high_priority_row).and_return([
-                                                                                                                       high_priority_row, low_priority_row
-                                                                                                                     ])
-          end)
+          allow(data_source).to receive(:rows)
+            .and_return(
+              double('ActiveRecord::Relation', update_all: true).tap do |relation|
+                allow(relation).to receive(:group_by)
+                  .and_yield(low_priority_row).and_yield(high_priority_row).and_yield(other_group_row)
+                  .and_return({ 'group_a' => [low_priority_row, high_priority_row], 'group_b' => [other_group_row] })
+                allow(relation).to receive(:sort_by).and_yield(low_priority_row).and_yield(high_priority_row)
+                  .and_return([high_priority_row, low_priority_row])
+              end
+            )
           setup_liquid_mocks
           setup_batch_mocks
         end
