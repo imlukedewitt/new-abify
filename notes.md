@@ -1,49 +1,10 @@
+# 2025-08-21
+- [ ] we need better logging
+- [ ] after a request completes, we should store the info somewhere that makes sense. in the row execution?
+- [ ] need a controller to make workflows, and everything that entails
+
+# OLD NOTES
 structure idea
-
-- app
-  - models
-    - data_sources
-      - csv_data
-      - json_data
-      - mock_data
-    - batch
-    - batch_execution
-    - config
-    - data_source
-    - import
-    - row
-    - step
-    - user
-    - workflow
-    - workflow_execution
-  - controllers
-    - api
-    - v1
-      - workflows
-        - steps
-        - workflow_executions
-      - users
-  - services
-    - batch_processor
-    - hydra_manager
-    - liquid
-      - context_builder
-      - filters
-        - workflow_filters
-      - processor
-    - liquid_processor
-    - row_processor
-    - step_processor
-    - workflow_executor
-  - views
-  - serializers
-  - presenters
-  - helpers
-  - jobs
-- lib
-  - hydra_logger
-- config
-
 
 WorkflowExecution is AKA "An Import" or "A Run". It has a DataSource (a series of Rows), and a Worflow (a series of WorkflowSteps)
 
