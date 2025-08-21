@@ -20,11 +20,11 @@ RSpec.describe WorkflowExecutor do
   end
 
   shared_context 'batching and liquid setup' do
-    let(:row1) { instance_double(Row, data: { 'reference' => 'group_a', 'priority' => '1' }) }
-    let(:row2) { instance_double(Row, data: { 'reference' => 'group_a', 'priority' => '2' }) }
-    let(:row3) { instance_double(Row, data: { 'reference' => 'group_b', 'priority' => '1' }) }
-    let(:row_no_group_nil) { instance_double(Row, data: { 'id' => 4 }) }
-    let(:row_no_group_empty) { instance_double(Row, data: { 'reference' => '', 'id' => 5 }) }
+    let(:row1) { instance_double(Row, data: { 'reference' => 'group_a', 'priority' => '1' }, source_index: 1) }
+    let(:row2) { instance_double(Row, data: { 'reference' => 'group_a', 'priority' => '2' }, source_index: 2) }
+    let(:row3) { instance_double(Row, data: { 'reference' => 'group_b', 'priority' => '1' }, source_index: 3) }
+    let(:row_no_group_nil) { instance_double(Row, data: { 'id' => 4 }, source_index: 1) }
+    let(:row_no_group_empty) { instance_double(Row, data: { 'reference' => '', 'id' => 5 }, source_index: 1) }
     let(:rows) { [row1, row2, row3, row_no_group_nil, row_no_group_empty] }
 
     let(:batch_a) { instance_double(Batch, id: 1) }
