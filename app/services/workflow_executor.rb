@@ -37,7 +37,6 @@ class WorkflowExecutor
     config = workflow.workflow_config || {}
     liquid_templates = config['liquid_templates'] || {}
     group_by_template = liquid_templates['group_by']
-
     rows = data_source.rows
 
     if group_by_template
