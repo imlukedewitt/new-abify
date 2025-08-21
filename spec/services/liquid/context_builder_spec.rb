@@ -11,7 +11,7 @@ RSpec.describe Liquid::ContextBuilder do
     subject(:context) { context_builder.build }
 
     it 'includes row data' do
-      expect(context[:row]).to eq(row.data)
+      expect(context[:row]).to eq({ "source_index" => row.source_index, **row.data })
     end
 
     it 'includes connection info' do
