@@ -10,7 +10,7 @@ module Liquid
 
     def build
       {
-        row: @row.data,
+        row: { "source_index" => @row.source_index, **@row.data },
         **connection_info
       }
     end
