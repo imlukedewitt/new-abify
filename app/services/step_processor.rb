@@ -41,6 +41,7 @@ class StepProcessor
       auth_config: @auth_config,
       on_complete: lambda { |response|
         result = process_response(response)
+        # TODO: store the request/response info somewhere and log it
         @on_complete&.call(result)
       }
     )
