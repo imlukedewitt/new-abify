@@ -78,9 +78,7 @@ class RowProcessor
 
     @current_step_index += 1
 
-    # Check if we're done processing all steps
     if @current_step_index >= @ordered_steps.length
-      # Only mark as complete if not already failed
       @execution.complete! unless @execution.failed?
       mark_completed
     else
