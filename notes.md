@@ -1,12 +1,12 @@
-# 2025-08-26
-- [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
-- [ ] process rows/steps in Sidekiq or ActiveJob, remove the DIY threading that it currently does
-- [ ] make sure we're not re-rendering the same liquid templates over and over again
-
-# 2025-08-21
+# Sooner
 - [ ] we need better logging
 - [ ] after a request completes, we should store the info somewhere that makes sense. in the row execution?
 - [ ] need a controller to make workflows, and everything that entails
+
+# Later
+- [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
+- [ ] process rows/steps in Sidekiq or ActiveJob, remove the DIY threading that it currently does
+- [ ] make sure we're not re-rendering the same liquid templates over and over again
 
 # OLD NOTES
 structure idea
