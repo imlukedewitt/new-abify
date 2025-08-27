@@ -70,6 +70,7 @@ class RowProcessor
     # Handle skipped steps (nil result)
     result ||= { success: true, data: {} }
 
+    Rails.logger.info "Row #{row.source_index} #{result[:success] ? 'success' : 'failed'}"
     if result[:success]
       update_row_with_success_data(result[:data])
     else
