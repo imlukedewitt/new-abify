@@ -44,8 +44,7 @@ module DataSources
           header_converters: ->(h) { h.downcase.strip },
           encoding: 'utf-8'
         ).each do |csv_row|
-          row_data = csv_row.to_h
-          build_row(row_data, index)
+          build_row(csv_row.to_h, index)
           index += 1
         end
       rescue CSV::MalformedCSVError => e
