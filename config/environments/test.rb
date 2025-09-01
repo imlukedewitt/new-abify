@@ -41,5 +41,4 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = true
 
   config.log_level = :info
-  config.logger = ActiveSupport::Logger.new(STDOUT)
 end

@@ -40,9 +40,6 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
       end
     end
 
-    context 'with valid steps' do
-    end
-
     context 'with invalid workflow id' do
       it 'returns an error' do
         post '/workflow_executions', params: {

@@ -48,9 +48,11 @@ class HydraManager
   end
 
   def run
+    Rails.logger.info "Starting Hydra queue"
     @running = true
     hydra.run
     @running = false
+    Rails.logger.info "Hydra queue complete"
   end
 
   private

@@ -71,6 +71,8 @@ class RowProcessor
     result ||= { success: true, data: {} }
 
     if result[:success]
+      Rails.logger.info "Row #{row.source_index} step #{@current_step_index} success"
+      Rails.logger.info "  data: #{result[:data]}" if result[:data].present?
       update_row_with_success_data(result[:data])
     else
       handle_step_failure(result[:error])
@@ -98,13 +100,14 @@ class RowProcessor
     current_step = @ordered_steps[@current_step_index]
 
     if @current_step_processor.required?
+      Rails.logger.info("Row #{@row.source_index} required step #{current_step.name} failed: #{error}")
       @execution.fail!
       row.update(status: :failed)
       mark_completed # Mark as completed even on failure
       return
     end
 
-    Rails.logger.warn("Non-required step #{current_step.name} failed: #{error}")
+    Rails.logger.info("Row #{@row.source_index} non-required step #{current_step.name} failed: #{error}")
   end
 
   def mark_completed
