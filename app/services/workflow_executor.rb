@@ -18,6 +18,7 @@ class WorkflowExecutor
     @execution = WorkflowExecution.create!(workflow: workflow, data_source: data_source)
     data_source.rows.update_all(workflow_execution_id: @execution.id)
     @execution.start!
+    Rails.logger.info "\nStarting workflow execution for #{@workflow.name} at #{@execution.started_at}"
 
     # Process rows in batches
     begin
