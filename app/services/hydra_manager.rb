@@ -43,8 +43,6 @@ class HydraManager
     request.on_complete { |resp| on_complete.call(resp) } if on_complete
 
     @requests << request
-    Rails.logger.info "Queuing request:\n  #{request.options[:method]} #{request.base_url}"
-    Rails.logger.info("  #{request.options[:body]}") if request.options[:body].present?
     front ? hydra.queue_front(request) : hydra.queue(request)
     request
   end

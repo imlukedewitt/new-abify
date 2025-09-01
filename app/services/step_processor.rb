@@ -30,13 +30,17 @@ class StepProcessor
   def call
     if should_skip?
       @execution.skip!
+      Rails.logger.info "skipping row #{@row.source_index} step #{@step.order}"
       return
     end
 
     @execution.start!
 
+    request_feilds = render_request_fields
+    Rails.logger.info "Queueing request for row #{@row.source_index} step #{@step.order}:"
+    Rails.logger.info "  #{request_feilds}"
     @hydra_manager.queue(
-      **render_request_fields,
+      **request_feilds,
       front: @priority,
       auth_config: @auth_config,
       on_complete: lambda { |response|
