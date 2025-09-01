@@ -1,13 +1,19 @@
 # Sooner
-- [ ] we need better logging
-- [ ] after a request completes, we should store the info somewhere that makes sense. in the row execution?
+- [X] we need better logging
+  - update 2025-09-01: good enough for now, can add per-workflow file logging later
+- [x] after a request completes, we should store the info somewhere that makes sense. in the row execution?
+   - update 2025-09-01: nah, it gets stored in the row data. not going to persist all the extra info for now
+- [ ] controller to create data sources
 - [ ] need a controller to make workflows, and everything that entails
+  - take a data source
+  - can just take a json for the config for now. in the future we can parse user-provided yaml/json and do all the liquid validation
 
 # Later
 - [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
 - [ ] process rows/steps in Sidekiq or ActiveJob, remove the DIY threading that it currently does
 - [ ] make sure we're not re-rendering the same liquid templates over and over again
   - along these same lines, it'd be good to validate and render as much as possible before the workflow executes
+  -
 
 # OLD NOTES
 structure idea
