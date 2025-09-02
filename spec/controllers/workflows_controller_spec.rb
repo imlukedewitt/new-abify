@@ -1,0 +1,78 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe WorkflowsController, type: :controller do
+  describe 'POST #create' do
+    context 'with valid workflow config' do
+      let(:valid_config) do
+        {
+          name: 'Test Workflow',
+          config: {
+            workflow: {
+              liquid_templates: {
+                group_by: '{{row.group}}',
+                sort_by: '{{row.priority}}'
+              },
+              connection: {
+                subdomain: 'test',
+                domain: 'example.com'
+              }
+            }
+          }
+        }
+      end
+
+      it 'creates a new workflow' do
+        expect do
+          post :create, params: valid_config
+        end.to change(Workflow, :count).by(1)
+      end
+    end
+
+    context 'with invalid workflow config' do
+      let(:invalid_config) do
+        {
+          name: 'Test Workflow',
+          config: {
+            workflow: {
+              invalid_section: {
+                some_key: 'some_value'
+              }
+            }
+          }
+        }
+      end
+
+      it 'returns an error' do
+        post :create, params: invalid_config
+        expect(response).to have_http_status(:unprocessable_content)
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('error')
+        expect(json_response['error']).to include('unexpected section in workflow config: invalid_section')
+      end
+    end
+
+    context 'with missing name parameter' do
+      let(:config_without_name) do
+        {
+          config: {
+            workflow: {
+              liquid_templates: {
+                group_by: '{{row.group}}'
+              }
+            }
+          }
+        }
+      end
+
+      it 'returns an error' do
+        post :create, params: config_without_name
+        expect(response).to have_http_status(:unprocessable_content)
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('error')
+        expect(json_response['error']).to include("Name can't be blank")
+      end
+    end
+  end
+end
