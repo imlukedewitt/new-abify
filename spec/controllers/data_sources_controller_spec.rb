@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe DataSourcesController, type: :controller do
   describe 'POST #create' do
     context 'with valid CSV file' do
-      let(:csv_file) { fixture_file_upload('spec/fixtures/files/valid_data.csv', 'text/csv') }
+      let(:csv_file) { fixture_file_upload('spec/fixtures/files/3_rows.csv', 'text/csv') }
 
       it 'creates a new data source' do
         expect do
@@ -24,7 +24,7 @@ RSpec.describe DataSourcesController, type: :controller do
     end
 
     context 'with invalid file type' do
-      let(:invalid_file) { fixture_file_upload('spec/fixtures/files/invalid.txt', 'text/plain') }
+      let(:invalid_file) { fixture_file_upload('spec/fixtures/files/plain_text.txt', 'text/plain') }
 
       it 'does not create a new data source' do
         expect do
