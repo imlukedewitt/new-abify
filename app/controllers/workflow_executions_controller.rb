@@ -7,10 +7,10 @@ class WorkflowExecutionsController < ApplicationController
     workflow = find_workflow
     return unless workflow
 
-    source = validate_source
-    return render(source) if source.is_a?(Hash)
+    data_source = find_data_source
+    return unless data_source
 
-    process_workflow_execution(workflow, source)
+    process_workflow_execution(workflow, data_source)
     nil
   end
 
@@ -24,21 +24,17 @@ class WorkflowExecutionsController < ApplicationController
     nil
   end
 
-  def validate_source
-    source = params[:source]
-    if source.nil? || !(source.is_a?(ActionDispatch::Http::UploadedFile) || source.is_a?(Rack::Test::UploadedFile))
-      { json: { error: "Source is required or invalid" }, status: :bad_request }
-    else
-      source
-    end
+  def find_data_source
+    data_source = DataSource.find_by(id: params[:data_source_id])
+    return data_source if data_source
+
+    render json: { error: "Data source not found" }, status: :unprocessable_content
+    nil
   end
 
-  def process_workflow_execution(workflow, source)
-    data_source = DataSources::Builder.call(source: source)
+  def process_workflow_execution(workflow, data_source)
     workflow_execution = WorkflowExecutor.new(workflow, data_source).call
     render json: { workflow_execution_id: workflow_execution.id }, status: :created
-  rescue DataSources::Builder::InvalidSourceError, CSV::MalformedCSVError => e
-    render json: { error: "Invalid data source: #{e.message}" }, status: :bad_request
   rescue StandardError => e
     render json: { error: "Processing error: #{e.message}" }, status: :unprocessable_content
   end
