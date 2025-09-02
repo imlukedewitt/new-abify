@@ -13,6 +13,8 @@ module DataSources
               "Source must be a file upload"
       end
 
+      validate_file_type!(source, type)
+
       "DataSources::#{type.camelize}".constantize.new(source: source).tap do |ds|
         ds.name = File.basename(source.original_filename) if source.respond_to?(:original_filename)
         ds.save!
@@ -20,6 +22,27 @@ module DataSources
       end
     rescue StandardError => e
       raise InvalidSourceError, e.message
+    end
+
+    def self.validate_file_type!(source, type)
+      return unless source.respond_to?(:content_type) && source.respond_to?(:original_filename)
+
+      case type.downcase
+      when 'csv'
+        raise InvalidSourceError, "Unsupported file type" unless valid_csv_file?(source)
+      when 'json'
+        raise InvalidSourceError, "Unsupported file type" unless valid_json_file?(source)
+      else
+        raise InvalidSourceError, "Unsupported data source type: #{type}"
+      end
+    end
+
+    def self.valid_csv_file?(source)
+      source.content_type == 'text/csv' || File.extname(source.original_filename).downcase == '.csv'
+    end
+
+    def self.valid_json_file?(source)
+      source.content_type == 'application/json' || File.extname(source.original_filename).downcase == '.json'
     end
   end
 end
