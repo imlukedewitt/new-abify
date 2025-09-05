@@ -1,0 +1,4 @@
+This is not a valid CSV or JSON file
+It's just plain text content
+That should be rejected by the data source builder
+Because it doesn't have the proper file extension or content type

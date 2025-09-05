@@ -14,4 +14,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
   resources :workflow_executions, only: [:create]
+  resources :data_sources, only: [:create]
+  resources :workflows, only: [:create] do
+    resources :steps, only: [:create]
+  end
 end

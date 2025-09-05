@@ -24,9 +24,11 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
 
     context 'with valid parameters' do
       it 'creates a new workflow execution' do
+        data_source = DataSources::Builder.call(source: valid_csv)
+
         post '/workflow_executions', params: {
           workflow_id: valid_workflow.id,
-          source: valid_csv
+          data_source_id: data_source.id
         }
 
         expect(response).to have_http_status(:created)
@@ -42,9 +44,11 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
 
     context 'with invalid workflow id' do
       it 'returns an error' do
+        data_source = DataSources::Builder.call(source: valid_csv)
+
         post '/workflow_executions', params: {
           workflow_id: 9999,
-          source: valid_csv
+          data_source_id: data_source.id
         }
 
         expect(response).to have_http_status(:unprocessable_content)
@@ -53,28 +57,28 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
       end
     end
 
-    context 'with missing source file' do
+    context 'with missing data source' do
       it 'returns an error' do
         post '/workflow_executions', params: {
           workflow_id: valid_workflow.id
         }
 
-        expect(response).to have_http_status(:bad_request)
+        expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
-        expect(json_response['error']).to include('Source is required or invalid')
+        expect(json_response['error']).to eq('Data source not found')
       end
     end
 
-    context 'with invalid source file' do
+    context 'with invalid data source id' do
       it 'returns an error' do
         post '/workflow_executions', params: {
           workflow_id: valid_workflow.id,
-          source: invalid_csv
+          data_source_id: 9999
         }
 
-        expect(response).to have_http_status(:bad_request)
+        expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
-        expect(json_response['error']).to include('Invalid data source')
+        expect(json_response['error']).to eq('Data source not found')
       end
     end
 
@@ -84,9 +88,11 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
       end
 
       it 'returns an error' do
+        data_source = DataSources::Builder.call(source: valid_csv)
+
         post '/workflow_executions', params: {
           workflow_id: valid_workflow.id,
-          source: valid_csv
+          data_source_id: data_source.id
         }
 
         expect(response).to have_http_status(:unprocessable_content)

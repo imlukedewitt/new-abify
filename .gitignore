@@ -37,3 +37,6 @@
 *.code-workspace
 .vscode/launch.json
 .vscode/settings.json
+
+# ignore data files i use for testing
+/data/*

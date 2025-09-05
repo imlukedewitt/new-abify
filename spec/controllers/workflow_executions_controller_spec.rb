@@ -5,13 +5,13 @@ require 'rails_helper'
 RSpec.describe WorkflowExecutionsController, type: :controller do
   describe 'POST #create' do
     let(:workflow) { create(:workflow) }
-    let(:valid_source) { fixture_file_upload(Rails.root.join('spec/fixtures/files/3_rows.csv'), 'text/csv') }
+    let(:data_source) { create(:data_source) }
 
     context 'with valid parameters' do
       it 'creates a new workflow execution' do
         post :create, params: {
           workflow_id: workflow.id,
-          source: valid_source
+          data_source_id: data_source.id
         }
 
         if response.status != 201
@@ -29,30 +29,30 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
       it "returns unprocessable entity when workflow is not found" do
         post :create, params: {
           workflow_id: "invalid_id",
-          source: valid_source
+          data_source_id: data_source.id
         }
 
         expect(response).to have_http_status(:unprocessable_content)
         expect(JSON.parse(response.body)).to eq({ "error" => "Workflow not found" })
       end
 
-      it 'returns bad request when source is missing' do
+      it 'returns unprocessable entity when data source is not found' do
+        post :create, params: {
+          workflow_id: workflow.id,
+          data_source_id: "invalid_id"
+        }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(JSON.parse(response.body)).to eq({ "error" => "Data source not found" })
+      end
+
+      it 'returns unprocessable entity when data source is missing' do
         post :create, params: {
           workflow_id: workflow.id
         }
 
-        expect(response).to have_http_status(:bad_request)
-      end
-
-      it 'returns bad request when source is invalid' do
-        invalid_source = fixture_file_upload(Rails.root.join('spec/fixtures/files/malformed.csv'), 'text/csv')
-
-        post :create, params: {
-          workflow_id: workflow.id,
-          source: invalid_source
-        }
-
-        expect(response).to have_http_status(:bad_request)
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(JSON.parse(response.body)).to eq({ "error" => "Data source not found" })
       end
     end
   end

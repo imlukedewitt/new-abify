@@ -1,0 +1,27 @@
+meta {
+  name: Create Workflow
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "test workflow",
+    "config": {
+      "connection": {
+        "subdomain": "test",
+        "domain": "example.com"
+      }
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+}
