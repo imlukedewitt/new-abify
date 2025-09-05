@@ -1,6 +1,6 @@
 # ABify
 
-ABify is a workflow automation tool designed to process large datasets by orchestrating complex, multi-step API interactions. It is particularly well-suited for data import tasks that require fetching, transforming, and posting data to external services.
+ABify is a workflow automation tool designed to process large datasets by orchestrating complex, multi-step API interactions.
 
 This project is very much a work in progress
 
