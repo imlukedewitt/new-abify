@@ -27,7 +27,7 @@ RUN bundle install
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 10000
 
 # Add an entrypoint script to prepare the database
 COPY entrypoint.sh /usr/bin/
