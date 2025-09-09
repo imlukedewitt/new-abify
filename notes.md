@@ -7,6 +7,7 @@
 - [ ] need a controller to make workflows, and everything that entails
   - take a data source
   - can just take a json for the config for now. in the future we can parse user-provided yaml/json and do all the liquid validation
+- [ ] dont store api credentials in plaintext
 
 # Later
 - [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
