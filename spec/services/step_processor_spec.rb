@@ -44,6 +44,34 @@ RSpec.describe StepProcessor do
     it 'raises an error when row is nil' do
       expect { described_class.new(step, nil) }.to raise_error(ArgumentError)
     end
+
+    context 'with auth configuration' do
+      it 'prioritizes explicitly passed auth_config' do
+        explicit_auth = { type: :custom, token: 'explicit_token' }
+        processor = described_class.new(step, row, auth_config: explicit_auth)
+        expect(processor.instance_variable_get(:@auth_config)).to eq(explicit_auth)
+      end
+
+      it 'falls back to workflow config auth when no step auth config is available' do
+        workflow_with_auth = create(
+          :workflow, config: {
+            'connection' => {
+              'auth' => { 'type' => 'oauth', 'token' => 'workflow_token' }
+            }
+          }
+        )
+        step_without_auth = create(:step, workflow: workflow_with_auth)
+        processor = described_class.new(step_without_auth, row)
+        expect(processor.instance_variable_get(:@auth_config)).to eq({ 'type' => 'oauth', 'token' => 'workflow_token' })
+      end
+
+      it 'defaults to empty hash when no auth config is available anywhere' do
+        workflow_without_auth = create(:workflow, config: { 'connection' => {} })
+        step_without_auth = create(:step, workflow: workflow_without_auth)
+        processor = described_class.new(step_without_auth, row)
+        expect(processor.instance_variable_get(:@auth_config)).to eq({})
+      end
+    end
   end
 
   describe '::call' do
