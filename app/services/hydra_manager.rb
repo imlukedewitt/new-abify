@@ -32,7 +32,7 @@ class HydraManager
   def queue(url:, method: :get, params: {}, body: nil, front: false, on_complete: nil, auth_config: nil)
     options = {
       method: method,
-      headers: { 'User-Agent' => 'Agent User', 'Content-Type' => 'application/json' }
+      headers: { 'User-Agent' => 'ABify by Luke', 'Content-Type' => 'application/json' }
     }
 
     apply_auth_config(options, auth_config) if auth_config
