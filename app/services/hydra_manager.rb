@@ -66,18 +66,24 @@ class HydraManager
   end
 
   def apply_auth_config(options, auth_config)
-    config = auth_config.transform_keys(&:to_sym) if auth_config.is_a?(Hash)
-    return unless config&.any?
+    config = normalize_auth_config(auth_config)
+    return unless config
 
-    auth_type = config[:type]
-    return unless auth_type.present?
-
-    auth_type = auth_type.to_sym if auth_type.is_a?(String)
-
+    auth_type = config[:type].to_sym
     method_name = AUTH_METHODS[auth_type]
     raise ArgumentError, "Unknown auth type: #{auth_type}" unless method_name
 
     send(method_name, options, config)
+  end
+
+  def normalize_auth_config(auth_config)
+    return unless auth_config.is_a?(Hash)
+
+    config = auth_config.transform_keys(&:to_sym)
+    return unless config[:type].present?
+
+    config[:type] = config[:type].to_sym if config[:type].is_a?(String)
+    config
   end
 
   def apply_basic_auth(options, config)
