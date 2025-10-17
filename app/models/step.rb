@@ -21,7 +21,7 @@ class Step < ApplicationRecord
   validate :validate_config
 
   def process(row)
-    StepProcessor.call(self, row)
+    StepExecutor.call(self, row)
   end
 
   def step_config

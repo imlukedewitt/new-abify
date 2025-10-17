@@ -5,8 +5,9 @@ require_relative 'hydra_manager'
 require_relative 'liquid/processor'
 require_relative 'liquid/context_builder'
 
-# StepProcessor is responsible for processing a workflow step
-class StepProcessor
+# StepExecutor is responsible for executing a workflow step
+# A step is basically an API request + response
+class StepExecutor
   attr_reader :step, :row, :config, :execution
 
   def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, auth_config: nil, priority: false)

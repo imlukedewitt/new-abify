@@ -82,7 +82,7 @@ RSpec.describe RowExecutor do
         wait_thread.join
 
         # Verify that processing completed before wait returned
-        expect(completion_order).to eq(%i[processing_done wait_done])
+        expect(completion_order).to eq([:processing_done, :wait_done])
       end
 
       it "returns immediately if already completed" do

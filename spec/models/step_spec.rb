@@ -85,8 +85,8 @@ RSpec.describe Step, type: :model do
     let(:step) { create(:step) }
     let(:row) { create(:row) }
 
-    it 'calls the service StepProcessor' do
-      expect(StepProcessor).to receive(:call).with(step, row)
+    it 'calls the service StepExecutor' do
+      expect(StepExecutor).to receive(:call).with(step, row)
       step.process(row)
     end
   end

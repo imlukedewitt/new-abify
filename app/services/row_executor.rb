@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Runs a Workflow on a single Row,
-# creating WorkflowStepExecutors for each step
-class RowProcessor
+# creating StepExecutors for each step
+class RowExecutor
   attr_reader :row, :workflow, :execution
 
   def initialize(row:, workflow:)
@@ -49,7 +49,7 @@ class RowProcessor
 
   def process_current_step
     current_step = @ordered_steps[@current_step_index]
-    @current_step_processor = StepProcessor.new(
+    @current_step_executor = StepExecutor.new(
       current_step,
       row,
       hydra_manager: HydraManager.instance,
@@ -58,11 +58,11 @@ class RowProcessor
       auth_config: current_step.config&.dig('auth')
     )
 
-    if @current_step_processor.should_skip?
+    if @current_step_executor.should_skip?
       handle_step_completion(nil)
     else
       @execution.start!
-      @current_step_processor.call
+      @current_step_executor.call
     end
   end
 
@@ -99,7 +99,7 @@ class RowProcessor
   def handle_step_failure(error)
     current_step = @ordered_steps[@current_step_index]
 
-    if @current_step_processor.required?
+    if @current_step_executor.required?
       Rails.logger.info("Row #{@row.source_index} required step #{current_step.name} failed: #{error}")
       @execution.fail!
       row.update(status: :failed)

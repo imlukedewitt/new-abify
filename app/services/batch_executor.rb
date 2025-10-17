@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# Processes a batch of rows with the given workflow
-class BatchProcessor
+# Executes a batch of rows with the given workflow
+class BatchExecutor
   attr_reader :batch, :workflow, :execution
 
   def initialize(batch:, workflow:)
@@ -32,21 +32,21 @@ class BatchProcessor
   private
 
   def process_in_parallel
-    row_processors = batch.rows.map do |row|
-      row_processor = RowProcessor.new(row: row, workflow: workflow)
-      row_processor.call
-      row_processor
+    row_executors = batch.rows.map do |row|
+      row_executor = RowExecutor.new(row: row, workflow: workflow)
+      row_executor.call
+      row_executor
     end
     HydraManager.instance.run
-    row_processors.each(&:wait_for_completion)
+    row_executors.each(&:wait_for_completion)
   end
 
   def process_sequentially
     batch.rows.each do |row|
-      row_processor = RowProcessor.new(row: row, workflow: workflow)
-      row_processor.call
+      row_executor = RowExecutor.new(row: row, workflow: workflow)
+      row_executor.call
       HydraManager.instance.run
-      row_processor.wait_for_completion
+      row_executor.wait_for_completion
     end
   end
 
