@@ -35,7 +35,5 @@ module DataSources
       save_rows!
       self
     end
-
-
   end
 end
