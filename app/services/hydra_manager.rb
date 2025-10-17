@@ -67,9 +67,11 @@ class HydraManager
 
   def apply_auth_config(options, auth_config)
     config = auth_config.transform_keys(&:to_sym) if auth_config.is_a?(Hash)
-    return unless config
+    return unless config&.any?
 
     auth_type = config[:type]
+    return unless auth_type.present?
+
     auth_type = auth_type.to_sym if auth_type.is_a?(String)
 
     method_name = AUTH_METHODS[auth_type]
