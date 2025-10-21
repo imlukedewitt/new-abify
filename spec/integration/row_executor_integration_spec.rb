@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe RowProcessor, :integration, :vcr do
+RSpec.describe RowExecutor, :integration, :vcr do
   let(:workflow) { create(:workflow) }
   let(:step) do
     create(:step, workflow: workflow, order: 1, config: {

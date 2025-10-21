@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe StepProcessor do
+RSpec.describe StepExecutor do
   let(:auth_config) { { type: :basic, username: 'abc123', password: 'x' } }
   let(:workflow) { create(:workflow) }
   let(:step) { create(:step, workflow: workflow) }
@@ -43,6 +43,34 @@ RSpec.describe StepProcessor do
 
     it 'raises an error when row is nil' do
       expect { described_class.new(step, nil) }.to raise_error(ArgumentError)
+    end
+
+    context 'with auth configuration' do
+      it 'prioritizes explicitly passed auth_config' do
+        explicit_auth = { type: :custom, token: 'explicit_token' }
+        processor = described_class.new(step, row, auth_config: explicit_auth)
+        expect(processor.instance_variable_get(:@auth_config)).to eq(explicit_auth)
+      end
+
+      it 'falls back to workflow config auth when no step auth config is available' do
+        workflow_with_auth = create(
+          :workflow, config: {
+            'connection' => {
+              'auth' => { 'type' => 'oauth', 'token' => 'workflow_token' }
+            }
+          }
+        )
+        step_without_auth = create(:step, workflow: workflow_with_auth)
+        processor = described_class.new(step_without_auth, row)
+        expect(processor.instance_variable_get(:@auth_config)).to eq({ 'type' => 'oauth', 'token' => 'workflow_token' })
+      end
+
+      it 'defaults to empty hash when no auth config is available anywhere' do
+        workflow_without_auth = create(:workflow, config: { 'connection' => {} })
+        step_without_auth = create(:step, workflow: workflow_without_auth)
+        processor = described_class.new(step_without_auth, row)
+        expect(processor.instance_variable_get(:@auth_config)).to eq({})
+      end
     end
   end
 
@@ -274,7 +302,7 @@ RSpec.describe StepProcessor do
           'skip_condition' => "{{row.email | present?}}"
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:should_skip?)).to be true
     end
@@ -285,7 +313,7 @@ RSpec.describe StepProcessor do
           'skip_condition' => "{{row.email | blank?}}"
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:should_skip?)).to be false
     end
@@ -294,7 +322,7 @@ RSpec.describe StepProcessor do
   describe '#required?' do
     it 'returns false when no required is configured' do
       step.config = { 'liquid_templates' => {} }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
       expect(step_processor.send(:required?)).to be false
     end
 
@@ -304,7 +332,7 @@ RSpec.describe StepProcessor do
           'required' => "{{row.organization | present?}}"
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:required?)).to be true
     end
@@ -315,7 +343,7 @@ RSpec.describe StepProcessor do
           'required' => "{{row.missing_field | present?}}"
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:required?)).to be false
     end
@@ -332,7 +360,7 @@ RSpec.describe StepProcessor do
           'test_condition' => "{{row.first_name | present?}}"
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:evaluate_boolean_condition, 'test_condition')).to be true
     end
@@ -343,7 +371,7 @@ RSpec.describe StepProcessor do
           'complex_condition' => "{% if row.email contains '@' and row.organization %}true{% else %}false{% endif %}"
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:evaluate_boolean_condition, 'complex_condition')).to be true
     end
@@ -356,7 +384,7 @@ RSpec.describe StepProcessor do
           'url' => 'https://api.example.com/users/{{row.first_name}}/{{row.last_name}}'
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:render_template_field, 'url')).to eq('https://api.example.com/users/John/Doe')
     end
@@ -367,7 +395,7 @@ RSpec.describe StepProcessor do
           'url' => 'https://api.example.com/users/{{row.missing_field}}'
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:render_template_field, 'url')).to eq('https://api.example.com/users/')
     end
@@ -378,13 +406,13 @@ RSpec.describe StepProcessor do
           'method' => '{{ row.http_method | default: "get" }}'
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:render_template_field, 'method')).to eq('get')
 
       # Create a new row with updated data
       updated_row = create(:row, data: row.data.merge('http_method' => 'post'))
-      step_processor = StepProcessor.new(step, updated_row)
+      step_processor = StepExecutor.new(step, updated_row)
       expect(step_processor.send(:render_template_field, 'method')).to eq('post')
     end
 
@@ -394,7 +422,7 @@ RSpec.describe StepProcessor do
           'body' => '{"user":{"name":"{{row.first_name}} {{row.last_name}}","organization":"{{row.organization}}"}}'
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:render_template_field,
                                  'body')).to eq('{"user":{"name":"John Doe","organization":"Acme Corp"}}')
@@ -406,7 +434,7 @@ RSpec.describe StepProcessor do
           'params' => '{"email":"{{row.email}}","reference":"{{row.reference | default: "unknown"}}"}'
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:render_template_field,
                                  'params')).to eq('{"email":"john.doe@example.com","reference":"unknown"}')
@@ -414,7 +442,7 @@ RSpec.describe StepProcessor do
 
     it 'returns nil when template field is not configured' do
       step.config = { 'liquid_templates' => { 'url' => 'https://example.com' } }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:render_template_field, 'nonexistent')).to be_nil
     end
@@ -430,7 +458,7 @@ RSpec.describe StepProcessor do
           'params' => '{"email":"{{row.email}}"}'
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       result = step_processor.send(:render_request_fields)
 
@@ -447,7 +475,7 @@ RSpec.describe StepProcessor do
           'method' => 'get'
         }
       }
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       result = step_processor.send(:render_request_fields)
 
@@ -457,7 +485,7 @@ RSpec.describe StepProcessor do
 
     it 'returns an empty hash when no liquid_templates are configured' do
       step.config = {}
-      step_processor = StepProcessor.new(step, row)
+      step_processor = StepExecutor.new(step, row)
 
       result = step_processor.send(:render_request_fields)
 

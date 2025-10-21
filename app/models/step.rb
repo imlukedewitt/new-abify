@@ -17,10 +17,11 @@ class Step < ApplicationRecord
   validates :config, presence: true
   validates :name, presence: true
   validates :order, presence: true, numericality: { only_integer: true, greater_than: 0 }
+  before_validation :set_default_order, on: :create
   validate :validate_config
 
   def process(row)
-    StepProcessor.call(self, row)
+    StepExecutor.call(self, row)
   end
 
   def step_config
@@ -31,6 +32,13 @@ class Step < ApplicationRecord
   end
 
   private
+
+  def set_default_order
+    return if order.present?
+
+    max_order = workflow.steps.maximum(:order) || 0
+    self.order = max_order + 1
+  end
 
   def validate_config
     if config.nil?

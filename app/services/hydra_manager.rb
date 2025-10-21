@@ -32,7 +32,7 @@ class HydraManager
   def queue(url:, method: :get, params: {}, body: nil, front: false, on_complete: nil, auth_config: nil)
     options = {
       method: method,
-      headers: { 'User-Agent' => 'Agent User', 'Content-Type' => 'application/json' }
+      headers: { 'User-Agent' => 'ABify by Luke', 'Content-Type' => 'application/json' }
     }
 
     apply_auth_config(options, auth_config) if auth_config
@@ -66,16 +66,24 @@ class HydraManager
   end
 
   def apply_auth_config(options, auth_config)
-    config = auth_config.transform_keys(&:to_sym) if auth_config.is_a?(Hash)
+    config = normalize_auth_config(auth_config)
     return unless config
 
-    auth_type = config[:type]
-    auth_type = auth_type.to_sym if auth_type.is_a?(String)
-
+    auth_type = config[:type].to_sym
     method_name = AUTH_METHODS[auth_type]
     raise ArgumentError, "Unknown auth type: #{auth_type}" unless method_name
 
     send(method_name, options, config)
+  end
+
+  def normalize_auth_config(auth_config)
+    return unless auth_config.is_a?(Hash)
+
+    config = auth_config.transform_keys(&:to_sym)
+    return unless config[:type].present?
+
+    config[:type] = config[:type].to_sym if config[:type].is_a?(String)
+    config
   end
 
   def apply_basic_auth(options, config)

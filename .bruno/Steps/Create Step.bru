@@ -1,0 +1,28 @@
+meta {
+  name: Create Step
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base}}/workflows/2/steps
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Test Step",
+    "config": {
+      "liquid_templates": {
+        "name": "Test Step",
+        "url": "{{base_url}}/api/test",
+        "method": "get"
+      }
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+}

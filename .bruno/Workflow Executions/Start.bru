@@ -1,0 +1,20 @@
+meta {
+  name: Start
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base}}/workflow_executions?workflow_id=2&data_source_id=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  workflow_id: 2
+  data_source_id: 1
+}
+
+settings {
+  encodeUrl: true
+}

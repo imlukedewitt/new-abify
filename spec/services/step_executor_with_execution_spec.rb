@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe StepProcessor, type: :service do
+RSpec.describe StepExecutor, type: :service do
   describe 'with StepExecution integration' do
     let(:step) { create(:step) }
     let(:row) { create(:row) }

@@ -1,0 +1,429 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/posts/1
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - ABify by Luke
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Fri, 17 Oct 2025 03:01:34 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '292'
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"124-yiKdLzqO5gfBrJFrcdJ8Yq0LGnU"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=C0w89epO5l%2FB9abwgyya5fAspKOBNRzzIYoUXj36LyQ%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1760670092"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=C0w89epO5l%2FB9abwgyya5fAspKOBNRzzIYoUXj36LyQ%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1760670092"
+      Server:
+      - cloudflare
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '999'
+      X-Ratelimit-Reset:
+      - '1760670117'
+      Age:
+      - '1'
+      Cf-Cache-Status:
+      - HIT
+      Cf-Ray:
+      - 98fc8d594862b162-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "userId": 1,
+          "id": 1,
+          "title": "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
+          "body": "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto"
+        }
+  recorded_at: Fri, 17 Oct 2025 03:01:34 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/nonexistent
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - ABify by Luke
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Date:
+      - Fri, 17 Oct 2025 03:01:34 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2'
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"2-vyGp6PvFo4RvsFtPoIWeCReyIC8"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=3JxwtuPMmN7uMHahlENsP9MJV9nOQCR%2BojBjZ8Do0xc%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1760670094"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=3JxwtuPMmN7uMHahlENsP9MJV9nOQCR%2BojBjZ8Do0xc%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1760670094"
+      Server:
+      - cloudflare
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '993'
+      X-Ratelimit-Reset:
+      - '1760670117'
+      Age:
+      - '0'
+      Cf-Cache-Status:
+      - HIT
+      Cf-Ray:
+      - 98fc8d599979b162-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: "{}"
+  recorded_at: Fri, 17 Oct 2025 03:01:34 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/posts/2
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - ABify by Luke
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Fri, 17 Oct 2025 03:01:34 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '278'
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"116-jnDuMpjju89+9j7e0BqkdFsVRjs"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=Q%2B1WVEUZYaVcr684iTKhtDMaHekktLfV7e%2BjrbQ%2BZMo%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1760670093"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=Q%2B1WVEUZYaVcr684iTKhtDMaHekktLfV7e%2BjrbQ%2BZMo%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1760670093"
+      Server:
+      - cloudflare
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '997'
+      X-Ratelimit-Reset:
+      - '1760670117'
+      Age:
+      - '1'
+      Cf-Cache-Status:
+      - HIT
+      Cf-Ray:
+      - 98fc8d59eab5b162-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "userId": 1,
+          "id": 2,
+          "title": "qui est esse",
+          "body": "est rerum tempore vitae\nsequi sint nihil reprehenderit dolor beatae ea dolores neque\nfugiat blanditiis voluptate porro vel nihil molestiae ut reiciendis\nqui aperiam non debitis possimus qui neque nisi nulla"
+        }
+  recorded_at: Fri, 17 Oct 2025 03:01:34 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/nonexistent
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - ABify by Luke
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Date:
+      - Fri, 17 Oct 2025 03:01:34 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2'
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"2-vyGp6PvFo4RvsFtPoIWeCReyIC8"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=3JxwtuPMmN7uMHahlENsP9MJV9nOQCR%2BojBjZ8Do0xc%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1760670094"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=3JxwtuPMmN7uMHahlENsP9MJV9nOQCR%2BojBjZ8Do0xc%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1760670094"
+      Server:
+      - cloudflare
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '993'
+      X-Ratelimit-Reset:
+      - '1760670117'
+      Age:
+      - '0'
+      Cf-Cache-Status:
+      - HIT
+      Cf-Ray:
+      - 98fc8d5a2bd3b162-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: "{}"
+  recorded_at: Fri, 17 Oct 2025 03:01:34 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/posts/3
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - ABify by Luke
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Date:
+      - Fri, 17 Oct 2025 03:01:34 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '283'
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"11b-USacuIw5a/iXAGdNKBvqr/TbMTc"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=Q%2B1WVEUZYaVcr684iTKhtDMaHekktLfV7e%2BjrbQ%2BZMo%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1760670093"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=Q%2B1WVEUZYaVcr684iTKhtDMaHekktLfV7e%2BjrbQ%2BZMo%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1760670093"
+      Server:
+      - cloudflare
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '995'
+      X-Ratelimit-Reset:
+      - '1760670117'
+      Age:
+      - '0'
+      Cf-Cache-Status:
+      - HIT
+      Cf-Ray:
+      - 98fc8d5a7cfdb162-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "userId": 1,
+          "id": 3,
+          "title": "ea molestias quasi exercitationem repellat qui ipsa sit aut",
+          "body": "et iusto sed quo iure\nvoluptatem occaecati omnis eligendi aut ad\nvoluptatem doloribus vel accusantium quis pariatur\nmolestiae porro eius odio et labore et velit aut"
+        }
+  recorded_at: Fri, 17 Oct 2025 03:01:34 GMT
+- request:
+    method: get
+    uri: https://jsonplaceholder.typicode.com/nonexistent
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - ABify by Luke
+      Content-Type:
+      - application/json
+      Expect:
+      - ''
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Date:
+      - Fri, 17 Oct 2025 03:01:34 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '2'
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Cache-Control:
+      - max-age=43200
+      Etag:
+      - W/"2-vyGp6PvFo4RvsFtPoIWeCReyIC8"
+      Expires:
+      - "-1"
+      Nel:
+      - '{"report_to":"heroku-nel","response_headers":["Via"],"max_age":3600,"success_fraction":0.01,"failure_fraction":0.1}'
+      Pragma:
+      - no-cache
+      Report-To:
+      - '{"group":"heroku-nel","endpoints":[{"url":"https://nel.heroku.com/reports?s=3JxwtuPMmN7uMHahlENsP9MJV9nOQCR%2BojBjZ8Do0xc%3D\u0026sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d\u0026ts=1760670094"}],"max_age":3600}'
+      Reporting-Endpoints:
+      - heroku-nel="https://nel.heroku.com/reports?s=3JxwtuPMmN7uMHahlENsP9MJV9nOQCR%2BojBjZ8Do0xc%3D&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&ts=1760670094"
+      Server:
+      - cloudflare
+      Vary:
+      - Origin, Accept-Encoding
+      Via:
+      - 2.0 heroku-router
+      X-Content-Type-Options:
+      - nosniff
+      X-Powered-By:
+      - Express
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Remaining:
+      - '993'
+      X-Ratelimit-Reset:
+      - '1760670117'
+      Age:
+      - '0'
+      Cf-Cache-Status:
+      - HIT
+      Cf-Ray:
+      - 98fc8d5aadf2b162-DFW
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: "{}"
+  recorded_at: Fri, 17 Oct 2025 03:01:34 GMT
+recorded_with: VCR 6.3.1

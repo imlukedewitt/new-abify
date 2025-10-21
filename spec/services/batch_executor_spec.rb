@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe BatchProcessor do
+RSpec.describe BatchExecutor do
   subject(:processor) { described_class.new(batch: batch_object, workflow: workflow) }
 
   let(:batch_object) { build(:batch) }
@@ -11,7 +11,7 @@ RSpec.describe BatchProcessor do
   describe "#initialize" do
     it "creates a new instance with a batch and workflow" do
       processor = described_class.new(batch: batch_object, workflow: workflow)
-      expect(processor).to be_a(BatchProcessor)
+      expect(processor).to be_a(BatchExecutor)
     end
 
     it "stores the batch and workflow as attributes" do
@@ -61,7 +61,7 @@ RSpec.describe BatchProcessor do
       allow(execution_double).to receive(:complete?).and_return(true)
 
       row_processor_doubles = rows.map do
-        instance_double(RowProcessor)
+        instance_double(RowExecutor)
       end
 
       expect(execution_double).to receive(:start!).ordered
@@ -69,7 +69,7 @@ RSpec.describe BatchProcessor do
       rows.each_with_index do |row, index|
         row_processor_double = row_processor_doubles[index]
 
-        expect(RowProcessor).to receive(:new)
+        expect(RowExecutor).to receive(:new)
           .with(row: row, workflow: workflow)
           .and_return(row_processor_double)
           .ordered
@@ -89,11 +89,11 @@ RSpec.describe BatchProcessor do
       allow(execution_double).to receive(:complete?).and_return(true)
       allow(batch_object).to receive(:processing_mode).and_return("parallel")
 
-      row_processor_doubles = rows.map { instance_double(RowProcessor) }
+      row_processor_doubles = rows.map { instance_double(RowExecutor) }
 
       rows.each_with_index do |row, index|
         row_processor_double = row_processor_doubles[index]
-        expect(RowProcessor).to receive(:new)
+        expect(RowExecutor).to receive(:new)
           .with(row: row, workflow: workflow)
           .and_return(row_processor_double)
         expect(row_processor_double).to receive(:call)

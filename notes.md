@@ -3,10 +3,11 @@
   - update 2025-09-01: good enough for now, can add per-workflow file logging later
 - [x] after a request completes, we should store the info somewhere that makes sense. in the row execution?
    - update 2025-09-01: nah, it gets stored in the row data. not going to persist all the extra info for now
-- [ ] controller to create data sources
+- [x] controller to create data sources
 - [ ] need a controller to make workflows, and everything that entails
   - take a data source
   - can just take a json for the config for now. in the future we can parse user-provided yaml/json and do all the liquid validation
+- [ ] dont store api credentials in plaintext
 
 # Later
 - [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
@@ -20,28 +21,28 @@ structure idea
 
 WorkflowExecution is AKA "An Import" or "A Run". It has a DataSource (a series of Rows), and a Worflow (a series of WorkflowSteps)
 
-WorkflowExecutor creates a BatchProcessor and RowProcessor for each row in the data
+WorkflowExecutor creates a BatchExecutor and RowExecutor for each row in the data
 - has a data_source
 - has a workflow
 - the workflow has steps
 - has a method to start the execution
 
-RowProcessor processes a single row through all workflow steps
-- Uses StepProcessor for each individual step
+RowExecutor processes a single row through all workflow steps
+- Uses StepExecutor for each individual step
 - Handles step completion and row updates
 - Manages step sequencing
 
-StepProcessor
-- processes the liquid syntax through LiquidProcessor
+StepExecutor
+- processes the liquid syntax through Liquid::Processor
 - handles hydra request queueing via HydraManager
 - evaluates skip conditions
 - extracts success data from responses
 
-BatchProcessor
+BatchExecutor
 - Handles grouping of rows
 - Manages batch execution ordering
 
-LiquidProcessor and ContextBuilder
+Liquid::Processor and ContextBuilder
 - Handles all liquid template processing
 - Builds contexts for liquid template evaluation
 - Custom workflow filters for template processing

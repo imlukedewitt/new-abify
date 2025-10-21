@@ -36,16 +36,14 @@ module DataSources
     end
 
     def process_csv_from_io(io)
-      index = 1
       begin
         CSV.new(
           io,
           headers: true,
           header_converters: ->(h) { h.downcase.strip },
           encoding: 'utf-8'
-        ).each do |csv_row|
+        ).each.with_index(1) do |csv_row, index|
           build_row(csv_row.to_h, index)
-          index += 1
         end
       rescue CSV::MalformedCSVError => e
         raise CSV::MalformedCSVError, "Malformed CSV: #{e.message}"

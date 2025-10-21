@@ -31,9 +31,9 @@ RSpec.describe WorkflowExecutor do
     let(:batch_b) { instance_double(Batch, id: 2) }
     let(:batch_ungrouped) { instance_double(Batch, id: 3) }
 
-    let(:batch_processor_a) { instance_double(BatchProcessor, call: true) }
-    let(:batch_processor_b) { instance_double(BatchProcessor, call: true) }
-    let(:batch_processor_ungrouped) { instance_double(BatchProcessor, call: true) }
+    let(:batch_processor_a) { instance_double(BatchExecutor, call: true) }
+    let(:batch_processor_b) { instance_double(BatchExecutor, call: true) }
+    let(:batch_processor_ungrouped) { instance_double(BatchExecutor, call: true) }
 
     let(:rows_relation) do
       double('ActiveRecord::Relation', update_all: true).tap do |relation|
@@ -60,11 +60,11 @@ RSpec.describe WorkflowExecutor do
     before do
       allow(workflow).to receive(:config).and_return(workflow_config) # TODO: Assumes workflow_config is defined in including context
       allow(data_source).to receive(:rows).and_return(rows_relation)
-      allow(BatchProcessor).to receive(:new).with(batch: batch_a,
+      allow(BatchExecutor).to receive(:new).with(batch: batch_a,
                                                   workflow: workflow).and_return(batch_processor_a)
-      allow(BatchProcessor).to receive(:new).with(batch: batch_b,
+      allow(BatchExecutor).to receive(:new).with(batch: batch_b,
                                                   workflow: workflow).and_return(batch_processor_b)
-      allow(BatchProcessor).to receive(:new).with(batch: batch_ungrouped,
+      allow(BatchExecutor).to receive(:new).with(batch: batch_ungrouped,
                                                   workflow: workflow).and_return(batch_processor_ungrouped)
     end
 
@@ -130,7 +130,7 @@ RSpec.describe WorkflowExecutor do
     end
 
     context 'when workflow has no batching configuration' do
-      let(:batch_processor_double) { instance_double(BatchProcessor, call: true) }
+      let(:batch_processor_double) { instance_double(BatchExecutor, call: true) }
       let(:batch_double) { instance_double(Batch, id: 123) }
 
       before do
@@ -142,7 +142,7 @@ RSpec.describe WorkflowExecutor do
             workflow_execution: workflow_execution
           )
         ).and_return(batch_double)
-        allow(BatchProcessor).to receive(:new).with(batch: batch_double,
+        allow(BatchExecutor).to receive(:new).with(batch: batch_double,
                                                     workflow: workflow).and_return(batch_processor_double)
       end
 
@@ -174,7 +174,7 @@ RSpec.describe WorkflowExecutor do
 
         allow(Batch).to receive(:create!).and_return(instance_double(Batch, id: 999))
         rows.each { |r| allow(r).to receive(:update!) }
-        allow(BatchProcessor).to receive(:new).and_return(instance_double(BatchProcessor, call: true))
+        allow(BatchExecutor).to receive(:new).and_return(instance_double(BatchExecutor, call: true))
 
         workflow_executor.call
       end
@@ -266,11 +266,11 @@ RSpec.describe WorkflowExecutor do
         end
 
         def setup_batch_processor_mocks
-          sort_batch_processor_a = instance_double(BatchProcessor, call: true)
-          sort_batch_processor_b = instance_double(BatchProcessor, call: true)
-          allow(BatchProcessor).to receive(:new).with(batch: @sort_batch_a, workflow: workflow)
+          sort_batch_processor_a = instance_double(BatchExecutor, call: true)
+          sort_batch_processor_b = instance_double(BatchExecutor, call: true)
+          allow(BatchExecutor).to receive(:new).with(batch: @sort_batch_a, workflow: workflow)
                                                 .and_return(sort_batch_processor_a)
-          allow(BatchProcessor).to receive(:new).with(batch: @sort_batch_b, workflow: workflow)
+          allow(BatchExecutor).to receive(:new).with(batch: @sort_batch_b, workflow: workflow)
                                                 .and_return(sort_batch_processor_b)
         end
 

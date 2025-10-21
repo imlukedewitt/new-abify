@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe BatchProcessor, :integration, :vcr do
+RSpec.describe BatchExecutor, :integration, :vcr do
   let(:workflow) { create(:workflow) }
 
   let!(:step1) do

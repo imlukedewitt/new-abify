@@ -19,6 +19,7 @@ class WorkflowConfigValidator
   CONNECTION_KEYS = %w[
     subdomain
     domain
+    auth
   ].freeze
 
   def initialize(config)
@@ -107,7 +108,7 @@ class WorkflowConfigValidator
       value = connection[key]
       next if value.nil?
 
-      errors << "workflow.connection.#{key} must be a string" unless value.is_a?(String)
+      errors << "workflow.connection.#{key} must be a string" unless value.is_a?(String) || value.is_a?(Hash)
     end
   end
 
