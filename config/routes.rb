@@ -15,7 +15,7 @@ Rails.application.routes.draw do
   # root "posts#index"
   resources :workflow_executions, only: [:create]
   resources :data_sources, only: %i[create index]
-  resources :workflows, only: [:create] do
+  resources :workflows, only: %i[create index show] do
     resources :steps, only: [:create]
   end
 end
