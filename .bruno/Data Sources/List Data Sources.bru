@@ -1,0 +1,27 @@
+meta {
+  name: List Data Sources
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base}}/data_sources
+  body: multipartForm
+  auth: inherit
+}
+
+body:form-urlencoded {
+  file: 
+}
+
+body:multipart-form {
+  source: @file()
+}
+
+body:file {
+  file: @file()
+}
+
+settings {
+  encodeUrl: true
+}
