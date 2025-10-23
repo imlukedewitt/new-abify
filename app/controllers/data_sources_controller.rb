@@ -8,4 +8,9 @@ class DataSourcesController < ApplicationController
   rescue DataSources::Builder::InvalidSourceError => e
     render json: { error: "Invalid data source: #{e.message}" }, status: :bad_request
   end
+
+  def index
+    data_sources = DataSource.find_each.to_a
+    render json: { data_sources: data_sources }
+  end
 end

@@ -59,4 +59,25 @@ RSpec.describe DataSourcesController, type: :controller do
       end
     end
   end
+
+  describe 'GET #index' do
+    let!(:data_source_1) { create(:data_source) }
+    let!(:data_source_2) { create(:data_source) }
+
+    it 'lists the data sources' do
+      get :index
+      expect(response).to be_successful
+
+      json_response = JSON.parse(response.body)
+      data_sources = json_response['data_sources']
+      expect(data_sources).to be_a(Array)
+      expect(data_sources.count).to equal(2)
+      expect(data_sources.map { |ds| ds['id'] }).to match_array(
+        [
+          data_source_1.id,
+          data_source_2.id
+        ]
+      )
+    end
+  end
 end
