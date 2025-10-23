@@ -1,0 +1,10 @@
+name: read workflow
+url: $BASE/workflows/:id
+params:
+- name: include_steps
+  value: 'true'
+- name: include_config
+  value: 'false'
+path_params:
+- name: id
+  value: '2'

@@ -1,0 +1,7 @@
+name: List workflows
+url: $BASE/workflows
+params:
+- name: include_steps
+  value: 'true'
+- name: include_config
+  value: 'false'
