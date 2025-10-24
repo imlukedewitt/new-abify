@@ -75,4 +75,19 @@ RSpec.describe WorkflowsController, type: :controller do
       end
     end
   end
+
+  describe 'GET #index' do
+    let!(:workflow_1) { create(:workflow) }
+    let!(:workflow_2) { create(:workflow) }
+
+    it 'returns all workflows' do
+      get :index
+      expect(response).to be_successful
+      json_response = JSON.parse(response.body, symbolize_names: true)
+      expect(json_response).to be_a(Hash)
+      expect(json_response[:workflows]).to be_an(Array)
+      workflows = json_response[:workflows]
+      expect(workflows.count).to eq(2)
+    end
+  end
 end
