@@ -15,8 +15,7 @@ class WorkflowsController < ApplicationController
   def index
     workflows = Workflow.all
     workflows = workflows.includes(:steps) if include_steps
-    serialized_data = serialize_workflows(workflows)
-    render json: { workflows: serialized_data }
+    render json: { workflows: serialize_workflows(workflows) }
   end
 
   def show
