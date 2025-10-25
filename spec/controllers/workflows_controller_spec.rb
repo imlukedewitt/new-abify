@@ -75,4 +75,47 @@ RSpec.describe WorkflowsController, type: :controller do
       end
     end
   end
+
+  describe 'GET #index' do
+    let!(:workflow_1) { create(:workflow) }
+    let!(:workflow_2) { create(:workflow) }
+
+    it 'returns all workflows' do
+      get :index
+      expect(response).to be_successful
+      json_response = JSON.parse(response.body, symbolize_names: true)
+
+      expect(json_response).to be_a(Hash)
+      expect(json_response[:workflows]).to be_an(Array)
+      workflows = json_response[:workflows]
+      expect(workflows.count).to eq(2)
+      expect(workflows.pluck(:id)).to eq([workflow_1.id, workflow_2.id])
+    end
+  end
+
+  describe 'GET #show' do
+    let!(:workflow) { create(:workflow) }
+    let(:response) { get :show, params: { id: id } }
+
+    context 'with a valid workflow id' do
+      let(:id) { workflow.id }
+      it 'returns the workflow' do
+        expect(response).to be_successful
+        json_response = JSON.parse(response.body, symbolize_names: true)
+        expect(json_response[:workflow][:id]).to eq(workflow.id)
+      end
+    end
+
+    context "with an invalid workflow id" do
+      let(:id) { 1337 }
+      it 'returns an error' do
+        expect(response.status).to eq(400)
+        expect(JSON.parse(response.body)).to eq(
+          {
+            "errors" => "Couldn't find Workflow with 'id'=1337"
+          }
+        )
+      end
+    end
+  end
 end
