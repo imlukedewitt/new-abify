@@ -13,4 +13,9 @@ class DataSourcesController < ApplicationController
     data_sources = DataSource.find_each.to_a
     render json: { data_sources: data_sources }
   end
+
+  def show
+    data_source = DataSource.find(params[:id])
+    render json: { data_source: data_source }
+  end
 end
