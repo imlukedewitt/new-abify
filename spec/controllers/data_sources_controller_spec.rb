@@ -80,4 +80,23 @@ RSpec.describe DataSourcesController, type: :controller do
       )
     end
   end
+
+  describe 'GET #show' do
+    let!(:data_source) { create(:data_source) }
+
+    it 'retrieves a data source' do
+      get :show, params: { id: data_source.id }
+      expect(response).to be_successful
+
+      json_response = JSON.parse(response.body)
+      retrieved_data_source = json_response['data_source']
+      expect(retrieved_data_source).to be_a(Hash)
+      expect(retrieved_data_source['id']).to eq(data_source.id)
+    end
+
+    it 'returns not found when the data source does not exist' do
+      get :show, params: { id: -1 }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

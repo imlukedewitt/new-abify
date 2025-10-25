@@ -1,0 +1,15 @@
+meta {
+  name: Read data source
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base}}/data_sources/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}

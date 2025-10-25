@@ -1,0 +1,15 @@
+meta {
+  name: Create CSV Data Source
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base}}/data_sources
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  source: @file(/Users/luke/Documents/sandbox/new-abify/data/testcx-10.csv)
+}

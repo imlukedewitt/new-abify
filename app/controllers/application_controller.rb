@@ -4,4 +4,8 @@ class ApplicationController < ActionController::Base
 
   # Disable CSRF protection for API requests (for Postman testing)
   protect_from_forgery with: :null_session
+
+  rescue_from ActiveRecord::RecordNotFound do
+    render json: { error: 'Not Found' }, status: :not_found
+  end
 end

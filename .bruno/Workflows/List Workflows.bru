@@ -1,0 +1,16 @@
+meta {
+  name: List workflows
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base}}/workflows?include_config=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  include_config: true
+  ~include_steps: true
+}
