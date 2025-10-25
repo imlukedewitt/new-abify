@@ -1,0 +1,6 @@
+name: Create workflow step
+method: POST
+url: $BASE/workflows/:workflow_id/steps
+path_params:
+- name: workflow_id
+  value: '2'

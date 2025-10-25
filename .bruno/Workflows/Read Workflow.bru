@@ -1,0 +1,20 @@
+meta {
+  name: read workflow
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base}}/workflows/:id?include_steps=true&include_config=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  include_steps: true
+  include_config: true
+}
+
+params:path {
+  id: 2
+}

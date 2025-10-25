@@ -1,13 +1,17 @@
 meta {
-  name: Create Step
+  name: Create Workflow Step
   type: http
   seq: 1
 }
 
 post {
-  url: {{base}}/workflows/2/steps
+  url: {{base}}/workflows/:workflow_id/steps
   body: json
   auth: inherit
+}
+
+params:path {
+  workflow_id: 2
 }
 
 body:json {
@@ -25,4 +29,5 @@ body:json {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

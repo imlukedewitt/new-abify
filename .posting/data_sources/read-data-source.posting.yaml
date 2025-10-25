@@ -1,0 +1,5 @@
+name: Read data source
+url: $BASE/data_sources/:id
+path_params:
+- name: id
+  value: '1'

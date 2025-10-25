@@ -1,0 +1,11 @@
+name: Create CSV Data Source
+method: POST
+url: $BASE/data_sources
+body:
+  form_data:
+  - name: source
+    value: '@file(/Users/luke/Documents/sandbox/new-abify/data/testcx-10.csv)'
+  content_type: application/x-www-form-urlencoded
+headers:
+- name: content-type
+  value: application/x-www-form-urlencoded

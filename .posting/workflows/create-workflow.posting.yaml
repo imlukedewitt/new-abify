@@ -1,0 +1,9 @@
+name: Create workflow
+url: $BASE/workflows
+method: POST
+body:
+  name: test workflow
+  config:
+    connection:
+      subdomain: test
+      domain: example.com
