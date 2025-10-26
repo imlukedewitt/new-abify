@@ -2,6 +2,7 @@
 
 ## WorkflowsController
 class WorkflowsController < ApplicationController
+  include Serializable
   def create
     workflow = Workflow.new(workflow_params)
 
@@ -15,12 +16,12 @@ class WorkflowsController < ApplicationController
   def index
     workflows = Workflow.all
     workflows = workflows.includes(:steps) if include_steps
-    render json: { workflows: serialize_workflows(workflows) }
+    render json: { workflows: serialize_collection(workflows, serialization_options) }
   end
 
   def show
     workflow = Workflow.find(params[:id])
-    render json: { workflow: serialize_workflow(workflow) }
+    render json: { workflow: serialize(workflow, serialization_options) }
   rescue ActiveRecord::RecordNotFound => e
     render json: { errors: e }, status: :bad_request
   end
@@ -31,33 +32,11 @@ class WorkflowsController < ApplicationController
     params.permit(:name, config: {})
   end
 
-  def serialize_workflows(workflows)
-    workflows.map do |workflow|
-      serialize_workflow(workflow)
-    end
-  end
-
-  def serialize_workflow(workflow)
+  def serialization_options
     {
-      id: workflow.id,
-      name: workflow.name,
-      created_at: workflow.created_at,
-      updated_at: workflow.updated_at
-    }.tap do |the|
-      the[:steps] = serialize_steps(workflow.steps) if include_steps
-      the[:config] = workflow.config if include_config
-    end
-  end
-
-  def serialize_steps(steps)
-    steps.map do |step|
-      {
-        id: step.id,
-        name: step.name,
-        url: step.config["liquid_templates"]["url"],
-        method: step.config["liquid_templates"]["method"]
-      }
-    end
+      include_steps: include_steps,
+      include_config: include_config
+    }
   end
 
   def include_steps
