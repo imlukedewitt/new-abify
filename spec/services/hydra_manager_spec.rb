@@ -56,21 +56,6 @@ RSpec.describe HydraManager do
       expect(request.options[:headers]['Authorization']).to be_nil
     end
 
-    it 'uses basic auth credentials from environment when env_key is provided' do
-      manager = HydraManager.instance
-      auth_config = { type: :basic, env_key: 'TEST_DB', username: 'default_user', password: 'default_pass' }
-
-      allow(ENV).to receive(:[]).with('AUTH_BASIC_USER_TEST_DB').and_return('env_username')
-      allow(ENV).to receive(:[]).with('AUTH_BASIC_PASS_TEST_DB').and_return('env_password')
-
-      request = manager.queue(
-        url: 'https://api.example.com/users',
-        auth_config: auth_config
-      )
-
-      expect(request.options[:userpwd]).to eq('env_username:env_password')
-    end
-
     it 'sets bearer token when auth_config is provided with type :bearer' do
       manager = HydraManager.instance
       auth_config = { type: :bearer, token: 'secrettoken123' }

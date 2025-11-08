@@ -3,13 +3,12 @@
 require 'rails_helper'
 
 RSpec.describe StepExecutor do
-  let(:auth_config) { { type: :basic, username: 'abc123', password: 'x' } }
   let(:workflow) { create(:workflow) }
   let(:step) { create(:step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:on_complete) { -> { puts 'done' } }
   let(:hydra_manager) { instance_double(HydraManager) }
-  let(:default_options) { { on_complete: on_complete, auth_config: auth_config, hydra_manager: hydra_manager } }
+  let(:default_options) { { on_complete: on_complete, hydra_manager: hydra_manager } }
   let(:step_processor) { described_class.new(step, row, **default_options) }
 
   before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
@@ -45,17 +44,7 @@ RSpec.describe StepExecutor do
     end
 
     context 'with auth configuration' do
-      it 'uses workflow connection credentials when available' do
-        user = create(:user)
-        connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'connection_token' })
-        workflow_with_connection = create(:workflow, connection: connection)
-        step_without_auth = create(:step, workflow: workflow_with_connection)
-        processor = described_class.new(step_without_auth, row)
-        expect(processor.instance_variable_get(:@auth_config)).to eq({ 'type' => 'bearer',
-                                                                       'token' => 'connection_token' })
-      end
-
-      it 'falls back to workflow config auth when no connection is available' do
+      it 'uses workflow config auth' do
         workflow_with_auth = create(
           :workflow, config: {
             'connection' => {

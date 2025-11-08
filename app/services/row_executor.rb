@@ -54,8 +54,7 @@ class RowExecutor
       row,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
-      priority: @execution.processing?, # prioritize completing in-progress rows
-      auth_config: current_step.config&.dig('auth')
+      priority: @execution.processing? # prioritize completing in-progress rows
     )
 
     if @current_step_executor.should_skip?
