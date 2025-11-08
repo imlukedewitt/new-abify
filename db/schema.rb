@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_14_200844) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -29,6 +29,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_200844) do
     t.string "processing_mode"
     t.integer "workflow_execution_id"
     t.index ["workflow_execution_id"], name: "index_batches_on_workflow_execution_id"
+  end
+
+  create_table "connections", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name", null: false
+    t.string "handle", null: false
+    t.text "credentials", null: false
+    t.string "subdomain"
+    t.string "domain"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "handle"], name: "index_connections_on_user_id_and_handle", unique: true
+    t.index ["user_id"], name: "index_connections_on_user_id"
   end
 
   create_table "data_sources", force: :cascade do |t|
@@ -118,11 +131,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_200844) do
     t.datetime "updated_at", null: false
     t.json "config"
     t.string "name"
+    t.integer "connection_id"
+    t.index ["connection_id"], name: "index_workflows_on_connection_id"
   end
 
   add_foreign_key "batch_executions", "batches"
   add_foreign_key "batch_executions", "workflows"
   add_foreign_key "batches", "workflow_executions"
+  add_foreign_key "connections", "users"
   add_foreign_key "row_executions", "rows"
   add_foreign_key "rows", "batches"
   add_foreign_key "rows", "data_sources"
@@ -132,4 +148,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_14_200844) do
   add_foreign_key "steps", "workflows"
   add_foreign_key "workflow_executions", "data_sources"
   add_foreign_key "workflow_executions", "workflows"
+  add_foreign_key "workflows", "connections", on_delete: :nullify
 end

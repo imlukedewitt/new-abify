@@ -1,0 +1,16 @@
+meta {
+  name: List Connections
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base}}/connections
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~user_id: 1
+}
+

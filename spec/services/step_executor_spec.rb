@@ -21,7 +21,6 @@ RSpec.describe StepExecutor do
       expect(step_processor.config).to eq(step.config.with_indifferent_access)
       expect(step_processor.instance_variable_get(:@hydra_manager)).to eq(hydra_manager)
       expect(step_processor.instance_variable_get(:@on_complete)).to eq(on_complete)
-      expect(step_processor.instance_variable_get(:@auth_config)).to eq(auth_config)
       expect(step_processor.instance_variable_get(:@priority)).to be false
     end
 
@@ -46,13 +45,17 @@ RSpec.describe StepExecutor do
     end
 
     context 'with auth configuration' do
-      it 'prioritizes explicitly passed auth_config' do
-        explicit_auth = { type: :custom, token: 'explicit_token' }
-        processor = described_class.new(step, row, auth_config: explicit_auth)
-        expect(processor.instance_variable_get(:@auth_config)).to eq(explicit_auth)
+      it 'uses workflow connection credentials when available' do
+        user = create(:user)
+        connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'connection_token' })
+        workflow_with_connection = create(:workflow, connection: connection)
+        step_without_auth = create(:step, workflow: workflow_with_connection)
+        processor = described_class.new(step_without_auth, row)
+        expect(processor.instance_variable_get(:@auth_config)).to eq({ 'type' => 'bearer',
+                                                                       'token' => 'connection_token' })
       end
 
-      it 'falls back to workflow config auth when no step auth config is available' do
+      it 'falls back to workflow config auth when no connection is available' do
         workflow_with_auth = create(
           :workflow, config: {
             'connection' => {
@@ -93,11 +96,11 @@ RSpec.describe StepExecutor do
                              'name' => 'Test Step',
                              'url' => 'https://api.example.com/test',
                              'method' => 'get',
-                             'success_data' => {} # Ensure no success data is processed
+                             'success_data' => {}
                            }
                          })
       callback_spy = spy('callback')
-      processor = described_class.new(test_step, row, on_complete: callback_spy, auth_config: auth_config)
+      processor = described_class.new(test_step, row, on_complete: callback_spy)
 
       request_fields = processor.send(:render_request_fields)
 
@@ -105,7 +108,6 @@ RSpec.describe StepExecutor do
         .with(
           hash_including(
             **request_fields,
-            auth_config: auth_config,
             front: false,
             on_complete: kind_of(Proc)
           )
@@ -131,7 +133,7 @@ RSpec.describe StepExecutor do
                          })
       callback_spy = spy('callback')
       processor = described_class.new(test_step, row, **default_options.except(:hydra_manager),
-        on_complete: callback_spy, auth_config: auth_config, priority: true)
+        on_complete: callback_spy, priority: true)
 
       request_fields = processor.send(:render_request_fields)
 
@@ -139,7 +141,6 @@ RSpec.describe StepExecutor do
         .with(
           hash_including(
             **request_fields,
-            auth_config: auth_config,
             front: true,
             on_complete: kind_of(Proc)
           )
@@ -387,6 +388,37 @@ RSpec.describe StepExecutor do
       step_processor = StepExecutor.new(step, row)
 
       expect(step_processor.send(:render_template_field, 'url')).to eq('https://api.example.com/users/John/Doe')
+    end
+
+    it 'allows accessing connection base_url in templates' do
+      user = create(:user)
+      connection = create(:connection, user: user, subdomain: 'mycompany', domain: 'salesforce.com')
+      workflow_with_connection = create(:workflow, connection: connection)
+      step_with_connection = create(:step, workflow: workflow_with_connection, config: {
+                                      'liquid_templates' => {
+                                        'name' => 'Test Step',
+                                        'url' => '{{connection.base_url}}/services/data/v57.0/sobjects/Account'
+                                      }
+                                    })
+      step_processor = StepExecutor.new(step_with_connection, row)
+
+      expect(step_processor.send(:render_template_field,
+                                 'url')).to eq('https://mycompany.salesforce.com/services/data/v57.0/sobjects/Account')
+    end
+
+    it 'allows accessing connection subdomain and domain separately' do
+      user = create(:user)
+      connection = create(:connection, user: user, subdomain: 'acme', domain: 'my-app.io')
+      workflow_with_connection = create(:workflow, connection: connection)
+      step_with_connection = create(:step, workflow: workflow_with_connection, config: {
+                                      'liquid_templates' => {
+                                        'name' => 'Test Step',
+                                        'url' => 'https://{{connection.subdomain}}.{{connection.domain}}/api/v1/users'
+                                      }
+                                    })
+      step_processor = StepExecutor.new(step_with_connection, row)
+
+      expect(step_processor.send(:render_template_field, 'url')).to eq('https://acme.my-app.io/api/v1/users')
     end
 
     it 'handles missing variables in URL template' do

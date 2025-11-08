@@ -29,7 +29,7 @@ class WorkflowsController < ApplicationController
   private
 
   def workflow_params
-    params.permit(:name, config: {})
+    params.permit(:name, :connection_id, config: {})
   end
 
   def serialization_options

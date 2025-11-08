@@ -1,0 +1,22 @@
+meta {
+  name: Create Workflow with Connection
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Salesforce Sync Workflow"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

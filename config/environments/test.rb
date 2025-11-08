@@ -41,4 +41,9 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = true
 
   config.log_level = :info
+
+  # Configure Active Record encryption for tests
+  config.active_record.encryption.primary_key = "test_primary_key_for_encryption"
+  config.active_record.encryption.deterministic_key = "test_deterministic_key_for_encryption"
+  config.active_record.encryption.key_derivation_salt = "test_key_derivation_salt"
 end

@@ -1,10 +1,17 @@
-# Authentication Configuration in HydraManager
+# Authentication Configuration
 
-The `HydraManager` class supports various authentication methods when making API requests. This document explains how to configure authentication, particularly focusing on how to secure sensitive credentials using environment variables.
+This document explains how to configure authentication for API requests in workflows, including the new `Connection` model for managing encrypted credentials.
+
+## Overview
+
+There are two ways to configure authentication:
+
+1. **Connection Model (Recommended)**: Create reusable, encrypted connection objects
+2. **Workflow Config (Legacy)**: Store auth directly in workflow config JSON
 
 ## Authentication Methods
 
-HydraManager supports the following authentication methods:
+The following authentication methods are supported:
 
 1. **Basic Authentication** (`type: :basic`)
 2. **Bearer Token Authentication** (`type: :bearer`)
@@ -12,9 +19,56 @@ HydraManager supports the following authentication methods:
 4. **OAuth2 Authentication** (`type: :oauth2`)
 5. **Custom Header Authentication** (`type: :custom`)
 
-## Using Environment Variables for Authentication
+## Using the Connection Model (Recommended)
 
-For sensitive credentials like API keys and tokens, it's recommended to use environment variables rather than hardcoding them in your configuration.
+The `Connection` model stores encrypted credentials that can be reused across multiple workflows.
+
+### Creating a Connection
+
+```ruby
+user = User.find(1)
+
+connection = Connection.create(
+  user: user,
+  name: "Salesforce Production",
+  handle: "salesforce_prod",  # Used to reference in configs
+  credentials: {
+    type: 'bearer',
+    token: 'your_secret_token'
+  }
+)
+```
+
+### Using a Connection in a Workflow
+
+```ruby
+workflow = Workflow.create(
+  name: "Sync Leads",
+  connection: connection  # Reference the connection
+)
+```
+
+That's it! All steps in the workflow will automatically use the connection's credentials.
+
+### Benefits
+
+- **Encrypted Storage**: Credentials are encrypted using Rails' built-in encryption
+- **Reusable**: Use the same connection across multiple workflows
+- **Centralized Management**: Update credentials in one place
+- **User-scoped**: Each user manages their own connections
+
+### Handle Format
+
+Connection handles must:
+- Start with a lowercase letter
+- Contain only lowercase letters, numbers, and underscores
+- Be unique per user
+
+Examples: `salesforce_prod`, `slack_workspace`, `api_key_123`
+
+## Using Environment Variables for Authentication (Alternative)
+
+For system-level integrations or self-hosted deployments, you can use environment variables.
 
 ### Environment Variable Format
 
@@ -122,3 +176,32 @@ AUTH_BEARER_GITHUB_API=gh_token_123456
 AUTH_APIKEY_WEATHER_SERVICE=weather_api_key_789
 AUTH_OAUTH_AUTH0_SERVICE=oauth_token_abc123
 ```
+
+## Legacy: Workflow Config Auth (Backwards Compatible)
+
+You can still store auth directly in workflow config (not encrypted):
+
+```ruby
+workflow.config = {
+  'connection' => {
+    'auth' => {
+      'type' => 'bearer',
+      'token' => 'your_token'
+    }
+  }
+}
+```
+
+**Note**: This method is deprecated in favor of the Connection model for better security and reusability.
+
+## Authentication Resolution Priority
+
+When executing a workflow step, authentication is resolved in this order:
+
+1. **Explicit auth_config parameter** (if passed to StepExecutor)
+2. **Step-level config auth** (in step.config['auth'])
+3. **Workflow connection** (workflow.connection.credentials)
+4. **Workflow config auth** (workflow.config['connection']['auth'])
+5. **Empty hash** (no authentication)
+
+This allows for flexible auth configuration at different levels.

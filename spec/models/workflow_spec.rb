@@ -15,6 +15,12 @@ RSpec.describe Workflow, type: :model do
       expect(association.macro).to eq :has_many
       expect(association.options[:dependent]).to eq :restrict_with_error
     end
+
+    it 'belongs to connection (optional)' do
+      association = described_class.reflect_on_association(:connection)
+      expect(association.macro).to eq :belongs_to
+      expect(association.options[:optional]).to eq true
+    end
   end
 
   describe 'validations' do
@@ -220,6 +226,74 @@ RSpec.describe Workflow, type: :model do
                          })
         expect(workflow).to be_valid
       end
+    end
+  end
+
+  describe '#resolved_auth_config' do
+    let(:user) { create(:user) }
+
+    context 'when workflow has a connection' do
+      it 'returns the connection credentials' do
+        connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'conn_token' })
+        workflow = create(:workflow, connection: connection)
+
+        expect(workflow.resolved_auth_config).to eq({ 'type' => 'bearer', 'token' => 'conn_token' })
+      end
+    end
+
+    context 'when workflow has no connection but has auth in config' do
+      it 'returns auth from config (backwards compatibility)' do
+        workflow = create(:workflow, config: {
+                            'connection' => {
+                              'auth' => { 'type' => 'basic', 'username' => 'user', 'password' => 'pass' }
+                            }
+                          })
+
+        expect(workflow.resolved_auth_config).to eq({ 'type' => 'basic', 'username' => 'user', 'password' => 'pass' })
+      end
+    end
+
+    context 'when workflow has both connection and config auth' do
+      it 'prioritizes connection over config' do
+        connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'conn_token' })
+        workflow = create(:workflow, connection: connection, config: {
+                            'connection' => {
+                              'auth' => { 'type' => 'basic', 'username' => 'user', 'password' => 'pass' }
+                            }
+                          })
+
+        expect(workflow.resolved_auth_config).to eq({ 'type' => 'bearer', 'token' => 'conn_token' })
+      end
+    end
+
+    context 'when workflow has neither connection nor config auth' do
+      it 'returns empty hash' do
+        workflow = create(:workflow, config: nil)
+
+        expect(workflow.resolved_auth_config).to eq({})
+      end
+
+      it 'returns empty hash when config has no auth' do
+        workflow = create(:workflow, config: { 'connection' => { 'subdomain' => 'test' } })
+
+        expect(workflow.resolved_auth_config).to eq({})
+      end
+    end
+  end
+
+  describe 'connection deletion behavior' do
+    let(:user) { create(:user) }
+
+    it 'nullifies connection_id when connection is deleted' do
+      connection = create(:connection, user: user)
+      workflow = create(:workflow, connection: connection)
+
+      expect(workflow.connection_id).not_to be_nil
+
+      connection.destroy
+
+      workflow.reload
+      expect(workflow.connection_id).to be_nil
     end
   end
 

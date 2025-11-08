@@ -4,10 +4,11 @@
 - [x] after a request completes, we should store the info somewhere that makes sense. in the row execution?
    - update 2025-09-01: nah, it gets stored in the row data. not going to persist all the extra info for now
 - [x] controller to create data sources
-- [ ] need a controller to make workflows, and everything that entails
+- [x] need a controller to make workflows, and everything that entails
   - take a data source
   - can just take a json for the config for now. in the future we can parse user-provided yaml/json and do all the liquid validation
 - [ ] dont store api credentials in plaintext
+- [ ] move liquid rendering stuff out of step executor
 
 # Later
 - [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit

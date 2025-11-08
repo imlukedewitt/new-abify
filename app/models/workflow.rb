@@ -4,6 +4,7 @@
 # Workflow model
 # Contains a collection of Steps to be executed in sequence
 class Workflow < ApplicationRecord
+  belongs_to :connection, optional: true
   has_many :steps, dependent: :destroy
   has_many :workflow_executions, dependent: :restrict_with_error
 
@@ -12,6 +13,13 @@ class Workflow < ApplicationRecord
 
   def create_execution(data_source)
     workflow_executions.create(data_source: data_source)
+  end
+
+  def resolved_auth_config
+    return connection.credentials if connection.present?
+    return config.dig('connection', 'auth') || {} if config.present?
+
+    {}
   end
 
   def workflow_config
