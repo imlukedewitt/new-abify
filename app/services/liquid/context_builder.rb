@@ -10,34 +10,19 @@ module Liquid
 
     def build
       {
-        row: { "source_index" => @row.source_index, **@row.data },
-        connection: connection_info
-      }
+        row: { "source_index" => @row.source_index, **@row.data }
+      }.merge(connection_info)
     end
 
     private
 
     def connection_info
-      # Use actual Connection model if available
-      if @workflow.connection
-        return {
-          'subdomain' => @workflow.connection.subdomain,
-          'domain' => @workflow.connection.domain,
-          'base_url' => @workflow.connection.base_url
-        }
-      end
-
-      # Fallback to config-based connection (for backward compatibility)
-      config = @workflow.workflow_config || {}
-      subdomain = config.dig('connection', 'subdomain')
-      domain = config.dig('connection', 'domain')
-
-      return {} if subdomain.nil? || domain.nil?
+      return unless @workflow.connection
 
       {
-        'subdomain' => subdomain,
-        'domain' => domain,
-        'base_url' => "https://#{subdomain}.#{domain}"
+        'subdomain' => @workflow.connection.subdomain,
+        'domain' => @workflow.connection.domain,
+        'base_url' => @workflow.connection.base_url
       }
     end
   end

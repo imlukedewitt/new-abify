@@ -5,16 +5,17 @@ meta {
 }
 
 post {
-  url: {{base}}/workflow_executions?workflow_id=2&data_source_id=1
+  url: {{base}}/workflow_executions?workflow_id=1&data_source_id=1
   body: none
   auth: inherit
 }
 
 params:query {
-  workflow_id: 2
+  workflow_id: 1
   data_source_id: 1
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
