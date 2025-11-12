@@ -13,12 +13,6 @@ RSpec.describe RowExecutor do
       expect(processor).to be_a(RowExecutor)
     end
 
-    it "finds or creates a RowExecution" do
-      execution_double = instance_double(RowExecution)
-      expect(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
-      expect(processor.execution).to eq(execution_double)
-    end
-
     context "when row is nil" do
       let(:row) { nil }
 
@@ -53,7 +47,7 @@ RSpec.describe RowExecutor do
       let(:execution_double) { instance_double(RowExecution) }
 
       before do
-        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
       end
 
       it "blocks until the row processing is complete" do
@@ -144,7 +138,7 @@ RSpec.describe RowExecutor do
       end
 
       execution_double = instance_double(RowExecution)
-      allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+      allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
       allow(execution_double).to receive(:start!)
       allow(execution_double).to receive(:processing?).and_return(false)
       allow(execution_double).to receive(:complete?)
@@ -268,7 +262,7 @@ RSpec.describe RowExecutor do
         allow(step_processor_double).to receive(:call)
 
         execution_double = instance_double(RowExecution, processing?: false)
-        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete?)
 
@@ -294,7 +288,7 @@ RSpec.describe RowExecutor do
         allow(second_sp_double).to receive(:call)
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true)
         allow(execution_double).to receive(:complete?)
@@ -316,7 +310,7 @@ RSpec.describe RowExecutor do
         allow(workflow).to receive(:steps).and_return([])
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:complete!)
         allow(execution_double).to receive(:complete?)
         allow(execution_double).to receive(:failed?).and_return(false)
@@ -335,7 +329,7 @@ RSpec.describe RowExecutor do
         allow(step_processor_double).to receive(:call)
 
         execution_double = instance_double(RowExecution, processing?: false)
-        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete!)
         allow(execution_double).to receive(:complete?)
@@ -360,7 +354,7 @@ RSpec.describe RowExecutor do
         allow(second_sp_double).to receive(:call)
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:processing?).and_return(false)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete?)
@@ -388,7 +382,7 @@ RSpec.describe RowExecutor do
         allow(third_sp).to receive(:call)
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:find_or_create_by).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true, true)
         allow(execution_double).to receive(:complete?)
