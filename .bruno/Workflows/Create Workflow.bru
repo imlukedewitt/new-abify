@@ -13,15 +13,13 @@ post {
 body:json {
   {
     "name": "{{name}}",
-    "connection_id": "{{connection_id}}",
-    "data_source_id": "{{data_source_id}}"
+    "connection_id": "{{connection_id}}"
   }
 }
 
 vars:pre-request {
   name: test workflow
   connection_id: 1
-  data_source_id: 1
 }
 
 settings {
