@@ -22,29 +22,10 @@ RSpec.describe Liquid::ContextBuilder do
         context_builder = described_class.new(row: row, workflow: workflow_with_connection)
         context = context_builder.build
 
-        expect(context[:connection]).to eq(
+        expect(context).to include(
           'subdomain' => 'mycompany',
           'domain' => 'salesforce.com',
           'base_url' => 'https://mycompany.salesforce.com'
-        )
-      end
-    end
-
-    context 'when workflow has custom domain settings in config' do
-      before do
-        workflow.config = {
-          'connection' => {
-            'subdomain' => 'custom',
-            'domain' => 'test.com'
-          }
-        }
-      end
-
-      it 'uses workflow config domain settings' do
-        expect(context[:connection]).to eq(
-          'subdomain' => 'custom',
-          'domain' => 'test.com',
-          'base_url' => 'https://custom.test.com'
         )
       end
     end
@@ -59,18 +40,9 @@ RSpec.describe Liquid::ContextBuilder do
         }
       end
 
-      it 'returns empty connection hash' do
-        expect(context[:connection]).to eq({})
-      end
-    end
-
-    context 'when workflow config is empty' do
-      before do
-        workflow.config = {}
-      end
-
-      it 'returns empty connection hash' do
-        expect(context[:connection]).to eq({})
+      it 'does not include connection info' do
+        connection_keys = %w[domain subdomain base_url]
+        expect(context.keys.map(&:to_s)).not_to include(*connection_keys)
       end
     end
   end
