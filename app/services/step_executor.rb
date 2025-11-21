@@ -21,7 +21,7 @@ class StepExecutor
     @on_complete = on_complete
     @auth_config = @step.workflow&.resolved_auth_config || {}
     @priority = priority
-    @execution = find_or_create_execution
+    @execution = StepExecution.new(step: @step, row: @row)
   end
 
   def self.call(step, row)
@@ -98,6 +98,9 @@ class StepExecutor
 
   def extract_success_data(parsed_response)
     success_templates = @config.dig('liquid_templates', 'success_data')
+    return {} if success_templates.blank?
+
+    success_templates = JSON.parse(success_templates)
     return {} unless success_templates.is_a?(Hash)
 
     context_with_response = context.merge('response' => parsed_response)
@@ -110,6 +113,8 @@ class StepExecutor
 
       result[key] = nil
     end
+  rescue JSON::ParserError
+    {}
   end
 
   def evaluate_boolean_condition(condition_key)
@@ -147,9 +152,5 @@ class StepExecutor
     end
 
     result
-  end
-
-  def find_or_create_execution
-    StepExecution.find_or_create_by(step: @step, row: @row)
   end
 end
