@@ -21,7 +21,8 @@ body:json {
       "liquid_templates": {
         "name": "{{step_name}}",
         "url": "{{url}}",
-        "method": "{{method}}"
+        "method": "{{method}}",
+        "success_data": "{{success_data}}"
       }
     }
   }
@@ -29,8 +30,9 @@ body:json {
 
 vars:pre-request {
   step_name: first step
-  url: {\{base_url}}/posts
+  url: {\{base_url}}/posts/{\{row.source_index}}
   method: get
+  success_data: {\"post_id\": \"{\{response.id}}\", \"post_title\": \"{\{response.title}}\", \"user_id\": \"{\{response.userId}}\"}
 }
 
 settings {

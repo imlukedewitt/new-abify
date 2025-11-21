@@ -5,12 +5,12 @@ meta {
 }
 
 get {
-  url: {{base}}/workflows?include_config=true
+  url: {{base}}/workflows?include_config=false&include_steps=true
   body: none
   auth: inherit
 }
 
 params:query {
-  include_config: true
-  ~include_steps: true
+  include_config: false
+  include_steps: true
 }
