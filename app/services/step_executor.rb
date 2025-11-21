@@ -99,8 +99,6 @@ class StepExecutor
   def extract_success_data(parsed_response)
     success_templates = @config.dig('liquid_templates', 'success_data')
     return {} if success_templates.blank?
-
-    success_templates = JSON.parse(success_templates)
     return {} unless success_templates.is_a?(Hash)
 
     context_with_response = context.merge('response' => parsed_response)
@@ -113,8 +111,6 @@ class StepExecutor
 
       result[key] = nil
     end
-  rescue JSON::ParserError
-    {}
   end
 
   def evaluate_boolean_condition(condition_key)
