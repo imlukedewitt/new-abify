@@ -17,7 +17,7 @@ module Liquid
     private
 
     def connection_info
-      return unless @workflow.connection
+      return {} unless @workflow.connection
 
       {
         'subdomain' => @workflow.connection.subdomain,
