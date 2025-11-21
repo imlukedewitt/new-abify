@@ -10,7 +10,7 @@ class BatchExecutor
 
     @batch = batch
     @workflow = workflow
-    @execution = find_or_create_execution
+    @execution = BatchExecution.new(batch: batch, workflow: workflow)
   end
 
   def call
@@ -48,9 +48,5 @@ class BatchExecutor
       HydraManager.instance.run
       row_executor.wait_for_completion
     end
-  end
-
-  def find_or_create_execution
-    BatchExecution.find_or_create_by(batch: batch, workflow: workflow)
   end
 end
