@@ -386,7 +386,7 @@ RSpec.describe StepExecutor do
       step_with_connection = create(:step, workflow: workflow_with_connection, config: {
                                       'liquid_templates' => {
                                         'name' => 'Test Step',
-                                        'url' => '{{connection.base_url}}/services/data/v57.0/sobjects/Account'
+                                        'url' => '{{base_url}}/services/data/v57.0/sobjects/Account'
                                       }
                                     })
       step_processor = StepExecutor.new(step_with_connection, row)
@@ -402,7 +402,7 @@ RSpec.describe StepExecutor do
       step_with_connection = create(:step, workflow: workflow_with_connection, config: {
                                       'liquid_templates' => {
                                         'name' => 'Test Step',
-                                        'url' => 'https://{{connection.subdomain}}.{{connection.domain}}/api/v1/users'
+                                        'url' => 'https://{{subdomain}}.{{domain}}/api/v1/users'
                                       }
                                     })
       step_processor = StepExecutor.new(step_with_connection, row)
