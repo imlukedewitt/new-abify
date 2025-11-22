@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ## ConnectionsController
-class ConnectionsController < ApplicationController
+class ConnectionsController < ApiController
   def create
     connection = Connection.new(connection_params)
 

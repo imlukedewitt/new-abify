@@ -2,7 +2,7 @@
 
 ##
 # WorkflowExecutionsController is responsible for creating workflow executions.
-class WorkflowExecutionsController < ApplicationController
+class WorkflowExecutionsController < ApiController
   def create
     workflow = find_workflow
     return unless workflow

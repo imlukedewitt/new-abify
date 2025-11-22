@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ## StepsController
-class StepsController < ApplicationController
+class StepsController < ApiController
   def create
     workflow = Workflow.find(params[:workflow_id])
     step = workflow.steps.build(step_params)

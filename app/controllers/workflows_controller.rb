@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ## WorkflowsController
-class WorkflowsController < ApplicationController
+class WorkflowsController < ApiController
   include Serializable
   def create
     workflow = Workflow.new(workflow_params)
