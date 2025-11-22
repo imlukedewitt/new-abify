@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The test environment is used exclusively to run your application's
 # test suite. You never need to work with it otherwise. Remember that
 # your test database is "scratch space" for the test suite and is wiped
@@ -42,8 +44,9 @@ Rails.application.configure do
 
   config.log_level = :info
 
-  # Configure Active Record encryption for tests
-  config.active_record.encryption.primary_key = "test_primary_key_for_encryption"
-  config.active_record.encryption.deterministic_key = "test_deterministic_key_for_encryption"
-  config.active_record.encryption.key_derivation_salt = "test_key_derivation_salt"
+  # Configure Active Record encryption from credentials
+  encryption_creds = Rails.application.credentials.active_record_encryption
+  config.active_record.encryption.primary_key = encryption_creds[:primary_key]
+  config.active_record.encryption.deterministic_key = encryption_creds[:deterministic_key]
+  config.active_record.encryption.key_derivation_salt = encryption_creds[:key_derivation_salt]
 end
