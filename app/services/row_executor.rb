@@ -3,7 +3,7 @@
 # Runs a Workflow on a single Row,
 # creating StepExecutors for each step
 class RowExecutor
-  attr_reader :row, :workflow, :execution
+  attr_reader :row, :workflow
 
   def initialize(row:, workflow:)
     raise ArgumentError, "row is required" if row.nil?
