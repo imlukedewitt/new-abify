@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ## WorkflowsController
-class WorkflowsController < ApplicationController
+class WorkflowsController < ApiController
   include Serializable
   def create
     workflow = Workflow.new(workflow_params)
@@ -29,7 +29,7 @@ class WorkflowsController < ApplicationController
   private
 
   def workflow_params
-    params.permit(:name, config: {})
+    params.permit(:name, :connection_id, config: {})
   end
 
   def serialization_options

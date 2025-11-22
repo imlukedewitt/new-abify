@@ -12,16 +12,17 @@ post {
 
 body:json {
   {
-    "name": "test workflow",
-    "config": {
-      "connection": {
-        "subdomain": "test",
-        "domain": "example.com"
-      }
-    }
+    "name": "{{name}}",
+    "connection_id": "{{connection_id}}"
   }
+}
+
+vars:pre-request {
+  name: test workflow
+  connection_id: 1
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

@@ -1,0 +1,26 @@
+meta {
+  name: Update Connection
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base}}/connections/1
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Updated Connection Name",
+    "credentials": {
+      "type": "bearer",
+      "token": "sk-updated-token-456"
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+

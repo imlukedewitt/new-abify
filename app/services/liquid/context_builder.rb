@@ -10,22 +10,19 @@ module Liquid
 
     def build
       {
-        row: { "source_index" => @row.source_index, **@row.data },
-        **connection_info
-      }
+        row: { "source_index" => @row.source_index, **@row.data }
+      }.merge(connection_info)
     end
 
     private
 
     def connection_info
-      config = @workflow.workflow_config || {}
-      subdomain = config.dig('connection', 'subdomain') || 'acme'
-      domain = config.dig('connection', 'domain') || 'application.com'
+      return {} unless @workflow.connection
 
       {
-        subdomain: subdomain,
-        domain: domain,
-        base_url: "https://#{subdomain}.#{domain}"
+        'subdomain' => @workflow.connection.subdomain,
+        'domain' => @workflow.connection.domain,
+        'base_url' => @workflow.connection.base_url
       }
     end
   end

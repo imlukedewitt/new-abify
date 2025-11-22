@@ -3,7 +3,7 @@
 # Runs a Workflow on a single Row,
 # creating StepExecutors for each step
 class RowExecutor
-  attr_reader :row, :workflow, :execution
+  attr_reader :row, :workflow
 
   def initialize(row:, workflow:)
     raise ArgumentError, "row is required" if row.nil?
@@ -13,21 +13,20 @@ class RowExecutor
     @workflow = workflow
     @ordered_steps = workflow.steps.sort_by(&:order)
     @current_step_index = 0
-    @execution = find_or_create_execution
     @completion_semaphore = Thread::ConditionVariable.new
     @completion_mutex = Thread::Mutex.new
     @completed = false
   end
 
   def call
-    if @execution.complete?
+    if execution.complete?
       mark_completed
       return
     end
 
     # TODO: this is messy, need to clean up with logic in #handle_step_completion
     if @ordered_steps.empty? || @current_step_index >= @ordered_steps.length
-      @execution.complete!
+      execution.complete!
       mark_completed
       return
     end
@@ -43,8 +42,8 @@ class RowExecutor
 
   private
 
-  def find_or_create_execution
-    RowExecution.find_or_create_by(row: @row)
+  def execution
+    @execution ||= RowExecution.new(row: @row)
   end
 
   def process_current_step
@@ -54,14 +53,13 @@ class RowExecutor
       row,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
-      priority: @execution.processing?, # prioritize completing in-progress rows
-      auth_config: current_step.config&.dig('auth')
+      priority: execution.processing? # prioritize completing in-progress rows
     )
 
     if @current_step_executor.should_skip?
       handle_step_completion(nil)
     else
-      @execution.start!
+      execution.start!
       @current_step_executor.call
     end
   end
@@ -81,7 +79,7 @@ class RowExecutor
     @current_step_index += 1
 
     if @current_step_index >= @ordered_steps.length
-      @execution.complete! unless @execution.failed?
+      execution.complete! unless execution.failed?
       mark_completed
     else
       call
@@ -101,7 +99,7 @@ class RowExecutor
 
     if @current_step_executor.required?
       Rails.logger.info("Row #{@row.source_index} required step #{current_step.name} failed: #{error}")
-      @execution.fail!
+      execution.fail!
       row.update(status: :failed)
       mark_completed # Mark as completed even on failure
       return

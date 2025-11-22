@@ -30,6 +30,33 @@ RSpec.describe WorkflowsController, type: :controller do
       end
     end
 
+    context 'with a connection_id' do
+      let(:user) { create(:user) }
+      let(:connection) { create(:connection, user: user) }
+      let(:config_with_connection) do
+        {
+          name: 'Workflow with Connection',
+          connection_id: connection.id,
+          config: {
+            workflow: {
+              liquid_templates: {
+                group_by: '{{row.group}}'
+              }
+            }
+          }
+        }
+      end
+
+      it 'creates a workflow with the connection' do
+        expect do
+          post :create, params: config_with_connection
+        end.to change(Workflow, :count).by(1)
+
+        workflow = Workflow.last
+        expect(workflow.connection_id).to eq(connection.id)
+      end
+    end
+
     context 'with invalid workflow config' do
       let(:invalid_config) do
         {

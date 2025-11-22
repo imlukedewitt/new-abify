@@ -87,9 +87,7 @@ class HydraManager
   end
 
   def apply_basic_auth(options, config)
-    username = ENV["AUTH_BASIC_USER_#{config[:env_key]}"] || config[:username]
-    password = ENV["AUTH_BASIC_PASS_#{config[:env_key]}"] || config[:password]
-    options[:userpwd] = "#{username}:#{password}"
+    options[:userpwd] = "#{config[:username]}:#{config[:password]}"
   end
 
   def apply_bearer_auth(options, config)

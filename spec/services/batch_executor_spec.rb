@@ -20,13 +20,10 @@ RSpec.describe BatchExecutor do
       expect(processor.workflow).to eq(workflow)
     end
 
-    it "finds or creates a batch execution" do
-      execution_double = instance_double(BatchExecution)
-      expect(BatchExecution).to receive(:find_or_create_by)
-        .with(batch: batch_object, workflow: workflow)
-        .and_return(execution_double)
-
-      expect(processor.execution).to eq(execution_double)
+    it "creates a new batch execution" do
+      expect(processor.execution).to be_a(BatchExecution)
+      expect(processor.execution.batch).to eq(batch_object)
+      expect(processor.execution.workflow).to eq(workflow)
     end
 
     context "when batch is nil" do
@@ -56,15 +53,13 @@ RSpec.describe BatchExecutor do
     end
 
     it "processes rows sequentially and waits for completion" do
-      execution_double = instance_double(BatchExecution)
-      allow(BatchExecution).to receive(:find_or_create_by).and_return(execution_double)
-      allow(execution_double).to receive(:complete?).and_return(true)
+      allow(processor.execution).to receive(:complete?).and_return(true)
 
       row_processor_doubles = rows.map do
         instance_double(RowExecutor)
       end
 
-      expect(execution_double).to receive(:start!).ordered
+      expect(processor.execution).to receive(:start!).ordered
 
       rows.each_with_index do |row, index|
         row_processor_double = row_processor_doubles[index]
@@ -78,15 +73,13 @@ RSpec.describe BatchExecutor do
         expect(row_processor_double).to receive(:wait_for_completion).ordered
       end
 
-      expect(execution_double).to receive(:check_completion).ordered
+      expect(processor.execution).to receive(:check_completion).ordered
 
       processor.call
     end
 
     it "processes rows in parallel and runs hydra only once" do
-      execution_double = instance_double(BatchExecution)
-      allow(BatchExecution).to receive(:find_or_create_by).and_return(execution_double)
-      allow(execution_double).to receive(:complete?).and_return(true)
+      allow(processor.execution).to receive(:complete?).and_return(true)
       allow(batch_object).to receive(:processing_mode).and_return("parallel")
 
       row_processor_doubles = rows.map { instance_double(RowExecutor) }
@@ -102,8 +95,8 @@ RSpec.describe BatchExecutor do
 
       expect(HydraManager.instance).to receive(:run).once
 
-      expect(execution_double).to receive(:start!).once
-      expect(execution_double).to receive(:check_completion).once
+      expect(processor.execution).to receive(:start!).once
+      expect(processor.execution).to receive(:check_completion).once
 
       processor.call
     end
@@ -111,9 +104,7 @@ RSpec.describe BatchExecutor do
 
   describe "#check_completion" do
     it "delegates to the batch execution" do
-      execution_double = instance_double(BatchExecution)
-      allow(BatchExecution).to receive(:find_or_create_by).and_return(execution_double)
-      expect(execution_double).to receive(:check_completion).and_return(true)
+      expect(processor.execution).to receive(:check_completion).and_return(true)
 
       expect(processor.check_completion).to eq(true)
     end

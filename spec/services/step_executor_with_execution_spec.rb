@@ -7,22 +7,21 @@ RSpec.describe StepExecutor, type: :service do
     let(:step) { create(:step) }
     let(:row) { create(:row) }
     let(:hydra_manager) { instance_double(HydraManager) }
-    let(:step_execution) { create(:step_execution, step: step, row: row) }
     let(:callback) { ->(result) {} }
     let(:processor) { described_class.new(step, row, on_complete: callback, hydra_manager: hydra_manager) }
 
     before do
-      allow(StepExecution).to receive(:find_or_create_by).and_return(step_execution)
       allow(hydra_manager).to receive(:queue).and_return(double('Typhoeus::Request'))
     end
 
-    it 'creates or finds a StepExecution record' do
-      expect(StepExecution).to receive(:find_or_create_by).with(step: step, row: row).and_return(step_execution)
-      processor.call
+    it 'creates a new StepExecution record' do
+      expect(processor.execution).to be_a(StepExecution)
+      expect(processor.execution.step).to eq(step)
+      expect(processor.execution.row).to eq(row)
     end
 
     it 'starts the StepExecution when calling the processor' do
-      expect(step_execution).to receive(:start!)
+      expect(processor.execution).to receive(:start!)
       processor.call
     end
 
@@ -36,7 +35,7 @@ RSpec.describe StepExecutor, type: :service do
       end
 
       it 'marks execution as successful when API returns success' do
-        expect(step_execution).to receive(:succeed!).with(hash_including('customer_id' => '123'))
+        expect(processor.execution).to receive(:succeed!).with(hash_including('customer_id' => '123'))
 
         expect(hydra_manager).to receive(:queue) do |args|
           args[:on_complete].call(success_response)
@@ -46,7 +45,7 @@ RSpec.describe StepExecutor, type: :service do
       end
 
       it 'marks execution as failed when API returns error' do
-        expect(step_execution).to receive(:fail!).with(["Not found"])
+        expect(processor.execution).to receive(:fail!).with(["Not found"])
 
         expect(hydra_manager).to receive(:queue) do |args|
           args[:on_complete].call(failure_response)
@@ -62,7 +61,7 @@ RSpec.describe StepExecutor, type: :service do
       end
 
       it 'marks execution as skipped without calling API' do
-        expect(step_execution).to receive(:skip!)
+        expect(processor.execution).to receive(:skip!)
         expect(hydra_manager).not_to receive(:queue)
 
         processor.call

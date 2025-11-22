@@ -11,20 +11,28 @@ post {
 }
 
 params:path {
-  workflow_id: 2
+  workflow_id: 1
 }
 
 body:json {
   {
-    "name": "Test Step",
+    "name": "{{step_name}}",
     "config": {
       "liquid_templates": {
-        "name": "Test Step",
-        "url": "{{base_url}}/api/test",
-        "method": "get"
+        "name": "{{step_name}}",
+        "url": "{{url}}",
+        "method": "{{method}}",
+        "success_data": {{success_data}}
       }
     }
   }
+}
+
+vars:pre-request {
+  step_name: first step
+  url: {\{base_url}}/posts/{\{row.source_index}}
+  method: get
+  success_data: {"post_id": "{\{response.id}}", "post_title": "{\{response.title}}", "user_id": "{\{response.userId}}"}
 }
 
 settings {

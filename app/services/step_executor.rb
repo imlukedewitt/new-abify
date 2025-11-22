@@ -10,7 +10,7 @@ require_relative 'liquid/context_builder'
 class StepExecutor
   attr_reader :step, :row, :config, :execution
 
-  def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, auth_config: nil, priority: false)
+  def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, priority: false)
     raise ArgumentError, 'step is required' unless step
     raise ArgumentError, 'row is required' unless row
 
@@ -19,9 +19,9 @@ class StepExecutor
     @config = @step.step_config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
-    @auth_config = auth_config || @config['auth'] || @step.workflow&.config&.dig('connection', 'auth') || {}
+    @auth_config = @step.workflow&.resolved_auth_config || {}
     @priority = priority
-    @execution = find_or_create_execution
+    @execution = StepExecution.new(step: @step, row: @row)
   end
 
   def self.call(step, row)
@@ -37,11 +37,11 @@ class StepExecutor
 
     @execution.start!
 
-    request_feilds = render_request_fields
+    request_fields = render_request_fields
     Rails.logger.info "Queueing request for row #{@row.source_index} step #{@step.order}:"
-    Rails.logger.info "  #{request_feilds}"
+    Rails.logger.info "  #{request_fields}"
     @hydra_manager.queue(
-      **request_feilds,
+      **request_fields,
       front: @priority,
       auth_config: @auth_config,
       on_complete: lambda { |response|
@@ -98,6 +98,7 @@ class StepExecutor
 
   def extract_success_data(parsed_response)
     success_templates = @config.dig('liquid_templates', 'success_data')
+    return {} if success_templates.blank?
     return {} unless success_templates.is_a?(Hash)
 
     context_with_response = context.merge('response' => parsed_response)
@@ -147,9 +148,5 @@ class StepExecutor
     end
 
     result
-  end
-
-  def find_or_create_execution
-    StepExecution.find_or_create_by(step: @step, row: @row)
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # .
-class DataSourcesController < ApplicationController
+class DataSourcesController < ApiController
   def create
     data_source = DataSources::Builder.call(source: params[:source])
     render json: { data_source_id: data_source.id }, status: :created

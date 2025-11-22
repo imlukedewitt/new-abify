@@ -18,4 +18,5 @@ Rails.application.routes.draw do
   resources :workflows, only: %i[create index show] do
     resources :steps, only: [:create]
   end
+  resources :connections, only: %i[create index show update destroy]
 end
