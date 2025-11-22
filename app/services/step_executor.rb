@@ -37,11 +37,11 @@ class StepExecutor
 
     @execution.start!
 
-    request_feilds = render_request_fields
+    request_fields = render_request_fields
     Rails.logger.info "Queueing request for row #{@row.source_index} step #{@step.order}:"
-    Rails.logger.info "  #{request_feilds}"
+    Rails.logger.info "  #{request_fields}"
     @hydra_manager.queue(
-      **request_feilds,
+      **request_fields,
       front: @priority,
       auth_config: @auth_config,
       on_complete: lambda { |response|
