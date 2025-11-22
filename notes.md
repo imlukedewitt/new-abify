@@ -11,6 +11,7 @@
 - [ ] move liquid rendering stuff out of step executor
 
 # Later
+- [ ] there's something wrong with storing the step success_data in row.data. You can use the same data source for multiple workflow executions
 - [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
 - [ ] process rows/steps in Sidekiq or ActiveJob, remove the DIY threading that it currently does
 - [ ] make sure we're not re-rendering the same liquid templates over and over again
