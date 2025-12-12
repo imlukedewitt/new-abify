@@ -1,0 +1,45 @@
+meta {
+  name: Create nested Workflow and Steps
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "{{name}}",
+    "connection_id": "{{connection_id}}",
+    "steps_attributes": [
+      {
+        "name": "{{step_name}}",
+        "config": {
+          "liquid_templates": {
+            "name": "{{step_name}}",
+            "url": "{{url}}",
+            "method": "{{method}}",
+            "success_data": {{success_data}}
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  name: test workflow
+  connection_id: 1
+  step_name: first step
+  url: {\{base_url}}/posts/{\{row.source_index}}
+  method: get
+  success_data: {"post_id": "{\{response.id}}", "post_title": "{\{response.title}}", "user_id": "{\{response.userId}}"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
