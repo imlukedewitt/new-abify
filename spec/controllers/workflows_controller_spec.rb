@@ -57,6 +57,32 @@ RSpec.describe WorkflowsController, type: :controller do
       end
     end
 
+    context 'with nested steps' do
+      let(:config_with_steps) do
+        {
+          name: 'Config with steps',
+          steps_attributes: [
+            name: 'First step',
+            config: {
+              liquid_templates: {
+                name: 'Step name',
+                url: 'api.com',
+                method: 'get'
+              }
+            }
+          ]
+        }
+      end
+
+      it 'creates nested steps' do
+        expect { post :create, params: config_with_steps }
+          .to change(Workflow, :count)
+          .by(1).and change(Step, :count).by(1)
+
+        expect(Step.last.name).to eq('First step')
+      end
+    end
+
     context 'with invalid workflow config' do
       let(:invalid_config) do
         {

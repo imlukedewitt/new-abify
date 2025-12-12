@@ -29,7 +29,7 @@ class WorkflowsController < ApiController
   private
 
   def workflow_params
-    params.permit(:name, :connection_id, config: {})
+    params.permit(:name, :connection_id, config: {}, steps_attributes: [:id, :name, { config: {} }])
   end
 
   def serialization_options
