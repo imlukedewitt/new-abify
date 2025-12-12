@@ -11,6 +11,8 @@ class Workflow < ApplicationRecord
   validates :name, presence: true
   validate :validate_config
 
+  accepts_nested_attributes_for :steps
+
   def create_execution(data_source)
     workflow_executions.create(data_source: data_source)
   end

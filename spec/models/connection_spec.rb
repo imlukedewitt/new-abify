@@ -48,25 +48,29 @@ RSpec.describe Connection, type: :model do
       it 'rejects handles with uppercase letters' do
         connection = build(:connection, user: user, handle: 'SalesForce')
         expect(connection).not_to be_valid
-        expect(connection.errors[:handle]).to include('must start with a letter and contain only lowercase letters, numbers, and underscores')
+        expect(connection.errors[:handle])
+          .to include('must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores')
       end
 
       it 'rejects handles with spaces' do
         connection = build(:connection, user: user, handle: 'sales force')
         expect(connection).not_to be_valid
-        expect(connection.errors[:handle]).to include('must start with a letter and contain only lowercase letters, numbers, and underscores')
+        expect(connection.errors[:handle])
+          .to include('must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores')
       end
 
       it 'rejects handles with special characters' do
-        connection = build(:connection, user: user, handle: 'sales-force')
+        connection = build(:connection, user: user, handle: 'sales$force')
         expect(connection).not_to be_valid
-        expect(connection.errors[:handle]).to include('must start with a letter and contain only lowercase letters, numbers, and underscores')
+        expect(connection.errors[:handle])
+          .to include('must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores')
       end
 
       it 'rejects handles starting with numbers' do
         connection = build(:connection, user: user, handle: '123_api')
         expect(connection).not_to be_valid
-        expect(connection.errors[:handle]).to include('must start with a letter and contain only lowercase letters, numbers, and underscores')
+        expect(connection.errors[:handle])
+          .to include('must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores')
       end
     end
 

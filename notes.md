@@ -6,17 +6,18 @@
 - [x] controller to create data sources
 - [x] need a controller to make workflows, and everything that entails
   - take a data source
-  - can just take a json for the config for now. in the future we can parse user-provided yaml/json and do all the liquid validation
+  - ~~in the future we can parse user-provided yaml/json and do all the liquid validation~~ we dont need this
 - [ ] dont store api credentials in plaintext
 - [ ] move liquid rendering stuff out of step executor
+- [ ] remove status from rows table
 
 # Later
+- [ ] make sure row/step execution classes are not too tightly coupled
 - [ ] there's something wrong with storing the step success_data in row.data. You can use the same data source for multiple workflow executions
 - [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
 - [ ] process rows/steps in Sidekiq or ActiveJob, remove the DIY threading that it currently does
 - [ ] make sure we're not re-rendering the same liquid templates over and over again
   - along these same lines, it'd be good to validate and render as much as possible before the workflow executes
-  -
 
 # OLD NOTES
 structure idea
@@ -50,6 +51,8 @@ Liquid::Processor and ContextBuilder
 - Custom workflow filters for template processing
 
 Example Workflow YAML:
+UPDATE 2025-11-27 not planning to use text based configs. It might make more sense as a local application, but ABify will be hosted on a server.
+I'm keeping the liquid parsing for user-submitted code though, I can still use that in a UI workflow builder
 ```yaml
 name: "Create Subscriptions Workflow"
 batch:
