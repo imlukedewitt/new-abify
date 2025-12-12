@@ -31,12 +31,12 @@ body:json {
 }
 
 vars:pre-request {
-  name: test workflow
-  connection_id: 1
-  step_name: first step
-  url: {\{base_url}}/posts/{\{row.source_index}}
+  name: AB test workflow
+  connection_id: 2
+  step_name: read site
+  url: {\{base_url}}/site.json
   method: get
-  success_data: {"post_id": "{\{response.id}}", "post_title": "{\{response.title}}", "user_id": "{\{response.userId}}"}
+  success_data: {"seller_id": "{\{response.site.seller_id}}", "site_name": "{\{response.site.name}}"}
 }
 
 settings {
