@@ -15,8 +15,8 @@ class Connection < ApplicationRecord
   validates :credentials, presence: true
 
   validates :handle, format: {
-    with: /\A[a-z][a-z0-9_]*\z/,
-    message: 'must start with a letter and contain only lowercase letters, numbers, and underscores'
+    with: /\A[a-z][a-z0-9_-]*\z/,
+    message: 'must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores'
   }, if: -> { handle.present? }
 
   validates :handle, uniqueness: { scope: :user_id }
