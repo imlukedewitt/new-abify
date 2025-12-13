@@ -3,14 +3,16 @@
 # Runs a Workflow on a single Row,
 # creating StepExecutors for each step
 class RowExecutor
-  attr_reader :row, :workflow
+  attr_reader :row, :workflow, :workflow_execution
 
-  def initialize(row:, workflow:)
+  def initialize(row:, workflow:, workflow_execution:)
     raise ArgumentError, "row is required" if row.nil?
     raise ArgumentError, "workflow is required" if workflow.nil?
+    raise ArgumentError, "workflow_execution is required" if workflow_execution.nil?
 
     @row = row
     @workflow = workflow
+    @workflow_execution = workflow_execution
     @ordered_steps = workflow.steps.sort_by(&:order)
     @current_step_index = 0
     @completion_semaphore = Thread::ConditionVariable.new
@@ -43,7 +45,7 @@ class RowExecutor
   private
 
   def execution
-    @execution ||= RowExecution.new(row: @row)
+    @execution ||= RowExecution.new(row: @row, workflow_execution: @workflow_execution)
   end
 
   def process_current_step
@@ -51,6 +53,7 @@ class RowExecutor
     @current_step_executor = StepExecutor.new(
       current_step,
       row,
+      row_execution: execution,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
       priority: execution.processing? # prioritize completing in-progress rows
@@ -71,7 +74,6 @@ class RowExecutor
     if result[:success]
       Rails.logger.info "Row #{row.source_index} step #{@current_step_index} success"
       Rails.logger.info "  data: #{result[:data]}" if result[:data].present?
-      update_row_with_success_data(result[:data])
     else
       handle_step_failure(result[:error])
     end
@@ -84,14 +86,6 @@ class RowExecutor
     else
       call
     end
-  end
-
-  def update_row_with_success_data(data)
-    return if data.nil? || data.empty?
-
-    row.data ||= {}
-    row.data.merge!(data)
-    row.save
   end
 
   def handle_step_failure(error)

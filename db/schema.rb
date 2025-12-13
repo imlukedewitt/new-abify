@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_13_002443) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -58,6 +58,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
 
   create_table "row_executions", force: :cascade do |t|
     t.integer "row_id", null: false
+    t.integer "workflow_execution_id", null: false
     t.string "status", default: "pending", null: false
     t.datetime "started_at"
     t.datetime "completed_at"
@@ -65,12 +66,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
     t.datetime "updated_at", null: false
     t.index ["row_id"], name: "index_row_executions_on_row_id"
     t.index ["status"], name: "index_row_executions_on_status"
+    t.index ["workflow_execution_id"], name: "index_row_executions_on_workflow_execution_id"
   end
 
   create_table "rows", force: :cascade do |t|
-    t.integer "workflow_execution_id"
     t.integer "data_source_id", null: false
-    t.json "original_data"
     t.json "data"
     t.string "status"
     t.integer "source_index"
@@ -79,7 +79,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
     t.integer "batch_id"
     t.index ["batch_id"], name: "index_rows_on_batch_id"
     t.index ["data_source_id"], name: "index_rows_on_data_source_id"
-    t.index ["workflow_execution_id"], name: "index_rows_on_workflow_execution_id"
   end
 
   create_table "step_executions", force: :cascade do |t|
@@ -91,6 +90,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "row_execution_id"
+    t.index ["row_execution_id"], name: "index_step_executions_on_row_execution_id"
     t.index ["row_id"], name: "index_step_executions_on_row_id"
     t.index ["step_id"], name: "index_step_executions_on_step_id"
   end
@@ -140,9 +141,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
   add_foreign_key "batches", "workflow_executions"
   add_foreign_key "connections", "users"
   add_foreign_key "row_executions", "rows"
+  add_foreign_key "row_executions", "workflow_executions"
   add_foreign_key "rows", "batches"
   add_foreign_key "rows", "data_sources"
-  add_foreign_key "rows", "workflow_executions"
+  add_foreign_key "step_executions", "row_executions"
   add_foreign_key "step_executions", "rows"
   add_foreign_key "step_executions", "steps"
   add_foreign_key "steps", "workflows"

@@ -4,6 +4,8 @@ require 'rails_helper'
 
 RSpec.describe RowExecutor, :integration, :vcr do
   let(:workflow) { create(:workflow) }
+  let(:data_source) { create(:data_source) }
+  let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: data_source) }
   let(:step) do
     create(:step, workflow: workflow, order: 1, config: {
              'liquid_templates' => {
@@ -18,49 +20,51 @@ RSpec.describe RowExecutor, :integration, :vcr do
              }
            })
   end
-  let(:row) { create(:row) }
+  let(:row) { create(:row, data_source: data_source) }
 
-  it 'processes a single step and updates row data', vcr: { cassette_name: 'jsonplaceholder/get_post' } do
+  it 'processes a step and stores success data in step execution', vcr: { cassette_name: 'jsonplaceholder/get_post' } do
     expect(workflow.steps).to include(step)
 
-    processor = described_class.new(row: row, workflow: workflow)
+    processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
     processor.call
 
     HydraManager.instance.run
 
-    row.reload
-    expect(row.data).to include('id' => '1', 'userId' => '1', 'title' => be_a(String))
+    step_execution = StepExecution.find_by(step: step, row: row)
+    expect(step_execution.status).to eq('success')
+    expect(step_execution.result['data']).to include('id' => '1', 'userId' => '1', 'title' => be_a(String))
   end
 
   it 'processes multiple steps in sequence', vcr: { cassette_name: 'jsonplaceholder/multiple_steps' } do
     step
 
     # Create second step that uses data from first step
-    create(:step, workflow: workflow, order: 2, config: {
-             'liquid_templates' => {
-               'name' => 'Get User',
-               'url' => 'https://jsonplaceholder.typicode.com/users/{{row.userId}}',
-               'method' => 'get',
-               'success_data' => {
-                 'username' => '{{response.username}}',
-                 'email' => '{{response.email}}'
-               }
-             }
-           })
+    step2 = create(:step, workflow: workflow, order: 2, config: {
+                     'liquid_templates' => {
+                       'name' => 'Get User',
+                       'url' => 'https://jsonplaceholder.typicode.com/users/{{row.userId}}',
+                       'method' => 'get',
+                       'success_data' => {
+                         'username' => '{{response.username}}',
+                         'user_email' => '{{response.email}}'
+                       }
+                     }
+                   })
 
-    processor = described_class.new(row: row, workflow: workflow)
+    processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
     processor.call
 
     HydraManager.instance.run
 
-    row.reload
-    expect(row.data).to include(
-      'id' => '1',
-      'userId' => '1',
-      'title' => be_a(String),
-      'username' => 'Bret',
-      'email' => 'Sincere@april.biz'
-    )
+    # Check that both step executions succeeded
+    step1_exec = StepExecution.find_by(step: step, row: row)
+    step2_exec = StepExecution.find_by(step: step2, row: row)
+
+    expect(step1_exec.status).to eq('success')
+    expect(step1_exec.result['data']).to include('id' => '1', 'userId' => '1')
+
+    expect(step2_exec.status).to eq('success')
+    expect(step2_exec.result['data']).to include('username' => 'Bret', 'user_email' => 'Sincere@april.biz')
   end
 
   it 'handles a failed non-required step gracefully', vcr: { cassette_name: 'jsonplaceholder/not_found' } do
@@ -75,8 +79,8 @@ RSpec.describe RowExecutor, :integration, :vcr do
                }
              }
            })
-    empty_row = create(:row, data: {})
-    processor = described_class.new(row: empty_row, workflow: workflow)
+    empty_row = create(:row, data: {}, data_source: data_source)
+    processor = described_class.new(row: empty_row, workflow: workflow, workflow_execution: workflow_execution)
     processor.call
 
     expect { HydraManager.instance.run }.not_to raise_error

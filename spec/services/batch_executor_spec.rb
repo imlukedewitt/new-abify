@@ -3,110 +3,133 @@
 require "rails_helper"
 
 RSpec.describe BatchExecutor do
-  subject(:processor) { described_class.new(batch: batch_object, workflow: workflow) }
+  let(:workflow) { create(:workflow) }
+  let(:data_source) { create(:data_source) }
+  let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: data_source) }
+  let(:batch) { create(:batch, workflow_execution: workflow_execution) }
 
-  let(:batch_object) { build(:batch) }
-  let(:workflow) { build(:workflow) }
+  before do
+    create(:step, workflow: workflow, order: 1, config: {
+             'liquid_templates' => {
+               'name' => 'Test Step',
+               'url' => 'https://api.example.com/test',
+               'method' => 'get'
+             }
+           })
+
+    # Stub HydraManager to prevent HTTP and immediately invoke callbacks
+    allow(HydraManager.instance).to receive(:queue) do |**args|
+      response = double('Response', code: 200, body: '{"id": "123"}')
+      args[:on_complete]&.call(response)
+    end
+    allow(HydraManager.instance).to receive(:run)
+  end
 
   describe "#initialize" do
-    it "creates a new instance with a batch and workflow" do
-      processor = described_class.new(batch: batch_object, workflow: workflow)
-      expect(processor).to be_a(BatchExecutor)
+    it "creates a new instance with required attributes" do
+      executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+
+      expect(executor.batch).to eq(batch)
+      expect(executor.workflow).to eq(workflow)
+      expect(executor.workflow_execution).to eq(workflow_execution)
     end
 
-    it "stores the batch and workflow as attributes" do
-      processor = described_class.new(batch: batch_object, workflow: workflow)
-      expect(processor.batch).to eq(batch_object)
-      expect(processor.workflow).to eq(workflow)
+    it "creates a BatchExecution" do
+      executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+
+      expect(executor.execution).to be_a(BatchExecution)
+      expect(executor.execution.batch).to eq(batch)
+      expect(executor.execution.workflow).to eq(workflow)
     end
 
-    it "creates a new batch execution" do
-      expect(processor.execution).to be_a(BatchExecution)
-      expect(processor.execution.batch).to eq(batch_object)
-      expect(processor.execution.workflow).to eq(workflow)
+    it "raises ArgumentError when batch is nil" do
+      expect { described_class.new(batch: nil, workflow: workflow, workflow_execution: workflow_execution) }
+        .to raise_error(ArgumentError, "batch is required")
     end
 
-    context "when batch is nil" do
-      let(:batch_object) { nil }
-
-      it "raises an ArgumentError" do
-        expect { described_class.new(batch: batch_object, workflow: workflow) }
-          .to raise_error(ArgumentError, "batch is required")
-      end
+    it "raises ArgumentError when workflow is nil" do
+      expect { described_class.new(batch: batch, workflow: nil, workflow_execution: workflow_execution) }
+        .to raise_error(ArgumentError, "workflow is required")
     end
 
-    context "when workflow is nil" do
-      let(:workflow) { nil }
-
-      it "raises an ArgumentError" do
-        expect { described_class.new(batch: batch_object, workflow: workflow) }
-          .to raise_error(ArgumentError, "workflow is required")
-      end
+    it "raises ArgumentError when workflow_execution is nil" do
+      expect { described_class.new(batch: batch, workflow: workflow, workflow_execution: nil) }
+        .to raise_error(ArgumentError, "workflow_execution is required")
     end
   end
 
   describe "#call" do
-    let(:rows) { build_list(:row, 3) }
+    context "with rows in the batch" do
+      before do
+        create_list(:row, 3, batch: batch, data_source: data_source)
+      end
 
-    before do
-      allow(batch_object).to receive(:rows).and_return(rows)
+      it "creates RowExecutions for each row" do
+        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution).call
+
+        expect(RowExecution.count).to eq(3)
+        expect(RowExecution.pluck(:status).uniq).to eq(['complete'])
+      end
+
+      it "starts and completes the batch execution" do
+        executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+        executor.call
+
+        expect(executor.execution.status).to eq('complete')
+        expect(executor.execution.started_at).to be_present
+        expect(executor.execution.completed_at).to be_present
+      end
     end
 
-    it "processes rows sequentially and waits for completion" do
-      allow(processor.execution).to receive(:complete?).and_return(true)
-
-      row_processor_doubles = rows.map do
-        instance_double(RowExecutor)
+    context "sequential processing mode" do
+      before do
+        batch.update!(processing_mode: 'sequential')
+        create_list(:row, 3, batch: batch, data_source: data_source)
       end
 
-      expect(processor.execution).to receive(:start!).ordered
+      it "calls HydraManager.run once per row" do
+        run_count = 0
+        allow(HydraManager.instance).to receive(:run) { run_count += 1 }
 
-      rows.each_with_index do |row, index|
-        row_processor_double = row_processor_doubles[index]
+        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution).call
 
-        expect(RowExecutor).to receive(:new)
-          .with(row: row, workflow: workflow)
-          .and_return(row_processor_double)
-          .ordered
-        expect(row_processor_double).to receive(:call).ordered
-        expect(HydraManager.instance).to receive(:run).ordered # Called per row
-        expect(row_processor_double).to receive(:wait_for_completion).ordered
+        expect(run_count).to eq(3)
       end
-
-      expect(processor.execution).to receive(:check_completion).ordered
-
-      processor.call
     end
 
-    it "processes rows in parallel and runs hydra only once" do
-      allow(processor.execution).to receive(:complete?).and_return(true)
-      allow(batch_object).to receive(:processing_mode).and_return("parallel")
-
-      row_processor_doubles = rows.map { instance_double(RowExecutor) }
-
-      rows.each_with_index do |row, index|
-        row_processor_double = row_processor_doubles[index]
-        expect(RowExecutor).to receive(:new)
-          .with(row: row, workflow: workflow)
-          .and_return(row_processor_double)
-        expect(row_processor_double).to receive(:call)
-        expect(row_processor_double).to receive(:wait_for_completion)
+    context "parallel processing mode" do
+      before do
+        batch.update!(processing_mode: 'parallel')
+        create_list(:row, 3, batch: batch, data_source: data_source)
       end
 
-      expect(HydraManager.instance).to receive(:run).once
+      it "calls HydraManager.run once for all rows" do
+        run_count = 0
+        allow(HydraManager.instance).to receive(:run) { run_count += 1 }
 
-      expect(processor.execution).to receive(:start!).once
-      expect(processor.execution).to receive(:check_completion).once
+        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution).call
 
-      processor.call
+        expect(run_count).to eq(1)
+      end
+    end
+
+    context "with no rows" do
+      it "completes without creating any RowExecutions" do
+        executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+        executor.call
+
+        expect(RowExecution.count).to eq(0)
+        expect(executor.execution.status).to eq('complete')
+      end
     end
   end
 
   describe "#check_completion" do
     it "delegates to the batch execution" do
-      expect(processor.execution).to receive(:check_completion).and_return(true)
+      executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
 
-      expect(processor.check_completion).to eq(true)
+      expect(executor.execution).to receive(:check_completion).and_return(true)
+      expect(executor.check_completion).to eq(true)
     end
   end
 end

@@ -7,7 +7,7 @@
 - [x] need a controller to make workflows, and everything that entails
   - take a data source
   - ~~in the future we can parse user-provided yaml/json and do all the liquid validation~~ we dont need this
-- [ ] dont store api credentials in plaintext
+- [x] dont store api credentials in plaintext
 - [ ] move liquid rendering stuff out of step executor
 - [ ] remove status from rows table
 

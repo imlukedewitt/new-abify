@@ -10,18 +10,19 @@ require_relative 'liquid/context_builder'
 class StepExecutor
   attr_reader :step, :row, :config, :execution
 
-  def initialize(step, row, hydra_manager: HydraManager.instance, on_complete: nil, priority: false)
+  def initialize(step, row, row_execution: nil, hydra_manager: HydraManager.instance, on_complete: nil, priority: false)
     raise ArgumentError, 'step is required' unless step
     raise ArgumentError, 'row is required' unless row
 
     @step = step
     @row = row
+    @row_execution = row_execution
     @config = @step.step_config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
     @auth_config = @step.workflow&.resolved_auth_config || {}
     @priority = priority
-    @execution = StepExecution.new(step: @step, row: @row)
+    @execution = StepExecution.new(step: @step, row: @row, row_execution: @row_execution)
   end
 
   def self.call(step, row)
@@ -132,7 +133,8 @@ class StepExecutor
   def context
     @context ||= Liquid::ContextBuilder.new(
       row: @row,
-      workflow: @step.workflow
+      workflow: @step.workflow,
+      row_execution: @row_execution
     ).build
   end
 
