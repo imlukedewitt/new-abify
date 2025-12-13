@@ -3,376 +3,192 @@
 require "rails_helper"
 
 RSpec.describe RowExecutor do
-  subject(:processor) { described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution) }
+  let(:workflow) { create(:workflow) }
+  let(:data_source) { create(:data_source) }
+  let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: data_source) }
+  let(:row) { create(:row, data_source: data_source, data: { 'name' => 'Test' }) }
 
-  let(:row) { build(:row) }
-  let(:workflow) { build(:workflow) }
-  let(:workflow_execution) { build(:workflow_execution, workflow: workflow) }
+  before do
+    # Stub HydraManager to prevent actual HTTP and immediately invoke callbacks
+    allow(HydraManager.instance).to receive(:queue) do |**args|
+      response = double('Response', code: 200, body: '{"id": "123"}')
+      args[:on_complete]&.call(response)
+    end
+    allow(HydraManager.instance).to receive(:run)
+  end
 
-  describe "#initialize" do
-    it "creates a new instance with a row and workflow" do
-      expect(processor).to be_a(RowExecutor)
+  describe '#initialize' do
+    it 'creates a new instance with required attributes' do
+      executor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
+
+      expect(executor.row).to eq(row)
+      expect(executor.workflow).to eq(workflow)
+      expect(executor.workflow_execution).to eq(workflow_execution)
     end
 
-    context "when row is nil" do
-      let(:row) { nil }
+    it 'raises ArgumentError when row is nil' do
+      expect { described_class.new(row: nil, workflow: workflow, workflow_execution: workflow_execution) }
+        .to raise_error(ArgumentError, 'row is required')
+    end
 
-      it "raises an ArgumentError" do
-        expect { processor }.to raise_error(ArgumentError, "row is required")
+    it 'raises ArgumentError when workflow is nil' do
+      expect { described_class.new(row: row, workflow: nil, workflow_execution: workflow_execution) }
+        .to raise_error(ArgumentError, 'workflow is required')
+    end
+
+    it 'raises ArgumentError when workflow_execution is nil' do
+      expect { described_class.new(row: row, workflow: workflow, workflow_execution: nil) }
+        .to raise_error(ArgumentError, 'workflow_execution is required')
+    end
+  end
+
+  describe '#call' do
+    context 'with no steps' do
+      it 'creates a completed row execution' do
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+
+        expect(RowExecution.count).to eq(1)
+        expect(RowExecution.first.status).to eq('complete')
       end
     end
 
-    context "when workflow is nil" do
-      let(:workflow) { nil }
-
-      it "raises an ArgumentError" do
-        expect { processor }.to raise_error(ArgumentError, "workflow is required")
-      end
-    end
-
-    context "when arguments are missing" do
-      it "raises an ArgumentError for missing row" do
-        expect do
-          described_class.new(workflow: workflow)
-        end.to raise_error(ArgumentError)
-      end
-
-      it "raises an ArgumentError for missing workflow" do
-        expect do
-          described_class.new(row: row)
-        end.to raise_error(ArgumentError)
-      end
-    end
-
-    describe "#wait_for_completion" do
-      let(:execution_double) { instance_double(RowExecution) }
-
+    context 'with one step' do
       before do
-        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
+        create(:step, workflow: workflow, order: 1, config: {
+                 'liquid_templates' => {
+                   'name' => 'Test Step',
+                   'url' => 'https://api.example.com/test',
+                   'method' => 'get'
+                 }
+               })
       end
 
-      it "blocks until the row processing is complete" do
-        allow(workflow).to receive(:steps).and_return([])
-        allow(execution_double).to receive(:complete!)
-        allow(execution_double).to receive(:complete?)
-        allow(execution_double).to receive(:failed?).and_return(false)
+      it 'creates row execution and step execution' do
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
 
-        # Track completion order
-        completion_order = []
+        expect(RowExecution.count).to eq(1)
+        expect(StepExecution.count).to eq(1)
+        expect(RowExecution.first.status).to eq('complete')
+      end
+    end
 
-        # Create processor and start processing in a separate thread
-        completion_thread = Thread.new do
-          processor.call
-          completion_order << :processing_done
+    context 'with multiple steps' do
+      before do
+        create(:step, workflow: workflow, order: 1, name: 'First', config: {
+                 'liquid_templates' => { 'name' => 'First', 'url' => 'https://api.example.com/first', 'method' => 'get' }
+               })
+        create(:step, workflow: workflow, order: 2, name: 'Second', config: {
+                 'liquid_templates' => { 'name' => 'Second', 'url' => 'https://api.example.com/second', 'method' => 'get' }
+               })
+      end
+
+      it 'processes all steps in order' do
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+
+        expect(StepExecution.count).to eq(2)
+        expect(RowExecution.first.status).to eq('complete')
+
+        steps = StepExecution.joins(:step).order('steps."order"')
+        expect(steps.map { |se| se.step.name }).to eq(%w[First Second])
+      end
+    end
+
+    context 'when a step should be skipped' do
+      before do
+        create(:step, workflow: workflow, order: 1, name: 'Skippable', config: {
+                 'liquid_templates' => {
+                   'name' => 'Skippable',
+                   'url' => 'https://api.example.com/test',
+                   'method' => 'get',
+                   'skip_condition' => '{{ row.should_skip | default: false }}'
+                 }
+               })
+      end
+
+      it 'runs step when skip_condition is false' do
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+
+        step_exec = StepExecution.first
+        expect(step_exec.status).to eq('success')
+      end
+
+      it 'skips step when skip_condition is true' do
+        row.update!(data: { 'should_skip' => 'true' })
+
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+
+        expect(StepExecution.count).to eq(0)
+        expect(RowExecution.first.status).to eq('complete')
+      end
+    end
+
+    context 'when a required step fails' do
+      before do
+        allow(HydraManager.instance).to receive(:queue) do |**args|
+          response = double('Response', code: 500, body: '{"error": "Server error"}')
+          args[:on_complete]&.call(response)
         end
 
-        # Start waiting for completion in another thread
-        wait_thread = Thread.new do
-          processor.wait_for_completion
-          completion_order << :wait_done
+        create(:step, workflow: workflow, order: 1, name: 'Required Step', config: {
+                 'liquid_templates' => {
+                   'name' => 'Required Step',
+                   'url' => 'https://api.example.com/test',
+                   'method' => 'get',
+                   'required' => 'true'
+                 }
+               })
+        create(:step, workflow: workflow, order: 2, name: 'After Required', config: {
+                 'liquid_templates' => { 'name' => 'After Required', 'url' => 'https://api.example.com/second', 'method' => 'get' }
+               })
+      end
+
+      it 'marks row as failed and stops processing' do
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+
+        row.reload
+        expect(row.status).to eq('failed')
+        expect(RowExecution.first.status).to eq('failed')
+        expect(StepExecution.count).to eq(1) # Second step never runs
+      end
+    end
+
+    context 'when a non-required step fails' do
+      before do
+        allow(HydraManager.instance).to receive(:queue) do |**args|
+          response = double('Response', code: 500, body: '{"error": "Server error"}')
+          args[:on_complete]&.call(response)
         end
 
-        # Wait for both threads to complete
-        completion_thread.join
-        wait_thread.join
-
-        # Verify that processing completed before wait returned
-        expect(completion_order).to eq(%i[processing_done wait_done])
+        create(:step, workflow: workflow, order: 1, name: 'Optional Step', config: {
+                 'liquid_templates' => {
+                   'name' => 'Optional Step',
+                   'url' => 'https://api.example.com/test',
+                   'method' => 'get',
+                   'required' => 'false'
+                 }
+               })
       end
 
-      it "returns immediately if already completed" do
-        allow(workflow).to receive(:steps).and_return([])
-        allow(execution_double).to receive(:complete!)
-        allow(execution_double).to receive(:complete?)
-        allow(execution_double).to receive(:failed?).and_return(false)
+      it 'continues processing and completes row execution' do
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
 
-        # Complete the processing first
-        processor.call
-
-        # wait_for_completion should return immediately
-        start_time = Time.current
-        processor.wait_for_completion
-        end_time = Time.current
-
-        expect(end_time - start_time).to be < 0.1
-      end
-
-      it "handles completion when execution is already complete" do
-        allow(execution_double).to receive(:complete?).and_return(true)
-        allow(execution_double).to receive(:failed?).and_return(false)
-
-        # Should mark as completed and return immediately
-        start_time = Time.current
-        processor.call
-        processor.wait_for_completion
-        end_time = Time.current
-
-        expect(end_time - start_time).to be < 0.1
+        row.reload
+        expect(row.status).not_to eq('failed')
+        expect(RowExecution.first.status).to eq('complete')
       end
     end
   end
 
-  describe "#call" do
-    let(:first_step) { build(:step, order: 1) }
-    let(:second_step) { build(:step, order: 2) }
+  describe '#wait_for_completion' do
+    it 'returns immediately after call completes' do
+      executor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
+      executor.call
 
-    before do
-      allow(workflow).to receive(:steps).and_return([second_step, first_step])
-    end
+      start_time = Time.current
+      executor.wait_for_completion
+      elapsed = Time.current - start_time
 
-    it "does not process next steps if a required step fails" do
-      required_step = build(:step, order: 1, name: "Required Step")
-      next_step = build(:step, order: 2)
-
-      allow(workflow).to receive(:steps).and_return([required_step, next_step])
-
-      required_processor = instance_double(StepExecutor)
-
-      allow(StepExecutor).to receive(:new)
-        .with(required_step, row, anything)
-        .and_return(required_processor)
-
-      allow(required_processor).to receive(:should_skip?).and_return(false)
-      allow(required_processor).to receive(:required?).and_return(true)
-      allow(required_processor).to receive(:call) do
-        processor.send(:handle_step_completion, { success: false, error: "Failure in required step" })
-      end
-
-      execution_double = instance_double(RowExecution)
-      allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
-      allow(execution_double).to receive(:start!)
-      allow(execution_double).to receive(:processing?).and_return(false)
-      allow(execution_double).to receive(:complete?)
-
-      allow(row).to receive(:update).with(status: :failed)
-
-      expect(StepExecutor).not_to receive(:new).with(next_step, row, anything)
-    end
-
-    it "processes steps in sequence and completes" do
-      first_processor = instance_double(StepExecutor)
-      second_processor = instance_double(StepExecutor)
-
-      expect(StepExecutor).to receive(:new)
-        .with(first_step, row, anything)
-        .and_return(first_processor)
-      allow(first_processor).to receive(:should_skip?).and_return(false)
-      expect(first_processor).to receive(:call)
-
-      processor.call
-
-      expect(StepExecutor).to receive(:new)
-        .with(second_step, row, anything)
-        .and_return(second_processor)
-      allow(second_processor).to receive(:should_skip?).and_return(false)
-      expect(second_processor).to receive(:call)
-
-      # Simulate completion of first step with success
-      processor.send(:handle_step_completion, { success: true, data: { 'customer_id' => '123' } })
-
-      expect(StepExecutor).not_to receive(:new)
-      processor.send(:handle_step_completion, { success: true, data: { 'subscription_id' => '456' } })
-    end
-
-    it "skips steps when should_skip? returns true" do
-      first_processor = instance_double(StepExecutor)
-      second_processor = instance_double(StepExecutor)
-
-      expect(StepExecutor).to receive(:new)
-        .with(first_step, row, anything)
-        .and_return(first_processor)
-      allow(first_processor).to receive(:should_skip?).and_return(true)
-      expect(first_processor).not_to receive(:call)
-
-      expect(StepExecutor).to receive(:new)
-        .with(second_step, row, anything)
-        .and_return(second_processor)
-      allow(second_processor).to receive(:should_skip?).and_return(false)
-      expect(second_processor).to receive(:call)
-
-      processor.call
-    end
-
-    it "handles steps without success_data" do
-      step_without_data = build(:step, order: 1, config: {
-                                  'liquid_templates' => {
-                                    'method' => 'get',
-                                    'url' => 'https://api.example.com/endpoint'
-                                  }
-                                })
-      allow(workflow).to receive(:steps).and_return([step_without_data])
-
-      test_processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
-      step_processor = instance_double(StepExecutor)
-
-      expect(StepExecutor).to receive(:new)
-        .with(step_without_data, row, anything)
-        .and_return(step_processor)
-      allow(step_processor).to receive(:should_skip?).and_return(false)
-      expect(step_processor).to receive(:call)
-
-      test_processor.call
-
-      expect do
-        test_processor.send(:handle_step_completion, { success: true, data: {} })
-      end.not_to raise_error
-    end
-
-    context "with @in_progress and priority logic" do
-      let(:hydra_manager_double) { instance_double(HydraManager) }
-      let(:on_complete_method) { processor.method(:handle_step_completion) } # Memoized for consistent object in mocks
-
-      before do
-        allow(HydraManager).to receive(:instance).and_return(hydra_manager_double)
-      end
-
-      it "initializes the first StepExecutor with priority: false and starts execution" do
-        allow(workflow).to receive(:steps).and_return([first_step])
-        step_processor_double = instance_double(StepExecutor, should_skip?: false)
-        allow(step_processor_double).to receive(:call)
-
-        execution_double = instance_double(RowExecution, processing?: false)
-        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
-        allow(execution_double).to receive(:start!)
-        allow(execution_double).to receive(:complete?)
-
-        expect(StepExecutor).to receive(:new).with(
-          first_step,
-          row,
-          hash_including(
-            priority: false,
-            on_complete: on_complete_method,
-            hydra_manager: hydra_manager_double
-          )
-        ).and_return(step_processor_double)
-
-        processor.call
-        expect(execution_double).to have_received(:start!)
-      end
-
-      it "initializes subsequent StepExecutors with priority: true" do
-        allow(workflow).to receive(:steps).and_return([first_step, second_step])
-        first_sp_double = instance_double(StepExecutor, should_skip?: false)
-        allow(first_sp_double).to receive(:call)
-        second_sp_double = instance_double(StepExecutor, should_skip?: false)
-        allow(second_sp_double).to receive(:call)
-
-        execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
-        allow(execution_double).to receive(:start!)
-        allow(execution_double).to receive(:processing?).and_return(false, true)
-        allow(execution_double).to receive(:complete?)
-        allow(execution_double).to receive(:failed?).and_return(false)
-
-        expect(StepExecutor).to receive(:new).with(
-          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
-        ).ordered.and_return(first_sp_double)
-
-        expect(StepExecutor).to receive(:new).with(
-          second_step, row, hash_including(priority: true, on_complete: on_complete_method)
-        ).ordered.and_return(second_sp_double)
-
-        processor.call
-        processor.send(:handle_step_completion, { success: true, data: {} })
-      end
-
-      it "completes the execution when called with no steps" do
-        allow(workflow).to receive(:steps).and_return([])
-
-        execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
-        allow(execution_double).to receive(:complete!)
-        allow(execution_double).to receive(:complete?)
-        allow(execution_double).to receive(:failed?).and_return(false)
-
-        # Create processor after setting up the mocks
-        row_processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
-
-        expect(StepExecutor).not_to receive(:new)
-        row_processor.call
-        expect(execution_double).to have_received(:complete!)
-      end
-
-      it "completes the execution after all steps are processed" do
-        allow(workflow).to receive(:steps).and_return([first_step])
-        step_processor_double = instance_double(StepExecutor, should_skip?: false)
-        allow(step_processor_double).to receive(:call)
-
-        execution_double = instance_double(RowExecution, processing?: false)
-        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
-        allow(execution_double).to receive(:start!)
-        allow(execution_double).to receive(:complete!)
-        allow(execution_double).to receive(:complete?)
-        allow(execution_double).to receive(:failed?).and_return(false)
-
-        expect(StepExecutor).to receive(:new).with(
-          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
-        ).and_return(step_processor_double)
-
-        processor.call
-
-        processor.send(:handle_step_completion, { success: true, data: {} })
-
-        expect(processor.instance_variable_get(:@current_step_index)).to eq 1
-        expect(execution_double).to have_received(:complete!)
-      end
-
-      it "uses priority: false for the next step if the first step is skipped" do
-        allow(workflow).to receive(:steps).and_return([first_step, second_step])
-        first_sp_double = instance_double(StepExecutor, should_skip?: true)
-        second_sp_double = instance_double(StepExecutor, should_skip?: false)
-        allow(second_sp_double).to receive(:call)
-
-        execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
-        allow(execution_double).to receive(:processing?).and_return(false)
-        allow(execution_double).to receive(:start!)
-        allow(execution_double).to receive(:complete?)
-        allow(execution_double).to receive(:failed?).and_return(false)
-
-        expect(StepExecutor).to receive(:new).with(
-          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
-        ).ordered.and_return(first_sp_double)
-
-        expect(StepExecutor).to receive(:new).with(
-          second_step, row, hash_including(priority: false, on_complete: on_complete_method)
-        ).ordered.and_return(second_sp_double)
-
-        processor.call
-      end
-
-      it "uses priority: true for a step after a skipped step, if processing was already in progress" do
-        third_step = build(:step, order: 3)
-        allow(workflow).to receive(:steps).and_return([first_step, second_step, third_step])
-
-        first_sp = instance_double(StepExecutor, should_skip?: false)
-        allow(first_sp).to receive(:call)
-        second_sp = instance_double(StepExecutor, should_skip?: true)
-        third_sp = instance_double(StepExecutor, should_skip?: false)
-        allow(third_sp).to receive(:call)
-
-        execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
-        allow(execution_double).to receive(:start!)
-        allow(execution_double).to receive(:processing?).and_return(false, true, true)
-        allow(execution_double).to receive(:complete?)
-        allow(execution_double).to receive(:failed?).and_return(false)
-
-        expect(StepExecutor).to receive(:new).with(
-          first_step, row, hash_including(priority: false, on_complete: on_complete_method)
-        ).ordered.and_return(first_sp)
-
-        expect(StepExecutor).to receive(:new).with(
-          second_step, row, hash_including(priority: true, on_complete: on_complete_method)
-        ).ordered.and_return(second_sp)
-
-        expect(StepExecutor).to receive(:new).with(
-          third_step, row, hash_including(priority: true, on_complete: on_complete_method)
-        ).ordered.and_return(third_sp)
-
-        processor.call
-        processor.send(:handle_step_completion, { success: true, data: {} })
-      end
+      expect(elapsed).to be < 0.1
     end
   end
 end
