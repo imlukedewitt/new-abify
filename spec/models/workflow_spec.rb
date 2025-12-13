@@ -29,6 +29,42 @@ RSpec.describe Workflow, type: :model do
       expect(workflow).not_to be_valid
       expect(workflow.errors[:name]).to include("can't be blank")
     end
+
+    describe 'handle' do
+      it 'allows nil handle' do
+        workflow = build(:workflow, handle: nil)
+        expect(workflow).to be_valid
+      end
+
+      it 'allows valid handle' do
+        workflow = build(:workflow, handle: 'my-workflow-123')
+        expect(workflow).to be_valid
+      end
+
+      it 'requires handle to start with a letter' do
+        workflow = build(:workflow, handle: '123-workflow')
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:handle])
+          .to include('must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores')
+      end
+
+      it 'rejects uppercase letters' do
+        workflow = build(:workflow, handle: 'MyWorkflow')
+        expect(workflow).not_to be_valid
+      end
+
+      it 'rejects spaces' do
+        workflow = build(:workflow, handle: 'my workflow')
+        expect(workflow).not_to be_valid
+      end
+
+      it 'enforces uniqueness' do
+        create(:workflow, handle: 'unique-handle')
+        workflow = build(:workflow, handle: 'unique-handle')
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:handle]).to include('has already been taken')
+      end
+    end
   end
 
   describe '#config validation' do
@@ -104,7 +140,8 @@ RSpec.describe Workflow, type: :model do
                              }
                            })
           expect(workflow).not_to be_valid
-          expect(workflow.errors[:config].first).to include('invalid Liquid syntax in workflow.liquid_templates.group_by')
+          expect(workflow.errors[:config].first)
+            .to include('invalid Liquid syntax in workflow.liquid_templates.group_by')
         end
       end
 
@@ -294,6 +331,63 @@ RSpec.describe Workflow, type: :model do
 
       workflow.reload
       expect(workflow.connection_id).to be_nil
+    end
+  end
+
+  describe '.find_by_id_or_handle' do
+    let!(:workflow) { create(:workflow, :with_handle) }
+
+    context 'when identifier is a numeric ID' do
+      it 'finds by ID' do
+        result = described_class.find_by_id_or_handle(workflow.id)
+        expect(result).to eq(workflow)
+      end
+
+      it 'finds by ID as string' do
+        result = described_class.find_by_id_or_handle(workflow.id.to_s)
+        expect(result).to eq(workflow)
+      end
+    end
+
+    context 'when identifier is a handle' do
+      it 'finds by handle' do
+        result = described_class.find_by_id_or_handle(workflow.handle)
+        expect(result).to eq(workflow)
+      end
+    end
+
+    context 'when identifier is blank' do
+      it 'returns nil for nil' do
+        expect(described_class.find_by_id_or_handle(nil)).to be_nil
+      end
+
+      it 'returns nil for empty string' do
+        expect(described_class.find_by_id_or_handle('')).to be_nil
+      end
+    end
+
+    context 'when identifier does not match' do
+      it 'returns nil for non-existent ID' do
+        expect(described_class.find_by_id_or_handle(99999)).to be_nil
+      end
+
+      it 'returns nil for non-existent handle' do
+        expect(described_class.find_by_id_or_handle('nonexistent')).to be_nil
+      end
+    end
+  end
+
+  describe '.find_by_id_or_handle!' do
+    let!(:workflow) { create(:workflow, :with_handle) }
+
+    it 'returns workflow when found' do
+      expect(described_class.find_by_id_or_handle!(workflow.handle)).to eq(workflow)
+    end
+
+    it 'raises RecordNotFound when not found' do
+      expect do
+        described_class.find_by_id_or_handle!('nonexistent')
+      end.to raise_error(ActiveRecord::RecordNotFound, /Couldn't find Workflow with identifier=nonexistent/)
     end
   end
 end

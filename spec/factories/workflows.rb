@@ -18,6 +18,10 @@ FactoryBot.define do
       }
     end
 
+    trait :with_handle do
+      sequence(:handle) { |n| "workflow-#{n}" }
+    end
+
     trait :with_step do
       after(:create) do |workflow|
         create(:step, workflow: workflow, order: 1)
