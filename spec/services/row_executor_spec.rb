@@ -170,8 +170,6 @@ RSpec.describe RowExecutor do
         described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
                             step_templates: templates).call
 
-        row.reload
-        expect(row.status).to eq('failed')
         expect(RowExecution.first.status).to eq('failed')
         expect(StepExecution.count).to eq(1) # Second step never runs
       end
@@ -200,8 +198,6 @@ RSpec.describe RowExecutor do
         described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
                             step_templates: templates).call
 
-        row.reload
-        expect(row.status).not_to eq('failed')
         expect(RowExecution.first.status).to eq('complete')
       end
     end

@@ -96,7 +96,6 @@ class RowExecutor
     if @current_step_executor.required?
       Rails.logger.info("Row #{@row.source_index} required step #{current_step.name} failed: #{error}")
       execution.fail!
-      row.update(status: :failed)
       mark_completed # Mark as completed even on failure
       return
     end
