@@ -123,20 +123,24 @@ RSpec.describe WorkflowExecutor do
       end
 
       before do
-        # Create rows with priorities in non-sorted order
+        # Create rows with priorities in non-sorted order (by ID: 3, 1, 2)
         create(:row, data_source: data_source, data: { 'category' => 'A', 'priority' => '3' })
         create(:row, data_source: data_source, data: { 'category' => 'A', 'priority' => '1' })
         create(:row, data_source: data_source, data: { 'category' => 'A', 'priority' => '2' })
       end
 
-      it 'sorts rows within groups by the sort_by template' do
+      it 'processes rows sequentially in sorted order' do
+        # Track the order rows are processed
+        processed_priorities = []
+        allow_any_instance_of(RowExecutor).to receive(:call).and_wrap_original do |method, *args|
+          processed_priorities << method.receiver.row.data['priority']
+          method.call(*args)
+        end
+
         described_class.new(workflow, data_source).call
 
-        batch = Batch.first
-        row_priorities = batch.rows.order(:id).map { |r| r.data['priority'] }
-
-        # TODO: this is currently broken https://github.com/imlukedewitt/new-abify/issues/24
-        expect(batch.rows.count).to eq(3)
+        # Should be processed in priority order: 1, 2, 3 (not ID order: 3, 1, 2)
+        expect(processed_priorities).to eq(%w[1 2 3])
       end
     end
 
