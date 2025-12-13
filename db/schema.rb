@@ -51,11 +51,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_13_002443) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "imports", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "row_executions", force: :cascade do |t|
     t.integer "row_id", null: false
     t.integer "workflow_execution_id", null: false
