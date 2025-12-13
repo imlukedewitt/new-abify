@@ -11,6 +11,7 @@
 # @attr [Workflow] workflow The workflow this step belongs to
 class Step < ApplicationRecord
   belongs_to :workflow
+  belongs_to :connection, optional: true
   has_many :step_executions, dependent: :destroy
   default_scope { order(order: :asc) }
 
@@ -25,6 +26,14 @@ class Step < ApplicationRecord
     return config['steps'][name] if config.key?('steps') && config['steps'].is_a?(Hash)
 
     config
+  end
+
+  def resolved_auth_config
+    if connection.present?
+      connection.credentials
+    else
+      workflow&.resolved_auth_config || {}
+    end
   end
 
   private

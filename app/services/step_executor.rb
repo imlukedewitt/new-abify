@@ -21,7 +21,7 @@ class StepExecutor
     @config = @step.step_config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
-    @auth_config = @step.workflow&.resolved_auth_config || {}
+    @auth_config = @step.resolved_auth_config
     @priority = priority
     @execution = StepExecution.new(step: @step, row: @row, row_execution: @row_execution)
     @templates = step_templates.fetch(@step.id)
