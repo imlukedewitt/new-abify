@@ -81,4 +81,44 @@ RSpec.describe Step, type: :model do
     end
   end
 
+  describe '#resolved_auth_config' do
+    let(:user) { create(:user) }
+
+    context 'when step has its own connection' do
+      it 'returns the step connection credentials' do
+        step_connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'step_token' })
+        step = create(:step, connection: step_connection)
+
+        expect(step.resolved_auth_config).to eq({ 'type' => 'bearer', 'token' => 'step_token' })
+      end
+
+      it 'overrides the workflow connection' do
+        workflow_connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'workflow_token' })
+        step_connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'step_token' })
+        workflow = create(:workflow, connection: workflow_connection)
+        step = create(:step, workflow: workflow, connection: step_connection)
+
+        expect(step.resolved_auth_config).to eq({ 'type' => 'bearer', 'token' => 'step_token' })
+      end
+    end
+
+    context 'when step has no connection but workflow has connection' do
+      it 'returns the workflow connection credentials' do
+        workflow_connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'workflow_token' })
+        workflow = create(:workflow, connection: workflow_connection)
+        step = create(:step, workflow: workflow, connection: nil)
+
+        expect(step.resolved_auth_config).to eq({ 'type' => 'bearer', 'token' => 'workflow_token' })
+      end
+    end
+
+    context 'when neither step nor workflow has a connection' do
+      it 'returns an empty hash' do
+        workflow = create(:workflow, connection: nil)
+        step = create(:step, workflow: workflow, connection: nil)
+
+        expect(step.resolved_auth_config).to eq({})
+      end
+    end
+  end
 end
