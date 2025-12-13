@@ -22,7 +22,7 @@ body:json {
             "name": "{{step_name}}",
             "url": "{{url}}",
             "method": "{{method}}",
-            "success_data": "{{success_data}}"
+            "success_data": {{success_data}}
           }
         }
       }
@@ -32,7 +32,7 @@ body:json {
 
 vars:pre-request {
   name: AB test workflow
-  connection_id: 2
+  connection_id: 1
   step_name: read site
   url: {\{base_url}}/site.json
   method: get
