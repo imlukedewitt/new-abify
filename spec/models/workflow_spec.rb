@@ -44,7 +44,8 @@ RSpec.describe Workflow, type: :model do
       it 'requires handle to start with a letter' do
         workflow = build(:workflow, handle: '123-workflow')
         expect(workflow).not_to be_valid
-        expect(workflow.errors[:handle]).to include('must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores')
+        expect(workflow.errors[:handle])
+          .to include('must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores')
       end
 
       it 'rejects uppercase letters' do
@@ -139,7 +140,8 @@ RSpec.describe Workflow, type: :model do
                              }
                            })
           expect(workflow).not_to be_valid
-          expect(workflow.errors[:config].first).to include('invalid Liquid syntax in workflow.liquid_templates.group_by')
+          expect(workflow.errors[:config].first)
+            .to include('invalid Liquid syntax in workflow.liquid_templates.group_by')
         end
       end
 
