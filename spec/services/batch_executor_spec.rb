@@ -16,6 +16,7 @@ RSpec.describe BatchExecutor do
                'method' => 'get'
              }
            })
+    workflow.reload
 
     # Stub HydraManager to prevent HTTP and immediately invoke callbacks
     allow(HydraManager.instance).to receive(:queue) do |**args|
@@ -65,14 +66,18 @@ RSpec.describe BatchExecutor do
       end
 
       it "creates RowExecutions for each row" do
-        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution).call
+        step_templates = build_step_templates(workflow)
+        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: step_templates).call
 
         expect(RowExecution.count).to eq(3)
         expect(RowExecution.pluck(:status).uniq).to eq(['complete'])
       end
 
       it "starts and completes the batch execution" do
-        executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+        step_templates = build_step_templates(workflow)
+        executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
+                                       step_templates: step_templates)
         executor.call
 
         expect(executor.execution.status).to eq('complete')
@@ -90,8 +95,10 @@ RSpec.describe BatchExecutor do
       it "calls HydraManager.run once per row" do
         run_count = 0
         allow(HydraManager.instance).to receive(:run) { run_count += 1 }
+        step_templates = build_step_templates(workflow)
 
-        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution).call
+        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: step_templates).call
 
         expect(run_count).to eq(3)
       end
@@ -106,8 +113,10 @@ RSpec.describe BatchExecutor do
       it "calls HydraManager.run once for all rows" do
         run_count = 0
         allow(HydraManager.instance).to receive(:run) { run_count += 1 }
+        step_templates = build_step_templates(workflow)
 
-        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution).call
+        described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: step_templates).call
 
         expect(run_count).to eq(1)
       end
@@ -115,7 +124,9 @@ RSpec.describe BatchExecutor do
 
     context "with no rows" do
       it "completes without creating any RowExecutions" do
-        executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+        step_templates = build_step_templates(workflow)
+        executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
+                                       step_templates: step_templates)
         executor.call
 
         expect(RowExecution.count).to eq(0)

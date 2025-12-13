@@ -8,7 +8,11 @@ RSpec.describe StepExecutor, type: :service do
     let(:row) { create(:row) }
     let(:hydra_manager) { instance_double(HydraManager) }
     let(:callback) { ->(result) {} }
-    let(:processor) { described_class.new(step, row, on_complete: callback, hydra_manager: hydra_manager) }
+    let(:step_templates) { build_step_templates_for(step) }
+    let(:processor) do
+      described_class.new(step, row, on_complete: callback, hydra_manager: hydra_manager,
+                                     step_templates: step_templates)
+    end
 
     before do
       allow(hydra_manager).to receive(:queue).and_return(double('Typhoeus::Request'))

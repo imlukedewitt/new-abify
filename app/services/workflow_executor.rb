@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'liquid/workflow_templates'
+require_relative 'liquid/step_templates'
 require_relative 'liquid/context_builder'
 
 ##
@@ -20,6 +21,7 @@ class WorkflowExecutor
   def call
     @execution = WorkflowExecution.create!(workflow: workflow, data_source: data_source)
     @execution.start!
+    @step_templates = compile_step_templates
     Rails.logger.info "\nStarting workflow execution for #{@workflow.name} at #{@execution.started_at}"
 
     # Process rows in batches
@@ -35,6 +37,12 @@ class WorkflowExecutor
   end
 
   private
+
+  def compile_step_templates
+    workflow.steps.each_with_object({}) do |step, hash|
+      hash[step.id] = Liquid::StepTemplates.new(step.step_config['liquid_templates'])
+    end
+  end
 
   def process_batches
     config = workflow.workflow_config || {}
@@ -112,6 +120,12 @@ class WorkflowExecutor
       rows.each { |row| row.update!(batch_id: batch.id) }
     end
 
-    BatchExecutor.new(batch: batch, workflow: workflow, workflow_execution: @execution, rows: rows).call
+    BatchExecutor.new(
+      batch: batch,
+      workflow: workflow,
+      workflow_execution: @execution,
+      rows: rows,
+      step_templates: @step_templates
+    ).call
   end
 end

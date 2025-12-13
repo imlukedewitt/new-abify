@@ -50,8 +50,14 @@ RSpec.describe BatchExecutor, :integration, :vcr do
   describe '#call' do
     it 'processes all rows in the batch' do
       expect(batch.rows.count).to eq(3)
+      step_templates = build_step_templates(workflow)
 
-      processor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+      processor = described_class.new(
+        batch: batch,
+        workflow: workflow,
+        workflow_execution: workflow_execution,
+        step_templates: step_templates
+      )
       processor.call
 
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)
@@ -86,8 +92,14 @@ RSpec.describe BatchExecutor, :integration, :vcr do
                }
              })
       workflow.reload
+      step_templates = build_step_templates(workflow)
 
-      processor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+      processor = described_class.new(
+        batch: batch,
+        workflow: workflow,
+        workflow_execution: workflow_execution,
+        step_templates: step_templates
+      )
       processor.call
 
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)
@@ -111,8 +123,14 @@ RSpec.describe BatchExecutor, :integration, :vcr do
                }
              })
       workflow.reload
+      step_templates = build_step_templates(workflow)
 
-      processor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
+      processor = described_class.new(
+        batch: batch,
+        workflow: workflow,
+        workflow_execution: workflow_execution,
+        step_templates: step_templates
+      )
       processor.call
 
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)

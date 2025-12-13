@@ -7,6 +7,7 @@ RSpec.describe RowExecutor do
   let(:data_source) { create(:data_source) }
   let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: data_source) }
   let(:row) { create(:row, data_source: data_source, data: { 'name' => 'Test' }) }
+  let(:step_templates) { build_step_templates(workflow) }
 
   before do
     # Stub HydraManager to prevent actual HTTP and immediately invoke callbacks
@@ -19,7 +20,8 @@ RSpec.describe RowExecutor do
 
   describe '#initialize' do
     it 'creates a new instance with required attributes' do
-      executor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
+      executor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                                     step_templates: step_templates)
 
       expect(executor.row).to eq(row)
       expect(executor.workflow).to eq(workflow)
@@ -27,17 +29,25 @@ RSpec.describe RowExecutor do
     end
 
     it 'raises ArgumentError when row is nil' do
-      expect { described_class.new(row: nil, workflow: workflow, workflow_execution: workflow_execution) }
+      expect do
+        described_class.new(row: nil, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: step_templates)
+      end
         .to raise_error(ArgumentError, 'row is required')
     end
 
     it 'raises ArgumentError when workflow is nil' do
-      expect { described_class.new(row: row, workflow: nil, workflow_execution: workflow_execution) }
+      expect do
+        described_class.new(row: row, workflow: nil, workflow_execution: workflow_execution,
+                            step_templates: step_templates)
+      end
         .to raise_error(ArgumentError, 'workflow is required')
     end
 
     it 'raises ArgumentError when workflow_execution is nil' do
-      expect { described_class.new(row: row, workflow: workflow, workflow_execution: nil) }
+      expect do
+        described_class.new(row: row, workflow: workflow, workflow_execution: nil, step_templates: step_templates)
+      end
         .to raise_error(ArgumentError, 'workflow_execution is required')
     end
   end
@@ -45,7 +55,8 @@ RSpec.describe RowExecutor do
   describe '#call' do
     context 'with no steps' do
       it 'creates a completed row execution' do
-        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: step_templates).call
 
         expect(RowExecution.count).to eq(1)
         expect(RowExecution.first.status).to eq('complete')
@@ -61,10 +72,13 @@ RSpec.describe RowExecutor do
                    'method' => 'get'
                  }
                })
+        workflow.reload
       end
 
       it 'creates row execution and step execution' do
-        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+        templates = build_step_templates(workflow)
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: templates).call
 
         expect(RowExecution.count).to eq(1)
         expect(StepExecution.count).to eq(1)
@@ -80,10 +94,13 @@ RSpec.describe RowExecutor do
         create(:step, workflow: workflow, order: 2, name: 'Second', config: {
                  'liquid_templates' => { 'name' => 'Second', 'url' => 'https://api.example.com/second', 'method' => 'get' }
                })
+        workflow.reload
       end
 
       it 'processes all steps in order' do
-        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+        templates = build_step_templates(workflow)
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: templates).call
 
         expect(StepExecution.count).to eq(2)
         expect(RowExecution.first.status).to eq('complete')
@@ -103,10 +120,13 @@ RSpec.describe RowExecutor do
                    'skip_condition' => '{{ row.should_skip | default: false }}'
                  }
                })
+        workflow.reload
       end
 
       it 'runs step when skip_condition is false' do
-        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+        templates = build_step_templates(workflow)
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: templates).call
 
         step_exec = StepExecution.first
         expect(step_exec.status).to eq('success')
@@ -114,8 +134,10 @@ RSpec.describe RowExecutor do
 
       it 'skips step when skip_condition is true' do
         row.update!(data: { 'should_skip' => 'true' })
+        templates = build_step_templates(workflow)
 
-        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: templates).call
 
         expect(StepExecution.count).to eq(0)
         expect(RowExecution.first.status).to eq('complete')
@@ -140,10 +162,13 @@ RSpec.describe RowExecutor do
         create(:step, workflow: workflow, order: 2, name: 'After Required', config: {
                  'liquid_templates' => { 'name' => 'After Required', 'url' => 'https://api.example.com/second', 'method' => 'get' }
                })
+        workflow.reload
       end
 
       it 'marks row as failed and stops processing' do
-        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+        templates = build_step_templates(workflow)
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: templates).call
 
         row.reload
         expect(row.status).to eq('failed')
@@ -167,10 +192,13 @@ RSpec.describe RowExecutor do
                    'required' => 'false'
                  }
                })
+        workflow.reload
       end
 
       it 'continues processing and completes row execution' do
-        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution).call
+        templates = build_step_templates(workflow)
+        described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                            step_templates: templates).call
 
         row.reload
         expect(row.status).not_to eq('failed')
@@ -181,7 +209,8 @@ RSpec.describe RowExecutor do
 
   describe '#wait_for_completion' do
     it 'returns immediately after call completes' do
-      executor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
+      executor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                                     step_templates: step_templates)
       executor.call
 
       start_time = Time.current

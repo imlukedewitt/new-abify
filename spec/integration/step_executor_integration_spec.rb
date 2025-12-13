@@ -22,10 +22,12 @@ RSpec.describe StepExecutor, :integration, :vcr do
   let(:row) { create(:row) }
 
   it 'can make a real HTTP request and process the response', vcr: { cassette_name: 'jsonplaceholder/get_post' } do
+    step_templates = build_step_templates_for(step)
+
     result = nil
     callback = ->(response) { result = response }
 
-    processor = described_class.new(step, row, on_complete: callback)
+    processor = described_class.new(step, row, on_complete: callback, step_templates: step_templates)
     processor.call
 
     # Run the hydra queue to actually make the requests
@@ -41,25 +43,26 @@ RSpec.describe StepExecutor, :integration, :vcr do
   end
 
   it 'can make a POST request', vcr: { cassette_name: 'jsonplaceholder/create_post' } do
-    step.config = {
-      'liquid_templates' => {
-        'name' => 'Create Post',
-        'url' => 'https://jsonplaceholder.typicode.com/posts',
-        'method' => 'post',
-        'body' => '{"title":"Test Post","body":"This is a test post","userId":1}',
-        'success_data' => {
-          'id' => '{{response.id}}',
-          'title' => '{{response.title}}',
-          'body' => '{{response.body}}',
-          'userId' => '{{response.userId}}'
-        }
-      }
-    }
+    step.update!(config: {
+                   'liquid_templates' => {
+                     'name' => 'Create Post',
+                     'url' => 'https://jsonplaceholder.typicode.com/posts',
+                     'method' => 'post',
+                     'body' => '{"title":"Test Post","body":"This is a test post","userId":1}',
+                     'success_data' => {
+                       'id' => '{{response.id}}',
+                       'title' => '{{response.title}}',
+                       'body' => '{{response.body}}',
+                       'userId' => '{{response.userId}}'
+                     }
+                   }
+                 })
+    step_templates = build_step_templates_for(step)
 
     result = nil
     callback = ->(response) { result = response }
 
-    processor = described_class.new(step, row, on_complete: callback)
+    processor = described_class.new(step, row, on_complete: callback, step_templates: step_templates)
     processor.call
 
     HydraManager.instance.run
@@ -74,18 +77,19 @@ RSpec.describe StepExecutor, :integration, :vcr do
   end
 
   it 'handles errors gracefully', vcr: { cassette_name: 'jsonplaceholder/not_found' } do
-    step.config = {
-      'liquid_templates' => {
-        'name' => 'Test 404',
-        'url' => 'https://jsonplaceholder.typicode.com/nonexistent',
-        'method' => 'get'
-      }
-    }
+    step.update!(config: {
+                   'liquid_templates' => {
+                     'name' => 'Test 404',
+                     'url' => 'https://jsonplaceholder.typicode.com/nonexistent',
+                     'method' => 'get'
+                   }
+                 })
+    step_templates = build_step_templates_for(step)
 
     result = nil
     callback = ->(response) { result = response }
 
-    processor = described_class.new(step, row, on_complete: callback)
+    processor = described_class.new(step, row, on_complete: callback, step_templates: step_templates)
     processor.call
 
     HydraManager.instance.run

@@ -24,8 +24,10 @@ RSpec.describe RowExecutor, :integration, :vcr do
 
   it 'processes a step and stores success data in step execution', vcr: { cassette_name: 'jsonplaceholder/get_post' } do
     expect(workflow.steps).to include(step)
+    step_templates = build_step_templates(workflow)
 
-    processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
+    processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution,
+                                    step_templates: step_templates)
     processor.call
 
     HydraManager.instance.run
@@ -50,8 +52,11 @@ RSpec.describe RowExecutor, :integration, :vcr do
                        }
                      }
                    })
+    workflow.reload
+    step_templates = build_step_templates(workflow)
 
-    processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
+    processor = described_class.new(row: row, workflow: workflow,
+                                    workflow_execution: workflow_execution, step_templates: step_templates)
     processor.call
 
     HydraManager.instance.run
@@ -79,8 +84,12 @@ RSpec.describe RowExecutor, :integration, :vcr do
                }
              }
            })
+    workflow.reload
+    step_templates = build_step_templates(workflow)
+
     empty_row = create(:row, data: {}, data_source: data_source)
-    processor = described_class.new(row: empty_row, workflow: workflow, workflow_execution: workflow_execution)
+    processor = described_class.new(row: empty_row, workflow: workflow, workflow_execution: workflow_execution,
+                                    step_templates: step_templates)
     processor.call
 
     expect { HydraManager.instance.run }.not_to raise_error
