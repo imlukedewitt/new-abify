@@ -14,10 +14,11 @@ class WorkflowExecution < ApplicationRecord
   validates :workflow, presence: true
   validates :data_source, presence: true
 
-  def fail!
+  def fail!(message = nil)
     update!(
       status: Executable::FAILED,
-      completed_at: Time.current
+      completed_at: Time.current,
+      error_message: message
     )
   end
 end
