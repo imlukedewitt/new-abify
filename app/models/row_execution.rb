@@ -10,7 +10,7 @@
 class RowExecution < ApplicationRecord
   include Executable
   belongs_to :row
-  has_many :step_executions, through: :row
+  has_many :step_executions
 
   def fail!
     update!(
@@ -29,5 +29,15 @@ class RowExecution < ApplicationRecord
 
     statuses['total'] = step_executions.count
     statuses
+  end
+
+  def merged_success_data
+    step_executions
+      .where(status: 'success')
+      .joins(:step)
+      .order(Arel.sql('steps."order"'))
+      .each_with_object({}) do |step_exec, merged|
+        merged.merge!(step_exec.result&.dig('data') || {})
+      end
   end
 end

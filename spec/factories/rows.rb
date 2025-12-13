@@ -7,7 +7,6 @@ FactoryBot.define do
     status { 'pending' }
     sequence(:source_index) { |n| n }
     data { { first_name: "John", last_name: "Doe", email: "john.doe@example.com", organization: "Acme Corp" } }
-    original_data { data.dup } # Original data starts as a copy of data
 
     trait :with_batch do
       association :batch

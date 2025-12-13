@@ -51,6 +51,7 @@ class RowExecutor
     @current_step_executor = StepExecutor.new(
       current_step,
       row,
+      row_execution: execution,
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
       priority: execution.processing? # prioritize completing in-progress rows
@@ -71,7 +72,6 @@ class RowExecutor
     if result[:success]
       Rails.logger.info "Row #{row.source_index} step #{@current_step_index} success"
       Rails.logger.info "  data: #{result[:data]}" if result[:data].present?
-      update_row_with_success_data(result[:data])
     else
       handle_step_failure(result[:error])
     end
@@ -84,14 +84,6 @@ class RowExecutor
     else
       call
     end
-  end
-
-  def update_row_with_success_data(data)
-    return if data.nil? || data.empty?
-
-    row.data ||= {}
-    row.data.merge!(data)
-    row.save
   end
 
   def handle_step_failure(error)

@@ -217,37 +217,6 @@ RSpec.describe RowExecutor do
       end.not_to raise_error
     end
 
-    it "saves success data to the row" do
-      customer_lookup = build(:step, order: 1, config: {
-                                'liquid_templates' => {
-                                  'method' => 'get',
-                                  'url' => '{{base}}/customers/lookup.json?reference={{row.customer_reference}}',
-                                  'success_data' => {
-                                    'customer_id' => '{{response.customer.id}}'
-                                  }
-                                }
-                              })
-
-      allow(workflow).to receive(:steps).and_return([customer_lookup])
-
-      customer_processor = instance_double(StepExecutor)
-
-      expect(StepExecutor).to receive(:new)
-        .with(customer_lookup, row, anything)
-        .and_return(customer_processor)
-      allow(customer_processor).to receive(:should_skip?).and_return(false)
-      expect(customer_processor).to receive(:call)
-
-      processor.call
-      row.data = {}
-      processor.send(:handle_step_completion, {
-                       success: true,
-                       data: { 'customer_id' => '123' }
-                     })
-
-      expect(row.data).to include('customer_id' => '123')
-    end
-
     context "with @in_progress and priority logic" do
       let(:hydra_manager_double) { instance_double(HydraManager) }
       let(:on_complete_method) { processor.method(:handle_step_completion) } # Memoized for consistent object in mocks

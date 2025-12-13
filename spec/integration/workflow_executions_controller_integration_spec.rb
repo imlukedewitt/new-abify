@@ -38,7 +38,10 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
         execution = WorkflowExecution.find(json_response['workflow_execution_id'])
         expect(execution).to be_present
         expect(execution.status).to eq(Executable::COMPLETE)
-        expect(execution.rows.first.data['post_id']).to eq "1"
+
+        row = execution.rows.first
+        row_exec = row.row_executions.first
+        expect(row_exec.merged_success_data['post_id']).to eq "1"
       end
     end
 

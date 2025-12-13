@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_13_002455) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -70,7 +70,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
   create_table "rows", force: :cascade do |t|
     t.integer "workflow_execution_id"
     t.integer "data_source_id", null: false
-    t.json "original_data"
     t.json "data"
     t.string "status"
     t.integer "source_index"
@@ -91,6 +90,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "row_execution_id"
+    t.index ["row_execution_id"], name: "index_step_executions_on_row_execution_id"
     t.index ["row_id"], name: "index_step_executions_on_row_id"
     t.index ["step_id"], name: "index_step_executions_on_step_id"
   end
@@ -143,6 +144,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_171612) do
   add_foreign_key "rows", "batches"
   add_foreign_key "rows", "data_sources"
   add_foreign_key "rows", "workflow_executions"
+  add_foreign_key "step_executions", "row_executions"
   add_foreign_key "step_executions", "rows"
   add_foreign_key "step_executions", "steps"
   add_foreign_key "steps", "workflows"

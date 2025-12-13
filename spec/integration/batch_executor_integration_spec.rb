@@ -59,7 +59,9 @@ RSpec.describe BatchExecutor, :integration, :vcr do
       expect(execution.status).to eq(Executable::COMPLETE)
 
       batch.rows.reload.each.with_index(1) do |row, idx|
-        expect(row.data).to include(
+        row_exec = row.row_executions.first
+        expect(row_exec).to be_present
+        expect(row_exec.merged_success_data).to include(
           'post_id' => idx.to_s,
           'post_title' => be_a(String),
           'user_id' => '1',
@@ -117,10 +119,11 @@ RSpec.describe BatchExecutor, :integration, :vcr do
       expect(execution.status).to eq(Executable::COMPLETE)
 
       batch.rows.reload.each.with_index(1) do |row, idx|
-        expect(row.data).to include(
+        row_exec = row.row_executions.first
+        expect(row_exec).to be_present
+        expect(row_exec.merged_success_data).to include(
           'post_id' => idx.to_s,
-          'post_title' => be_a(String),
-          'source_row_index' => idx
+          'post_title' => be_a(String)
         )
       end
     end

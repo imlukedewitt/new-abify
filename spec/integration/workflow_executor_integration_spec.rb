@@ -51,13 +51,14 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
 
         processed_rows = batch.rows.order(Arel.sql('data->>\'post_id_input\' ASC')) # Ensure consistent order
 
-        expect(processed_rows[0].data).to include(
-          'post_id_input' => 1,
+        row_exec_0 = processed_rows[0].row_executions.first
+        expect(row_exec_0.merged_success_data).to include(
           'fetched_title' => 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
           'original_id' => '1'
         )
-        expect(processed_rows[1].data).to include(
-          'post_id_input' => 2,
+
+        row_exec_1 = processed_rows[1].row_executions.first
+        expect(row_exec_1.merged_success_data).to include(
           'fetched_title' => 'qui est esse',
           'original_id' => '2'
         )
@@ -137,13 +138,15 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
 
         expect(batch_a.processing_mode).to eq('sequential')
         expect(batch_a.rows.count).to eq(2)
-        batch_a.rows.sort_by { |row| row.data['original_id_input'].to_i }.each do |row|
-          expect(row.data['original_category']).to eq('A')
-          expect(row.data).to have_key('fetched_todo_title')
-          if row.data['original_id_input'].to_i == 1
-            expect(row.data['fetched_todo_title']).to eq('delectus aut autem')
-          elsif row.data['original_id_input'].to_i == 2
-            expect(row.data['fetched_todo_title']).to eq('quis ut nam facilis et officia qui')
+        batch_a.rows.sort_by { |row| row.data['id_input'].to_i }.each do |row|
+          row_exec = row.row_executions.first
+          success_data = row_exec.merged_success_data
+          expect(success_data['original_category']).to eq('A')
+          expect(success_data).to have_key('fetched_todo_title')
+          if success_data['original_id_input'].to_i == 1
+            expect(success_data['fetched_todo_title']).to eq('delectus aut autem')
+          elsif success_data['original_id_input'].to_i == 2
+            expect(success_data['fetched_todo_title']).to eq('quis ut nam facilis et officia qui')
           end
         end
 
@@ -157,9 +160,10 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
         expect(batch_b.processing_mode).to eq('sequential')
         expect(batch_b.rows.count).to eq(1)
         row_b = batch_b.rows.first
-        expect(row_b.data['original_category']).to eq('B')
-        expect(row_b.data['original_id_input'].to_i).to eq(3)
-        expect(row_b.data['fetched_todo_title']).to eq('fugiat veniam minus')
+        success_data_b = row_b.row_executions.first.merged_success_data
+        expect(success_data_b['original_category']).to eq('B')
+        expect(success_data_b['original_id_input'].to_i).to eq(3)
+        expect(success_data_b['fetched_todo_title']).to eq('fugiat veniam minus')
 
         # --- Verify Batch for Ungrouped (Parallel) ---
         # Rows with nil or empty string category are grouped together by WorkflowExecutor
@@ -171,14 +175,18 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
 
         expect(batch_ungrouped.processing_mode).to eq('parallel')
         expect(batch_ungrouped.rows.count).to eq(2)
-        batch_ungrouped.rows.sort_by { |row| row.data['original_id_input'].to_i }.each do |row|
+        batch_ungrouped.rows.sort_by { |row| row.data['id_input'].to_i }.each do |row|
+          row_exec = row.row_executions.first
+          success_data = row_exec.merged_success_data
           # original_category might be nil or empty string, reflecting the input
-          expect(row.data['original_category'].blank? || row.data['original_category'] == row.input_data['category']).to be true
-          expect(row.data).to have_key('fetched_todo_title')
-          if row.data['original_id_input'].to_i == 4
-            expect(row.data['fetched_todo_title']).to eq('et porro tempora')
-          elsif row.data['original_id_input'].to_i == 5
-            expect(row.data['fetched_todo_title']).to eq('laboriosam mollitia et enim quasi adipisci quia provident illum')
+          expect(success_data['original_category'].blank? || success_data['original_category'] == row.data['category'])
+            .to be true
+          expect(success_data).to have_key('fetched_todo_title')
+          if success_data['original_id_input'].to_i == 4
+            expect(success_data['fetched_todo_title']).to eq('et porro tempora')
+          elsif success_data['original_id_input'].to_i == 5
+            expect(success_data['fetched_todo_title'])
+              .to eq('laboriosam mollitia et enim quasi adipisci quia provident illum')
           end
         end
 

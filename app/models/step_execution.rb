@@ -13,6 +13,7 @@ class StepExecution < ApplicationRecord
   include Executable
   belongs_to :step
   belongs_to :row
+  belongs_to :row_execution, optional: true
 
   attribute :result
 

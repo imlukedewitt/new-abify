@@ -20,7 +20,7 @@ RSpec.describe RowExecutor, :integration, :vcr do
   end
   let(:row) { create(:row) }
 
-  it 'processes a single step and updates row data', vcr: { cassette_name: 'jsonplaceholder/get_post' } do
+  it 'processes a step and stores success data in step execution', vcr: { cassette_name: 'jsonplaceholder/get_post' } do
     expect(workflow.steps).to include(step)
 
     processor = described_class.new(row: row, workflow: workflow)
@@ -28,39 +28,41 @@ RSpec.describe RowExecutor, :integration, :vcr do
 
     HydraManager.instance.run
 
-    row.reload
-    expect(row.data).to include('id' => '1', 'userId' => '1', 'title' => be_a(String))
+    step_execution = StepExecution.find_by(step: step, row: row)
+    expect(step_execution.status).to eq('success')
+    expect(step_execution.result['data']).to include('id' => '1', 'userId' => '1', 'title' => be_a(String))
   end
 
   it 'processes multiple steps in sequence', vcr: { cassette_name: 'jsonplaceholder/multiple_steps' } do
     step
 
     # Create second step that uses data from first step
-    create(:step, workflow: workflow, order: 2, config: {
-             'liquid_templates' => {
-               'name' => 'Get User',
-               'url' => 'https://jsonplaceholder.typicode.com/users/{{row.userId}}',
-               'method' => 'get',
-               'success_data' => {
-                 'username' => '{{response.username}}',
-                 'email' => '{{response.email}}'
-               }
-             }
-           })
+    step2 = create(:step, workflow: workflow, order: 2, config: {
+                     'liquid_templates' => {
+                       'name' => 'Get User',
+                       'url' => 'https://jsonplaceholder.typicode.com/users/{{row.userId}}',
+                       'method' => 'get',
+                       'success_data' => {
+                         'username' => '{{response.username}}',
+                         'user_email' => '{{response.email}}'
+                       }
+                     }
+                   })
 
     processor = described_class.new(row: row, workflow: workflow)
     processor.call
 
     HydraManager.instance.run
 
-    row.reload
-    expect(row.data).to include(
-      'id' => '1',
-      'userId' => '1',
-      'title' => be_a(String),
-      'username' => 'Bret',
-      'email' => 'Sincere@april.biz'
-    )
+    # Check that both step executions succeeded
+    step1_exec = StepExecution.find_by(step: step, row: row)
+    step2_exec = StepExecution.find_by(step: step2, row: row)
+
+    expect(step1_exec.status).to eq('success')
+    expect(step1_exec.result['data']).to include('id' => '1', 'userId' => '1')
+
+    expect(step2_exec.status).to eq('success')
+    expect(step2_exec.result['data']).to include('username' => 'Bret', 'user_email' => 'Sincere@april.biz')
   end
 
   it 'handles a failed non-required step gracefully', vcr: { cassette_name: 'jsonplaceholder/not_found' } do
