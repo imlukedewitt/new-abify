@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_13_002443) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_13_195135) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -67,7 +67,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_13_002443) do
   create_table "rows", force: :cascade do |t|
     t.integer "data_source_id", null: false
     t.json "data"
-    t.string "status"
     t.integer "source_index"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

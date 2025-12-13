@@ -3,7 +3,6 @@
 FactoryBot.define do
   factory :row do
     data_source
-    status { 'pending' }
     sequence(:source_index) { |n| n }
     data { { first_name: "John", last_name: "Doe", email: "john.doe@example.com", organization: "Acme Corp" } }
 
@@ -19,18 +18,6 @@ FactoryBot.define do
       data do
         { first_name: "John", last_name: "Doe", email: "john.doe@example.com" }.merge(custom_fields)
       end
-    end
-
-    trait :processed do
-      status { 'processed' }
-    end
-
-    trait :failed do
-      status { 'failed' }
-    end
-
-    trait :skipped do
-      status { 'skipped' }
     end
   end
 end
