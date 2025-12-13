@@ -13,10 +13,6 @@ class Workflow < ApplicationRecord
 
   accepts_nested_attributes_for :steps
 
-  def create_execution(data_source)
-    workflow_executions.create(data_source: data_source)
-  end
-
   def resolved_auth_config
     @resolved_auth_config ||= if connection.present?
                                 connection.credentials

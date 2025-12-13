@@ -27,10 +27,6 @@ class StepExecutor
     @templates = step_templates.fetch(@step.id)
   end
 
-  def self.call(step, row)
-    new(step, row).call
-  end
-
   def call
     return skip! if should_skip?
 

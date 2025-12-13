@@ -296,22 +296,4 @@ RSpec.describe Workflow, type: :model do
       expect(workflow.connection_id).to be_nil
     end
   end
-
-  describe '#create_execution' do
-    let(:workflow) { create(:workflow) }
-    let(:data_source) { create(:data_source) }
-
-    it 'creates a workflow execution' do
-      expect do
-        workflow.create_execution(data_source)
-      end.to change(WorkflowExecution, :count).by(1)
-    end
-
-    it 'returns the created execution' do
-      execution = workflow.create_execution(data_source)
-      expect(execution).to be_a(WorkflowExecution)
-      expect(execution.workflow).to eq(workflow)
-      expect(execution.data_source).to eq(data_source)
-    end
-  end
 end
