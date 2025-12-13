@@ -80,21 +80,22 @@ RSpec.describe WorkflowExecutor do
         create(:row, data_source: data_source, data: { 'category' => '', 'name' => 'ungrouped' })
       end
 
-      it 'creates sequential batches for grouped rows' do
+      it 'creates parallel batches for each group' do
         described_class.new(workflow, data_source).call
 
-        # Group A and Group B should be sequential
-        sequential_batches = Batch.where(processing_mode: 'sequential')
-        expect(sequential_batches.count).to eq(2)
+        # All batches should be parallel (3 groups: '', 'A', 'B')
+        expect(Batch.count).to eq(3)
+        expect(Batch.pluck(:processing_mode).uniq).to eq(['parallel'])
       end
 
-      it 'creates a parallel batch for ungrouped rows' do
+      it 'includes blank category rows in their own batch' do
         described_class.new(workflow, data_source).call
 
-        parallel_batch = Batch.find_by(processing_mode: 'parallel')
-        expect(parallel_batch).to be_present
-        expect(parallel_batch.rows.count).to eq(1)
-        expect(parallel_batch.rows.first.data['name']).to eq('ungrouped')
+        batches = Batch.includes(:rows).all
+        blank_batch = batches.find { |b| b.rows.any? { |r| r.data['category'] == '' } }
+        expect(blank_batch).to be_present
+        expect(blank_batch.rows.count).to eq(1)
+        expect(blank_batch.rows.first.data['name']).to eq('ungrouped')
       end
 
       it 'assigns rows to correct batches by category' do
@@ -104,43 +105,70 @@ RSpec.describe WorkflowExecutor do
 
         batch_a = batches.find { |b| b.rows.any? { |r| r.data['category'] == 'A' } }
         expect(batch_a.rows.count).to eq(2)
-        expect(batch_a.processing_mode).to eq('sequential')
+        expect(batch_a.processing_mode).to eq('parallel')
 
         batch_b = batches.find { |b| b.rows.any? { |r| r.data['category'] == 'B' } }
         expect(batch_b.rows.count).to eq(1)
-        expect(batch_b.processing_mode).to eq('sequential')
+        expect(batch_b.processing_mode).to eq('parallel')
+      end
+
+      it 'processes batches in sorted order by group key' do
+        # Track the order batches are processed
+        processed_batch_keys = []
+        allow_any_instance_of(BatchExecutor).to receive(:call).and_wrap_original do |method, *_args|
+          batch = method.receiver.batch
+          rows = batch.rows.to_a
+          key = rows.first&.data&.dig('category') || ''
+          processed_batch_keys << key
+          method.call
+        end
+
+        described_class.new(workflow, data_source).call
+
+        # Batches should be processed in lexicographic order: '', 'A', 'B'
+        expect(processed_batch_keys).to eq(['', 'A', 'B'])
       end
     end
 
-    context 'with sort_by config' do
+    context 'with group_by using computed batch order' do
       let(:workflow) do
         create(:workflow, config: {
                  'liquid_templates' => {
-                   'group_by' => '{{row.category}}',
-                   'sort_by' => '{{row.priority}}'
+                   'group_by' => '{% if row.is_parent == "true" %}1{% else %}2{% endif %}'
                  }
                })
       end
 
       before do
-        # Create rows with priorities in non-sorted order (by ID: 3, 1, 2)
-        create(:row, data_source: data_source, data: { 'category' => 'A', 'priority' => '3' })
-        create(:row, data_source: data_source, data: { 'category' => 'A', 'priority' => '1' })
-        create(:row, data_source: data_source, data: { 'category' => 'A', 'priority' => '2' })
+        # Create rows: children first, parents second (wrong order by ID)
+        create(:row, data_source: data_source, data: { 'is_parent' => 'false', 'name' => 'child1' })
+        create(:row, data_source: data_source, data: { 'is_parent' => 'false', 'name' => 'child2' })
+        create(:row, data_source: data_source, data: { 'is_parent' => 'true', 'name' => 'parent1' })
       end
 
-      it 'processes rows sequentially in sorted order' do
-        # Track the order rows are processed
-        processed_priorities = []
-        allow_any_instance_of(RowExecutor).to receive(:call).and_wrap_original do |method, *args|
-          processed_priorities << method.receiver.row.data['priority']
-          method.call(*args)
+      it 'processes parent batch before child batch' do
+        # Track which batch keys are processed in order
+        processed_batch_keys = []
+        allow_any_instance_of(BatchExecutor).to receive(:call).and_wrap_original do |method, *_args|
+          batch = method.receiver.batch
+          # Determine batch key from first row
+          first_row = batch.rows.first
+          key = first_row.data['is_parent'] == 'true' ? '1' : '2'
+          processed_batch_keys << key
+          method.call
         end
 
         described_class.new(workflow, data_source).call
 
-        # Should be processed in priority order: 1, 2, 3 (not ID order: 3, 1, 2)
-        expect(processed_priorities).to eq(%w[1 2 3])
+        # Batch "1" (parents) should run before batch "2" (children)
+        expect(processed_batch_keys).to eq(%w[1 2])
+      end
+
+      it 'runs rows within each batch in parallel' do
+        described_class.new(workflow, data_source).call
+
+        expect(Batch.count).to eq(2)
+        expect(Batch.pluck(:processing_mode).uniq).to eq(['parallel'])
       end
     end
 
@@ -168,12 +196,13 @@ RSpec.describe WorkflowExecutor do
         create(:row, data_source: data_source, data: { 'category' => nil, 'name' => 'nil_category' })
       end
 
-      it 'groups nil/missing category rows together in parallel batch' do
+      it 'groups nil/missing category rows together in same batch' do
         described_class.new(workflow, data_source).call
 
-        parallel_batch = Batch.find_by(processing_mode: 'parallel')
-        expect(parallel_batch).to be_present
-        expect(parallel_batch.rows.count).to eq(2)
+        # Both rows have blank/nil category, so they should be in the same batch
+        expect(Batch.count).to eq(1)
+        expect(Batch.first.rows.count).to eq(2)
+        expect(Batch.first.processing_mode).to eq('parallel')
       end
     end
   end

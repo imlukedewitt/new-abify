@@ -75,7 +75,16 @@ module Liquid
     end
 
     def parse_hash(hash)
-      hash.transform_values { |template| parse(template) if template.is_a?(String) }.compact
+      hash.transform_values do |value|
+        case value
+        when String
+          parse(value) unless value.empty?
+        when Hash
+          parse_hash(value)
+        else
+          value
+        end
+      end.compact
     end
 
     def parse(template_string)
@@ -89,7 +98,22 @@ module Liquid
       return template.to_s if DataUtils.boolean?(template)
 
       stringify_context = DataUtils.deep_stringify_keys(context)
-      template.render(stringify_context)
+      render_template(template, stringify_context)
+    end
+
+    def render_template(template, context)
+      case template
+      when ::Liquid::Template
+        template.render(context)
+      when Hash
+        render_hash(template, context)
+      else
+        template.to_s
+      end
+    end
+
+    def render_hash(hash, context)
+      hash.transform_values { |value| render_template(value, context) }
     end
 
     def render_boolean(key, context)

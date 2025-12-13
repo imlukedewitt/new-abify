@@ -58,43 +58,19 @@ class WorkflowExecutor
   end
 
   def process_grouped_rows(rows)
-    row_groups = prepare_row_groups(rows)
+    row_groups = group_rows_by_key(rows)
 
-    row_groups.each do |group_key, current_group_rows|
-      next if group_key == :default
+    sorted_keys = row_groups.keys.sort_by(&:to_s) # (lexicographic, blank first)
 
-      create_and_process_batch(current_group_rows, "sequential")
+    sorted_keys.each do |group_key|
+      create_and_process_batch(row_groups[group_key], "parallel")
     end
-
-    default_rows = row_groups[:default]
-    create_and_process_batch(default_rows, "parallel") if default_rows.present?
-  end
-
-  def prepare_row_groups(rows)
-    grouped_rows = group_rows_by_key(rows)
-    sort_grouped_rows(grouped_rows)
   end
 
   def group_rows_by_key(rows)
     rows.group_by do |row|
       context = context_for_row(row)
-      key = @templates.group_key(context)
-      key.present? ? key : :default
-    end
-  end
-
-  def sort_grouped_rows(grouped_rows)
-    grouped_rows.each do |group_key, group_rows|
-      grouped_rows[group_key] = sort_rows(group_rows)
-    end
-
-    grouped_rows
-  end
-
-  def sort_rows(rows)
-    rows.sort_by do |row|
-      context = context_for_row(row)
-      @templates.sort_key(context) || ""
+      @templates.group_key(context) || ""
     end
   end
 

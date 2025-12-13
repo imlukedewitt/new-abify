@@ -1,0 +1,28 @@
+meta {
+  name: Create Customer CSV Data Source
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base}}/data_sources
+  body: multipartForm
+  auth: inherit
+}
+
+body:form-urlencoded {
+  file: 
+}
+
+body:multipart-form {
+  source: @file(/Users/luke/Documents/sandbox/new-abify/data/test_customers.csv)
+}
+
+body:file {
+  file: @file()
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

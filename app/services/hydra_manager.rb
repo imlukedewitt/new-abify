@@ -37,9 +37,9 @@ class HydraManager
 
     apply_auth_config(options, auth_config) if auth_config
 
-    options[:body] = body if body
-    encoded_params = url_param_string(params) if params
-    request = Typhoeus::Request.new("#{url}?#{encoded_params}", options)
+    options[:body] = body.is_a?(Hash) ? body.to_json : body if body
+    full_url = params.present? ? "#{url}?#{url_param_string(params)}" : url
+    request = Typhoeus::Request.new(full_url, options)
     request.on_complete { |resp| on_complete.call(resp) } if on_complete
 
     @requests << request
