@@ -81,13 +81,4 @@ RSpec.describe Step, type: :model do
     end
   end
 
-  describe '#process' do
-    let(:step) { create(:step) }
-    let(:row) { create(:row) }
-
-    it 'calls the service StepExecutor' do
-      expect(StepExecutor).to receive(:call).with(step, row)
-      step.process(row)
-    end
-  end
 end

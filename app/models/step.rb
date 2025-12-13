@@ -20,10 +20,6 @@ class Step < ApplicationRecord
   before_validation :set_default_order, on: :create
   validate :validate_config
 
-  def process(row)
-    StepExecutor.call(self, row)
-  end
-
   def step_config
     return nil if config.nil?
     return config['steps'][name] if config.key?('steps') && config['steps'].is_a?(Hash)
