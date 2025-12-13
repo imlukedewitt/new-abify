@@ -1,0 +1,75 @@
+meta {
+  name: Delete Customers Workflow
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Delete Customers",
+    "handle": "delete_customers",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "lookup customer by reference",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup customer by reference",
+            "url": "{\{base_url}}/customers/lookup.json?reference={\{row['customer reference'] | url_encode}}",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['customer id'] != blank and row['customer id'] != '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "customer id": "{\{response.customer.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "delete customer",
+        "config": {
+          "liquid_templates": {
+            "name": "delete customer",
+            "url": "{\{base_url}}/customers/{\{row['customer id']}}.json",
+            "method": "delete",
+            "required": "true",
+            "success_data": {
+              "result": "customer deleted"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Delete Customers Workflow
+  
+  Creates a workflow with 2 steps:
+  1. **lookup customer by reference** - Looks up customer by reference (skipped if customer id already provided)
+  2. **delete customer** - Deletes the customer record
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  - Customer Reference (used for lookup if customer id not provided)
+  - Customer ID (optional - if provided, skips lookup step)
+}
+

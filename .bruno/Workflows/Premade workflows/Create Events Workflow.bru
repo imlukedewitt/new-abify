@@ -1,0 +1,90 @@
+meta {
+  name: Create Events Workflow
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Create Events",
+    "handle": "create_events",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "send EBB Usage",
+        "config": {
+          "liquid_templates": {
+            "name": "send EBB Usage",
+            "url": "https://events.{% if row['domain'] != blank and row['domain'] != '' %}{\{row['domain']}}{% else %}{\{domain}}{% endif %}/{% if row['subdomain'] != blank and row['subdomain'] != '' %}{\{row['subdomain']}}{% else %}{\{subdomain}}{% endif %}/events/{\{row['api handle'] | url_encode}}.json{% if row['store uid'] != blank and row['store uid'] != '' %}?store_uid={\{row['store uid'] | url_encode}}{% endif %}",
+            "method": "post",
+            "required": "true",
+            "body": {
+              "chargify": {
+                "subscription_id": "{\{row['event.chargify.subscription_id']}}",
+                "component_id": "{\{row['event.chargify.component_id']}}"
+              },
+              "timestamp": "{\{row['event.timestamp']}}",
+              "uniqueness_token": "{\{row['event.uniqueness_token']}}",
+              "quantity": "{\{row['event.quantity']}}",
+              "price": "{\{row['event.price']}}",
+              "memo": "{\{row['event.memo']}}"
+            },
+            "success_data": {
+              "result": "EBB usage event sent successfully"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Create Events Workflow (EBB Usage)
+  
+  Creates a workflow with 1 step:
+  1. **send EBB Usage** - Sends an event-based billing usage event to the events ingestion endpoint
+  
+  Note: This workflow sends to the events.{domain} endpoint, not the standard API.
+  The event body supports nested properties using dot notation (e.g., event.chargify.subscription_id).
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  
+  ### Routing
+  - API Handle (required - the EBB stream API handle)
+  - Domain (optional - defaults to connection's domain, e.g., chargify.com)
+  - Subdomain (optional - defaults to connection's subdomain)
+  - Store UID (optional - for deduplication)
+  
+  ### Event Data (use event. prefix)
+  - event.chargify.subscription_id
+  - event.chargify.component_id
+  - event.timestamp (ISO 8601 format)
+  - event.uniqueness_token (for deduplication)
+  - event.quantity
+  - event.price
+  - event.memo
+  
+  ### Custom Event Properties
+  Any column starting with "event." will be included in the event payload.
+  Nested properties are supported: event.custom.field.name
+}
+

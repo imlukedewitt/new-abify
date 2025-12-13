@@ -1,0 +1,126 @@
+meta {
+  name: Create Bulk Allocations Workflow
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Create Bulk Allocations",
+    "handle": "create_bulk_allocations",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "lookup subscription by reference",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup subscription by reference",
+            "url": "{\{base_url}}/subscriptions/lookup.json?reference={\{row['subscription reference'] | url_encode}}",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['subscription id'] != blank and row['subscription id'] != '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "subscription id": "{\{response.subscription.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "create bulk allocations",
+        "config": {
+          "liquid_templates": {
+            "name": "create bulk allocations",
+            "url": "{\{base_url}}/subscriptions/{\{row['subscription id']}}/allocations.json",
+            "method": "post",
+            "required": "true",
+            "body": {
+              "allocations": [
+                {
+                  "component_id": "{% if row['component id 1'] != blank and row['component id 1'] != '' %}{\{row['component id 1']}}{% else %}handle:{\{row['component handle 1']}}{% endif %}",
+                  "quantity": "{\{row['quantity 1']}}",
+                  "price_point": "{% if row['component price point id 1'] != blank and row['component price point id 1'] != '' %}{\{row['component price point id 1']}}{% else %}{\{row['component price point handle 1']}}{% endif %}",
+                  "memo": "{\{row['memo 1']}}"
+                },
+                {
+                  "component_id": "{% if row['component id 2'] != blank and row['component id 2'] != '' %}{\{row['component id 2']}}{% else %}handle:{\{row['component handle 2']}}{% endif %}",
+                  "quantity": "{\{row['quantity 2']}}",
+                  "price_point": "{% if row['component price point id 2'] != blank and row['component price point id 2'] != '' %}{\{row['component price point id 2']}}{% else %}{\{row['component price point handle 2']}}{% endif %}",
+                  "memo": "{\{row['memo 2']}}"
+                },
+                {
+                  "component_id": "{% if row['component id 3'] != blank and row['component id 3'] != '' %}{\{row['component id 3']}}{% else %}handle:{\{row['component handle 3']}}{% endif %}",
+                  "quantity": "{\{row['quantity 3']}}",
+                  "price_point": "{% if row['component price point id 3'] != blank and row['component price point id 3'] != '' %}{\{row['component price point id 3']}}{% else %}{\{row['component price point handle 3']}}{% endif %}",
+                  "memo": "{\{row['memo 3']}}"
+                },
+                {
+                  "component_id": "{% if row['component id 4'] != blank and row['component id 4'] != '' %}{\{row['component id 4']}}{% else %}handle:{\{row['component handle 4']}}{% endif %}",
+                  "quantity": "{\{row['quantity 4']}}",
+                  "price_point": "{% if row['component price point id 4'] != blank and row['component price point id 4'] != '' %}{\{row['component price point id 4']}}{% else %}{\{row['component price point handle 4']}}{% endif %}",
+                  "memo": "{\{row['memo 4']}}"
+                },
+                {
+                  "component_id": "{% if row['component id 5'] != blank and row['component id 5'] != '' %}{\{row['component id 5']}}{% else %}handle:{\{row['component handle 5']}}{% endif %}",
+                  "quantity": "{\{row['quantity 5']}}",
+                  "price_point": "{% if row['component price point id 5'] != blank and row['component price point id 5'] != '' %}{\{row['component price point id 5']}}{% else %}{\{row['component price point handle 5']}}{% endif %}",
+                  "memo": "{\{row['memo 5']}}"
+                }
+              ]
+            },
+            "success_data": {
+              "allocation count": "{\{response | size}}",
+              "result": "{\{response | size}} allocations created"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Create Bulk Allocations Workflow
+  
+  Creates a workflow with 2 steps:
+  1. **lookup subscription by reference** - Looks up subscription by reference (skipped if subscription id provided)
+  2. **create bulk allocations** - Creates multiple component allocations in a single API call
+  
+  Note: Empty allocations (where component handle/id is blank) will be trimmed by the API.
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  - Subscription ID or Subscription Reference
+  
+  ### Allocation 1
+  - Component ID 1 or Component Handle 1
+  - Component Price Point ID 1 or Component Price Point Handle 1 (optional)
+  - Quantity 1
+  - Memo 1 (optional)
+  
+  ### Allocation 2
+  - Component ID 2 or Component Handle 2
+  - Component Price Point ID 2 or Component Price Point Handle 2 (optional)
+  - Quantity 2
+  - Memo 2 (optional)
+  
+  ### Allocations 3-5
+  Same pattern as above (supports up to 5 allocations per row)
+}
+

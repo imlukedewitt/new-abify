@@ -1,0 +1,102 @@
+meta {
+  name: Create Metered Usage Workflow
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Create Metered Usage",
+    "handle": "create_metered_usage",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "lookup subscription by reference",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup subscription by reference",
+            "url": "{\{base_url}}/subscriptions/lookup.json?reference={\{row['subscription reference'] | url_encode}}",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['subscription id'] != blank and row['subscription id'] != '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "subscription id": "{\{response.subscription.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "lookup component price point by handle",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup component price point by handle",
+            "url": "{\{base_url}}/components/{% if row['component id'] != blank and row['component id'] != '' %}{\{row['component id']}}{% else %}handle:{\{row['component handle'] | url_encode}}{% endif %}/price_points/handle:{\{row['component price point handle'] | url_encode}}.json",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['component price point id'] != blank and row['component price point id'] != '' %}true{% elsif row['component price point handle'] == blank or row['component price point handle'] == '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "component price point id": "{\{response.price_point.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "create metered usage",
+        "config": {
+          "liquid_templates": {
+            "name": "create metered usage",
+            "url": "{\{base_url}}/subscriptions/{\{row['subscription id']}}/components/{% if row['component id'] != blank and row['component id'] != '' %}{\{row['component id']}}{% else %}handle:{\{row['component handle'] | url_encode}}{% endif %}/usages.json",
+            "method": "post",
+            "required": "true",
+            "body": {
+              "usage": {
+                "quantity": "{\{row['quantity']}}",
+                "price_point_id": "{\{row['component price point id']}}",
+                "memo": "{\{row['memo']}}"
+              }
+            },
+            "success_data": {
+              "metered usage id": "{\{response.usage.id}}",
+              "result": "metered usage created for subscription {\{response.usage.subscription_id}}"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Create Metered Usage Workflow
+  
+  Creates a workflow with 3 steps:
+  1. **lookup subscription by reference** - Looks up subscription by reference (skipped if subscription id provided)
+  2. **lookup component price point by handle** - Looks up price point ID by handle (skipped if price point id provided or no handle given)
+  3. **create metered usage** - Creates metered component usage
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  - Subscription ID or Subscription Reference
+  - Component ID or Component Handle
+  - Component Price Point ID or Component Price Point Handle (optional)
+  - Quantity (required)
+  - Memo (optional)
+}
+

@@ -1,0 +1,173 @@
+meta {
+  name: Create Components Workflow
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Create Components",
+    "handle": "create_components",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "lookup product family ID",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup product family ID",
+            "url": "{\{base_url}}/product_families/lookup.json?handle={\{row['product family handle'] | url_encode}}",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['product family id'] != blank and row['product family id'] != '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "product family id": "{\{response.product_family.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "create component",
+        "config": {
+          "liquid_templates": {
+            "name": "create component",
+            "url": "{\{base_url}}/product_families/{\{row['product family id']}}/{\{row['component type']}}_components.json",
+            "method": "post",
+            "required": "true",
+            "skip_condition": "{% if row['name'] == blank or row['name'] == '' %}{% if row['component handle'] == blank or row['component handle'] == '' %}true{% else %}false{% endif %}{% else %}false{% endif %}",
+            "body": {
+              "{\{row['component type']}}_component": {
+                "name": "{\{row['name']}}",
+                "description": "{\{row['description']}}",
+                "unit_name": "{\{row['unit name']}}",
+                "handle": "{\{row['component handle']}}",
+                "recurring": "{\{row['recurring']}}",
+                "default_price_point_name": "{\{row['price point name']}}",
+                "default_price_point_handle": "{\{row['price point handle']}}",
+                "pricing_scheme": "{\{row['pricing scheme']}}",
+                "taxable": "{\{row['taxable']}}",
+                "tax_code": "{\{row['tax code']}}",
+                "tax_included": "{\{row['tax included']}}",
+                "allow_fractional_quantities": "{\{row['allow fractional quantities']}}",
+                "hide_date_range_on_invoice": "{\{row['hide date range on invoice']}}",
+                "display_on_hosted_page": "{\{row['allow billing portal updates']}}",
+                "upgrade_charge": "{\{row['upgrade charge']}}",
+                "downgrade_credit": "{\{row['downgrade credit']}}",
+                "unit_price": "{\{row['unit price']}}",
+                "event_based_billing_metric_id": "{\{row['metric id']}}",
+                "rollover_prepaid_remainder": "{\{row['allow rollover']}}",
+                "renew_prepaid_allocation": "{\{row['auto renew units']}}",
+                "interval": "{\{row['interval']}}",
+                "interval_unit": "{\{row['interval unit']}}",
+                "item_category": "{\{row['item category']}}",
+                "prices": "[{\"starting_quantity\":1,\"unit_price\":\"{\{row['unit price']}}\"}]"
+              }
+            },
+            "success_data": {
+              "component id": "{\{response.component.id}}",
+              "component url": "{\{base_url}}/product_families/{\{response.component.product_family_id}}/{\{response.component.kind}}s/{\{response.component.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "create component price point",
+        "config": {
+          "liquid_templates": {
+            "name": "create component price point",
+            "url": "{\{base_url}}/components/handle:{\{row['attach to'] | url_encode}}/price_points.json",
+            "method": "post",
+            "required": "true",
+            "skip_condition": "{% if row['name'] != blank and row['name'] != '' %}true{% elsif row['component handle'] != blank and row['component handle'] != '' %}true{% else %}false{% endif %}",
+            "body": {
+              "price_point": {
+                "name": "{\{row['price point name']}}",
+                "handle": "{\{row['price point handle']}}",
+                "renew_prepaid_allocation": "{\{row['auto renew units']}}",
+                "rollover_prepaid_remainder": "{\{row['allow rollover']}}",
+                "expiration_interval": "{\{row['expire after']}}",
+                "expiration_interval_unit": "{\{row['month or day']}}",
+                "pricing_scheme": "{\{row['pricing scheme']}}",
+                "tax_included": "{\{row['tax included']}}",
+                "interval": "{\{row['interval']}}",
+                "interval_unit": "{\{row['interval unit']}}",
+                "prices": "[{\"starting_quantity\":1,\"unit_price\":\"{\{row['unit price']}}\"}]"
+              }
+            },
+            "success_data": {
+              "price point id": "{\{response.price_point.id}}"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Create Components Workflow
+  
+  Creates a workflow with 3 steps:
+  1. **lookup product family ID** - Looks up product family by handle (skipped if product family id provided)
+  2. **create component** - Creates the component (skipped if no name or component handle - for price point only rows)
+  3. **create component price point** - Creates a price point on existing component (skipped if creating a new component)
+  
+  Note: Each row should either create a component (with name/component handle) OR add a price point to an existing component (with attach to). Not both.
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  
+  ### For Creating Components
+  - Product Family Handle, Product Family ID (optional)
+  - Name, Component Handle, Description, Unit Name
+  - Component Type (metered, quantity_based, on_off, prepaid)
+  - Pricing Scheme (per_unit, volume, tiered, stairstep)
+  - Price Point Name, Price Point Handle
+  - Unit Price
+  - Recurring (true/false)
+  - Taxable, Tax Code, Tax Included
+  - Allow Fractional Quantities, Hide Date Range On Invoice
+  - Allow Billing Portal Updates
+  - Upgrade Charge, Downgrade Credit
+  - Metric ID (for EBB components)
+  - Allow Rollover, Auto Renew Units
+  - Interval, Interval Unit
+  - Item Category
+  
+  ### For Creating Price Points Only
+  - Attach To (component handle to attach price point to)
+  - Price Point Name, Price Point Handle
+  - Pricing Scheme, Unit Price
+  - Tax Included
+  - Allow Rollover, Auto Renew Units
+  - Expire After, Month Or Day
+  - Interval, Interval Unit
+  
+  ### For Tiered/Volume Pricing (numbered)
+  - Price 1, Starting Quantity 1, Ending Quantity 1
+  - Price 2, Starting Quantity 2, Ending Quantity 2
+  - etc.
+  
+  ### For Overage Pricing
+  - Overage Pricing Scheme
+  - Overage Unit Price (for per_unit)
+  - Overage Price 1, Overage Starting Quantity 1, Overage Ending Quantity 1
+  - etc.
+}
+
