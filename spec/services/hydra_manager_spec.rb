@@ -150,7 +150,7 @@ RSpec.describe HydraManager do
 
       request = manager.queue(url: 'https://api.example.com/users')
 
-      expect(request.url).to eq('https://api.example.com/users?')
+      expect(request.url).to eq('https://api.example.com/users')
       expect(request.options[:method]).to eq(:get)
       expect(request.options[:userpwd]).to be_nil
       expect(request.on_complete).to be_empty
