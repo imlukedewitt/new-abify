@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../services/liquid/environment'
+
 ##
 # Validates step configuration structure and content
 # Expects config to be scoped to specific step: config['steps'][step_name] or direct step config
@@ -25,6 +27,7 @@ class StepConfigValidator
   def initialize(config)
     @config = config
     @errors = []
+    @environment = Liquid::EnvironmentBuilder.build
   end
 
   def valid?
@@ -74,20 +77,28 @@ class StepConfigValidator
   def validate_liquid_syntax
     liquid_templates = config['liquid_templates']
 
-    liquid_templates.each do |key, template|
-      next if template.nil?
-      next unless template.is_a?(String)
-      next if template.empty?
+    liquid_templates.each do |key, value|
+      if value.is_a?(Hash)
+        # Handle nested templates like success_data
+        validate_nested_templates(value, "liquid_templates.#{key}")
+      elsif value.is_a?(String) && !value.empty?
+        validate_template_syntax(value, "liquid_templates.#{key}")
+      end
+    end
+  end
 
-      validate_template_syntax(template, "liquid_templates.#{key}")
+  def validate_nested_templates(hash, parent_path)
+    hash.each do |key, template|
+      next unless template.is_a?(String) && !template.empty?
+
+      validate_template_syntax(template, "#{parent_path}.#{key}")
     end
   end
 
   def validate_template_syntax(template, field_path)
-    require_relative '../services/liquid/processor'
-    processor = Liquid::Processor.new(template, {})
-
-    errors << "invalid Liquid syntax in #{field_path}: #{processor.validation_errors}" unless processor.valid?
+    ::Liquid::Template.parse(template, environment: @environment)
+  rescue ::Liquid::SyntaxError => e
+    errors << "invalid Liquid syntax in #{field_path}: #{e.message}"
   rescue StandardError => e
     errors << "failed to validate Liquid syntax in #{field_path}: #{e.message}"
   end

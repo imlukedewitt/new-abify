@@ -23,4 +23,8 @@ module DataUtils
       true
     end
   end
+
+  def self.boolean?(value)
+    value.is_a?(TrueClass) || value.is_a?(FalseClass)
+  end
 end
