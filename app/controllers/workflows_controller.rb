@@ -4,7 +4,7 @@
 class WorkflowsController < ApiController
   include Serializable
   def create
-    workflow = Workflow.new(workflow_params)
+    workflow = Workflow.new(workflow_params_with_connection)
 
     if workflow.save
       render json: { workflow_id: workflow.id }, status: :created
@@ -20,7 +20,7 @@ class WorkflowsController < ApiController
   end
 
   def show
-    workflow = Workflow.find(params[:id])
+    workflow = Workflow.find_by_id_or_handle!(params[:id])
     render json: { workflow: serialize(workflow, serialization_options) }
   rescue ActiveRecord::RecordNotFound => e
     render json: { errors: e }, status: :bad_request
@@ -29,7 +29,22 @@ class WorkflowsController < ApiController
   private
 
   def workflow_params
-    params.permit(:name, :connection_id, config: {}, steps_attributes: [:id, :name, { config: {} }])
+    params.permit(:name, :handle, :connection_id, :connection_handle, config: {},
+                                                                      steps_attributes: [:id, :name, { config: {} }])
+  end
+
+  def workflow_params_with_connection
+    permitted = workflow_params.except(:connection_handle)
+    resolve_connection_from_handle(permitted)
+  end
+
+  def resolve_connection_from_handle(permitted)
+    return permitted if params[:connection_handle].blank?
+    return permitted if permitted[:connection_id].present?
+
+    connection = Connection.find_by(handle: params[:connection_handle])
+    permitted[:connection_id] = connection&.id
+    permitted
   end
 
   def serialization_options

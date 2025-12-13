@@ -147,7 +147,7 @@ RSpec.describe WorkflowsController, type: :controller do
   end
 
   describe 'GET #show' do
-    let!(:workflow) { create(:workflow) }
+    let!(:workflow) { create(:workflow, :with_handle) }
     let(:response) { get :show, params: { id: id } }
 
     context 'with a valid workflow id' do
@@ -159,16 +159,84 @@ RSpec.describe WorkflowsController, type: :controller do
       end
     end
 
+    context 'with a valid workflow handle' do
+      let(:id) { workflow.handle }
+      it 'returns the workflow' do
+        expect(response).to be_successful
+        json_response = JSON.parse(response.body, symbolize_names: true)
+        expect(json_response[:workflow][:id]).to eq(workflow.id)
+      end
+    end
+
     context "with an invalid workflow id" do
       let(:id) { 1337 }
       it 'returns an error' do
         expect(response.status).to eq(400)
-        expect(JSON.parse(response.body)).to eq(
-          {
-            "errors" => "Couldn't find Workflow with 'id'=1337"
-          }
-        )
+        json = JSON.parse(response.body)
+        expect(json["errors"]).to include("Couldn't find Workflow")
       end
+    end
+
+    context "with an invalid workflow handle" do
+      let(:id) { 'nonexistent-handle' }
+      it 'returns an error' do
+        expect(response.status).to eq(400)
+        json = JSON.parse(response.body)
+        expect(json["errors"]).to include("Couldn't find Workflow")
+      end
+    end
+  end
+
+  describe 'POST #create with handle' do
+    it 'creates a workflow with a handle' do
+      post :create, params: { name: 'Handled Workflow', handle: 'my-workflow' }
+
+      expect(response).to have_http_status(:created)
+      workflow = Workflow.last
+      expect(workflow.handle).to eq('my-workflow')
+    end
+
+    it 'rejects invalid handle format' do
+      post :create, params: { name: 'Bad Handle', handle: '123-invalid' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to include('must start with a letter')
+    end
+  end
+
+  describe 'POST #create with connection_handle' do
+    let(:user) { create(:user) }
+    let(:connection) { create(:connection, user: user, handle: 'my-connection') }
+
+    it 'creates a workflow using connection_handle' do
+      post :create, params: { name: 'Connected Workflow', connection_handle: connection.handle }
+
+      expect(response).to have_http_status(:created)
+      workflow = Workflow.last
+      expect(workflow.connection_id).to eq(connection.id)
+    end
+
+    it 'prefers connection_id over connection_handle when both provided' do
+      other_connection = create(:connection, user: user, handle: 'other-connection')
+
+      post :create, params: {
+        name: 'Connected Workflow',
+        connection_id: connection.id,
+        connection_handle: other_connection.handle
+      }
+
+      expect(response).to have_http_status(:created)
+      workflow = Workflow.last
+      expect(workflow.connection_id).to eq(connection.id)
+    end
+
+    it 'creates workflow with nil connection when handle not found' do
+      post :create, params: { name: 'Workflow', connection_handle: 'nonexistent' }
+
+      expect(response).to have_http_status(:created)
+      workflow = Workflow.last
+      expect(workflow.connection_id).to be_nil
     end
   end
 end

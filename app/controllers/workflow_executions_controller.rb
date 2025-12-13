@@ -17,7 +17,8 @@ class WorkflowExecutionsController < ApiController
   private
 
   def find_workflow
-    workflow = Workflow.find_by(id: params[:workflow_id])
+    identifier = params[:workflow_handle].presence || params[:workflow_id]
+    workflow = Workflow.find_by_id_or_handle(identifier)
     return workflow if workflow
 
     render json: { error: "Workflow not found" }, status: :unprocessable_content
