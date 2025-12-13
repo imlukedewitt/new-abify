@@ -50,6 +50,7 @@ class BatchExecutor
     row_executors.each(&:wait_for_completion)
   end
 
+  # TODO: remove this entirely?
   def process_sequentially
     rows.each do |row|
       row_executor = RowExecutor.new(
