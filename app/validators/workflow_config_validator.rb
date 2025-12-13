@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../services/liquid/environment'
+
 ##
 # Validates workflow configuration structure and content
 # Expects config to be scoped to workflow section: config['workflow']
@@ -25,6 +27,7 @@ class WorkflowConfigValidator
   def initialize(config)
     @config = config
     @errors = []
+    @environment = Liquid::EnvironmentBuilder.build
   end
 
   def valid?
@@ -113,10 +116,9 @@ class WorkflowConfigValidator
   end
 
   def validate_liquid_syntax(template, field_path)
-    require_relative '../services/liquid/processor'
-    processor = Liquid::Processor.new(template, {})
-
-    errors << "invalid Liquid syntax in #{field_path}: #{processor.validation_errors}" unless processor.valid?
+    ::Liquid::Template.parse(template, environment: @environment)
+  rescue ::Liquid::SyntaxError => e
+    errors << "invalid Liquid syntax in #{field_path}: #{e.message}"
   rescue StandardError => e
     errors << "failed to validate Liquid syntax in #{field_path}: #{e.message}"
   end

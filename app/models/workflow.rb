@@ -18,10 +18,13 @@ class Workflow < ApplicationRecord
   end
 
   def resolved_auth_config
-    return connection.credentials if connection.present?
-    return config.dig('connection', 'auth') || {} if config.present?
-
-    {}
+    @resolved_auth_config ||= if connection.present?
+                                connection.credentials
+                              elsif config.present?
+                                config.dig('connection', 'auth') || {}
+                              else
+                                {}
+                              end
   end
 
   def workflow_config

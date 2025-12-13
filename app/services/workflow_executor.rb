@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require_relative 'liquid/workflow_templates'
+require_relative 'liquid/step_templates'
+require_relative 'liquid/context_builder'
+
 ##
 # WorkflowExecutor creates a RowProcessor for every Row in the Data Source
 class WorkflowExecutor
@@ -17,6 +21,7 @@ class WorkflowExecutor
   def call
     @execution = WorkflowExecution.create!(workflow: workflow, data_source: data_source)
     @execution.start!
+    @step_templates = compile_step_templates
     Rails.logger.info "\nStarting workflow execution for #{@workflow.name} at #{@execution.started_at}"
 
     # Process rows in batches
@@ -33,21 +38,27 @@ class WorkflowExecutor
 
   private
 
+  def compile_step_templates
+    workflow.steps.each_with_object({}) do |step, hash|
+      hash[step.id] = Liquid::StepTemplates.new(step.step_config['liquid_templates'])
+    end
+  end
+
   def process_batches
     config = workflow.workflow_config || {}
     liquid_templates = config['liquid_templates'] || {}
-    group_by_template = liquid_templates['group_by']
+    @templates = Liquid::WorkflowTemplates.new(liquid_templates)
     rows = data_source.rows
 
-    if group_by_template
-      process_grouped_rows(rows, group_by_template)
+    if liquid_templates['group_by']
+      process_grouped_rows(rows)
     else
       process_single_batch(rows)
     end
   end
 
-  def process_grouped_rows(rows, group_by_template)
-    row_groups = prepare_row_groups(rows, group_by_template)
+  def process_grouped_rows(rows)
+    row_groups = prepare_row_groups(rows)
 
     row_groups.each do |group_key, current_group_rows|
       next if group_key == :default
@@ -59,38 +70,36 @@ class WorkflowExecutor
     create_and_process_batch(default_rows, "parallel") if default_rows.present?
   end
 
-  def prepare_row_groups(rows, group_by_template)
-    grouped_rows = group_rows_by_key(rows, group_by_template)
+  def prepare_row_groups(rows)
+    grouped_rows = group_rows_by_key(rows)
     sort_grouped_rows(grouped_rows)
   end
 
-  def group_rows_by_key(rows, group_by_template)
+  def group_rows_by_key(rows)
     rows.group_by do |row|
-      key = evaluate_template_for_row(row, group_by_template)
+      context = context_for_row(row)
+      key = @templates.group_key(context)
       key.present? ? key : :default
     end
   end
 
   def sort_grouped_rows(grouped_rows)
-    sort_by_template = workflow.workflow_config&.dig('liquid_templates', 'sort_by')
-    return grouped_rows unless sort_by_template
-
     grouped_rows.each do |group_key, group_rows|
-      grouped_rows[group_key] = sort_rows_by_template(group_rows, sort_by_template)
+      grouped_rows[group_key] = sort_rows(group_rows)
     end
 
     grouped_rows
   end
 
-  def sort_rows_by_template(rows, sort_by_template)
+  def sort_rows(rows)
     rows.sort_by do |row|
-      evaluate_template_for_row(row, sort_by_template)
+      context = context_for_row(row)
+      @templates.sort_key(context) || ""
     end
   end
 
-  def evaluate_template_for_row(row, template)
-    context = Liquid::ContextBuilder.new(row: row, workflow: workflow).build
-    Liquid::Processor.new(template, context).render
+  def context_for_row(row)
+    Liquid::ContextBuilder.new(row: row, workflow: workflow).build
   end
 
   def process_single_batch(rows)
@@ -111,6 +120,12 @@ class WorkflowExecutor
       rows.each { |row| row.update!(batch_id: batch.id) }
     end
 
-    BatchExecutor.new(batch: batch, workflow: workflow, workflow_execution: @execution, rows: rows).call
+    BatchExecutor.new(
+      batch: batch,
+      workflow: workflow,
+      workflow_execution: @execution,
+      rows: rows,
+      step_templates: @step_templates
+    ).call
   end
 end

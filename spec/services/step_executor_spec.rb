@@ -6,28 +6,44 @@ RSpec.describe StepExecutor do
   let(:workflow) { create(:workflow) }
   let(:step) { create(:step, workflow: workflow) }
   let(:row) { create(:row) }
+  let(:step_templates) { build_step_templates_for(step) }
   let(:hydra_manager) { instance_double(HydraManager) }
 
   before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
 
+  def step_with_config(liquid_templates)
+    step.update(config: { 'liquid_templates' => liquid_templates })
+    build_step_templates_for(step)
+  end
+
+  def success_response(body = '{}')
+    double('Response', body: body, code: 200)
+  end
+
+  def error_response(code, body = '{}')
+    double('Response', body: body, code: code)
+  end
+
   describe '#initialize' do
     it 'creates a new instance with step and row' do
-      processor = described_class.new(step, row)
+      processor = described_class.new(step, row, step_templates: step_templates)
       expect(processor.step).to eq(step)
       expect(processor.row).to eq(row)
       expect(processor.config).to eq(step.config.with_indifferent_access)
     end
 
     it 'raises an error when step is nil' do
-      expect { described_class.new(nil, row) }.to raise_error(ArgumentError, 'step is required')
+      expect { described_class.new(nil, row, step_templates: step_templates) }
+        .to raise_error(ArgumentError, 'step is required')
     end
 
     it 'raises an error when row is nil' do
-      expect { described_class.new(step, nil) }.to raise_error(ArgumentError, 'row is required')
+      expect { described_class.new(step, nil, step_templates: step_templates) }
+        .to raise_error(ArgumentError, 'row is required')
     end
 
     it 'creates a StepExecution' do
-      processor = described_class.new(step, row)
+      processor = described_class.new(step, row, step_templates: step_templates)
       expect(processor.execution).to be_a(StepExecution)
       expect(processor.execution.step).to eq(step)
       expect(processor.execution.row).to eq(row)
@@ -35,34 +51,20 @@ RSpec.describe StepExecutor do
 
     context 'with priority option' do
       it 'accepts priority: true' do
-        processor = described_class.new(step, row, priority: true)
+        processor = described_class.new(step, row, step_templates: step_templates, priority: true)
         expect(processor).to be_a(StepExecutor)
       end
 
       it 'accepts priority: false' do
-        processor = described_class.new(step, row, priority: false)
+        processor = described_class.new(step, row, step_templates: step_templates, priority: false)
         expect(processor).to be_a(StepExecutor)
       end
-    end
-  end
-
-  describe '::call' do
-    it 'initializes a new instance and calls it' do
-      processor = instance_double(StepExecutor)
-      expect(described_class).to receive(:new).with(step, row).and_return(processor)
-      expect(processor).to receive(:call)
-      described_class.call(step, row)
     end
   end
 
   describe '#call' do
     it 'queues a request with hydra manager' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'url' => 'https://api.example.com/test',
-                      'method' => 'get'
-                    }
-                  })
+      templates = step_with_config('url' => 'https://api.example.com/test', 'method' => 'get')
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:url]).to eq('https://api.example.com/test')
@@ -70,26 +72,21 @@ RSpec.describe StepExecutor do
         expect(args[:on_complete]).to be_a(Proc)
       end
 
-      described_class.new(step, row).call
+      described_class.new(step, row, step_templates: templates).call
     end
 
     it 'processes successful response with success_data extraction' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'url' => 'https://api.example.com',
-                      'method' => 'get',
-                      'success_data' => {
-                        'customer_id' => '{{response.customer.id}}'
-                      }
-                    }
-                  })
+      templates = step_with_config(
+        'url' => 'https://api.example.com',
+        'method' => 'get',
+        'success_data' => { 'customer_id' => '{{response.customer.id}}' }
+      )
 
       callback_spy = spy('callback')
-      processor = described_class.new(step, row, on_complete: callback_spy)
+      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy)
 
       allow(hydra_manager).to receive(:queue) do |args|
-        response = double('response', body: '{"customer":{"id":"123"}}', code: 200)
-        args[:on_complete].call(response)
+        args[:on_complete].call(success_response('{"customer":{"id":"123"}}'))
       end
 
       processor.call
@@ -98,19 +95,13 @@ RSpec.describe StepExecutor do
     end
 
     it 'processes failed responses' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'url' => 'https://api.example.com',
-                      'method' => 'get'
-                    }
-                  })
+      templates = step_with_config('url' => 'https://api.example.com', 'method' => 'get')
 
       callback_spy = spy('callback')
-      processor = described_class.new(step, row, on_complete: callback_spy)
+      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy)
 
       allow(hydra_manager).to receive(:queue) do |args|
-        response = double('response', body: '{"error":"Not found"}', code: 404)
-        args[:on_complete].call(response)
+        args[:on_complete].call(error_response(404, '{"error":"Not found"}'))
       end
 
       processor.call
@@ -120,19 +111,13 @@ RSpec.describe StepExecutor do
     end
 
     it 'handles invalid JSON responses' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'url' => 'https://api.example.com',
-                      'method' => 'get'
-                    }
-                  })
+      templates = step_with_config('url' => 'https://api.example.com', 'method' => 'get')
 
       callback_spy = spy('callback')
-      processor = described_class.new(step, row, on_complete: callback_spy)
+      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy)
 
       allow(hydra_manager).to receive(:queue) do |args|
-        response = double('response', body: 'not json', code: 200)
-        args[:on_complete].call(response)
+        args[:on_complete].call(success_response('not json'))
       end
 
       processor.call
@@ -142,32 +127,21 @@ RSpec.describe StepExecutor do
     end
 
     it 'handles nil on_complete gracefully' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'url' => 'https://test.com',
-                      'method' => 'post'
-                    }
-                  })
+      templates = step_with_config('url' => 'https://test.com', 'method' => 'post')
 
-      processor = described_class.new(step, row)
+      processor = described_class.new(step, row, step_templates: templates)
 
       allow(hydra_manager).to receive(:queue) do |args|
-        response = double('response', body: '{}', code: 200)
-        expect { args[:on_complete].call(response) }.not_to raise_error
+        expect { args[:on_complete].call(success_response) }.not_to raise_error
       end
 
       processor.call
     end
 
     it 'queues request with priority when priority flag is true' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'url' => 'https://priority.example.com/test',
-                      'method' => 'post'
-                    }
-                  })
+      templates = step_with_config('url' => 'https://priority.example.com/test', 'method' => 'post')
 
-      processor = described_class.new(step, row, priority: true)
+      processor = described_class.new(step, row, step_templates: templates, priority: true)
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:front]).to be true
@@ -187,12 +161,13 @@ RSpec.describe StepExecutor do
                                         'method' => 'get'
                                       }
                                     })
+      templates = build_step_templates_for(step_with_connection)
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:url]).to eq('https://acme.my-app.io/api/v1/users')
       end
 
-      described_class.new(step_with_connection, row).call
+      described_class.new(step_with_connection, row, step_templates: templates).call
     end
 
     it 'uses connection base_url in templates' do
@@ -206,56 +181,47 @@ RSpec.describe StepExecutor do
                                         'method' => 'get'
                                       }
                                     })
+      templates = build_step_templates_for(step_with_connection)
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:url]).to eq('https://mycompany.salesforce.com/services/data/v57.0/sobjects/Account')
       end
 
-      described_class.new(step_with_connection, row).call
+      described_class.new(step_with_connection, row, step_templates: templates).call
     end
 
     it 'renders Liquid templates with row data' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'url' => 'https://api.example.com/users/{{row.first_name}}',
-                      'method' => 'post',
-                      'body' => '{"name":"{{row.first_name}} {{row.last_name}}"}'
-                    }
-                  })
+      templates = step_with_config(
+        'url' => 'https://api.example.com/users/{{row.first_name}}',
+        'method' => 'post',
+        'body' => '{"name":"{{row.first_name}} {{row.last_name}}"}'
+      )
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:url]).to eq('https://api.example.com/users/John')
         expect(args[:body]).to eq('{"name":"John Doe"}')
       end
 
-      described_class.new(step, row).call
+      described_class.new(step, row, step_templates: templates).call
     end
   end
 
   describe '#should_skip?' do
     it 'returns false when no skip_condition is configured' do
-      processor = described_class.new(step, row)
+      processor = described_class.new(step, row, step_templates: step_templates)
       expect(processor.should_skip?).to be false
     end
 
     it 'evaluates skip_condition and returns true when condition is met' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'skip_condition' => "{{row.email | present?}}"
-                    }
-                  })
-      processor = described_class.new(step, row)
+      templates = step_with_config('skip_condition' => '{{row.email | present?}}')
+      processor = described_class.new(step, row, step_templates: templates)
 
       expect(processor.should_skip?).to be true
     end
 
     it 'returns false when skip_condition evaluates to false' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'skip_condition' => "{{row.email | blank?}}"
-                    }
-                  })
-      processor = described_class.new(step, row)
+      templates = step_with_config('skip_condition' => '{{row.email | blank?}}')
+      processor = described_class.new(step, row, step_templates: templates)
 
       expect(processor.should_skip?).to be false
     end
@@ -263,29 +229,21 @@ RSpec.describe StepExecutor do
 
   describe '#required?' do
     it 'returns false when no required is configured' do
-      step.update(config: { 'liquid_templates' => {} })
-      processor = described_class.new(step, row)
+      templates = step_with_config({})
+      processor = described_class.new(step, row, step_templates: templates)
       expect(processor.required?).to be false
     end
 
     it 'evaluates required and returns true when condition is met' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'required' => "{{row.organization | present?}}"
-                    }
-                  })
-      processor = described_class.new(step, row)
+      templates = step_with_config('required' => '{{row.organization | present?}}')
+      processor = described_class.new(step, row, step_templates: templates)
 
       expect(processor.required?).to be true
     end
 
     it 'returns false when required evaluates to false' do
-      step.update(config: {
-                    'liquid_templates' => {
-                      'required' => "{{row.missing_field | present?}}"
-                    }
-                  })
-      processor = described_class.new(step, row)
+      templates = step_with_config('required' => '{{row.missing_field | present?}}')
+      processor = described_class.new(step, row, step_templates: templates)
 
       expect(processor.required?).to be false
     end
