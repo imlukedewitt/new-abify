@@ -1,0 +1,86 @@
+meta {
+  name: Create Allocations Workflow
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Create Allocations",
+    "handle": "create_allocations",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "lookup subscription by reference",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup subscription by reference",
+            "url": "{\{base_url}}/subscriptions/lookup.json?reference={\{row['subscription reference'] | url_encode}}",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['subscription id'] != blank and row['subscription id'] != '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "subscription id": "{\{response.subscription.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "create allocation",
+        "config": {
+          "liquid_templates": {
+            "name": "create allocation",
+            "url": "{\{base_url}}/subscriptions/{\{row['subscription id']}}/components/{% if row['component id'] != blank and row['component id'] != '' %}{\{row['component id']}}{% else %}handle:{\{row['component handle'] | url_encode}}{% endif %}/allocations.json",
+            "method": "post",
+            "required": "true",
+            "body": {
+              "allocation": {
+                "quantity": "{\{row['quantity']}}",
+                "price_point_id": "{% if row['component price point id'] != blank and row['component price point id'] != '' %}{\{row['component price point id']}}{% else %}{\{row['component price point handle']}}{% endif %}",
+                "memo": "{\{row['memo']}}"
+              }
+            },
+            "success_data": {
+              "allocation id": "{\{response.allocation.id}}",
+              "result": "allocation created for subscription {\{response.allocation.subscription_id}}"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Create Allocations Workflow
+  
+  Creates a workflow with 2 steps:
+  1. **lookup subscription by reference** - Looks up subscription by reference (skipped if subscription id provided)
+  2. **create allocation** - Creates a single component allocation
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  - Subscription ID or Subscription Reference
+  - Component ID or Component Handle
+  - Component Price Point ID or Component Price Point Handle (optional)
+  - Quantity (required)
+  - Memo (optional)
+}
+

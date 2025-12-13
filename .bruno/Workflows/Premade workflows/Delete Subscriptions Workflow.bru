@@ -1,0 +1,60 @@
+meta {
+  name: Delete Subscriptions Workflow
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Delete Subscriptions",
+    "handle": "delete_subscriptions",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "delete subscription",
+        "config": {
+          "liquid_templates": {
+            "name": "delete subscription",
+            "url": "{\{base_url}}/subscriptions/{\{row['subscription id']}}/purge.json?ack={\{row['customer id']}}{% if row['delete customer'] == 'TRUE' or row['delete customer'] == 'true' %}&cascade[]=customer{% endif %}",
+            "method": "post",
+            "required": "true",
+            "success_data": {
+              "result": "subscription deleted"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Delete Subscriptions Workflow
+  
+  Creates a workflow with 1 step:
+  1. **delete subscription** - Purges the subscription (optionally cascading to delete the customer)
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  - Subscription ID (required)
+  - Customer ID (required for ack parameter)
+  - Delete Customer (optional - set to TRUE to also delete the customer)
+}
+

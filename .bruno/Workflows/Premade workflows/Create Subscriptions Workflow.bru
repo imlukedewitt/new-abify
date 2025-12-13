@@ -1,0 +1,151 @@
+meta {
+  name: Create Subscriptions Workflow
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base}}/workflows
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Create Subscriptions",
+    "handle": "create_subscriptions",
+    "connection_id": {{connection_id}},
+    "steps_attributes": [
+      {
+        "name": "lookup customer",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup customer",
+            "url": "{\{base_url}}/customers/lookup.json?reference={\{row['customer reference'] | url_encode}}",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['customer id'] != blank and row['customer id'] != '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "customer id": "{\{response.customer.id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "lookup payment profile",
+        "config": {
+          "liquid_templates": {
+            "name": "lookup payment profile",
+            "url": "{\{base_url}}/payment_profiles.json?customer_id={\{row['customer id']}}",
+            "method": "get",
+            "required": "true",
+            "skip_condition": "{% if row['payment profile id'] != blank and row['payment profile id'] != '' %}true{% else %}false{% endif %}",
+            "success_data": {
+              "payment profile id": "{\{response | last_payment_profile_id}}"
+            }
+          }
+        }
+      },
+      {
+        "name": "create subscription",
+        "config": {
+          "liquid_templates": {
+            "name": "create subscription",
+            "url": "{\{base_url}}/subscriptions.json",
+            "method": "post",
+            "required": "true",
+            "body": {
+              "subscription": {
+                "dunning_exempt": "{\{row['dunning exempt']}}",
+                "import_mrr": "{% if row['initial billing at'] != blank and row['initial billing at'] != '' %}false{% else %}true{% endif %}",
+                "customer_id": "{\{row['customer id']}}",
+                "customer_reference": "{% if row['customer id'] == blank or row['customer id'] == '' %}{\{row['customer reference']}}{% endif %}",
+                "receives_invoice_emails": "{\{row['receives invoice emails']}}",
+                "reference": "{\{row['subscription reference']}}",
+                "currency": "{\{row['currency']}}",
+                "payment_collection_method": "{\{row['payment collection method']}}",
+                "previous_billing_at": "{\{row['previous billing at']}}",
+                "next_billing_at": "{\{row['next billing at']}}",
+                "initial_billing_at": "{\{row['initial billing at']}}",
+                "canceled_at": "{% if row['canceled at'] != blank %}{\{row['canceled at']}}{% else %}{\{row['cancelled at']}}{% endif %}",
+                "activated_at": "{\{row['activated at']}}",
+                "expires_at": "{\{row['expires at']}}",
+                "net_terms": "{\{row['net terms']}}",
+                "service_credit_balance": "{\{row['service credit balance']}}",
+                "prepayment_balance": "{\{row['prepayment balance']}}",
+                "product_handle": "{\{row['product']}}",
+                "product_price_point_handle": "{% if row['product price point'] != blank %}{\{row['product price point']}}{% else %}{\{row['product price point handle']}}{% endif %}",
+                "ref": "{\{row['referral code']}}",
+                "payment_profile_id": "{% unless row['subscription group'] == 'TRUE' or row['subscription group'] == 'true' %}{% unless row['group payer'] != blank and row['group payer'] != '' and row['group payer'] != 'self' %}{\{row['payment profile id']}}{% endunless %}{% endunless %}",
+                "group": "{% if row['subscription group'] == 'TRUE' or row['subscription group'] == 'true' %}{\"target\":{\"type\":\"{\{row['group payer']}}\"},\"billing\":{\"align_date\":\"{\{row['align billing date']}}\"}}{% else %}false{% endif %}",
+                "coupon_codes": "[\{%- for i in (1..10) -%}{% assign coupon_key = 'coupon ' | append: i %}{% if row[coupon_key] != blank and row[coupon_key] != '' %}\"{\{row[coupon_key]}}\"{% unless forloop.last %},{% endunless %}{% endif %}\{%- endfor -%}]",
+                "components": "[\{%- for i in (1..10) -%}{% assign comp_key = 'component ' | append: i %}{% assign qty_key = 'component quantity ' | append: i %}{% if row[qty_key] != blank and row[qty_key] != '' %}{\"component_id\":\"handle:{\{row[comp_key]}}\",\"allocated_quantity\":{\{row[qty_key]}},\"unit_balance\":{\{row[qty_key]}}{% assign pp_key = 'component price point ' | append: i %},\"price_point\":\"handle:{\{row[pp_key]}}\"}{% unless forloop.last %},{% endunless %}{% endif %}\{%- endfor -%}]"
+              }
+            },
+            "success_data": {
+              "subscription id": "{\{response.subscription.id}}",
+              "subscription url": "{\{base_url}}/subscriptions/{\{response.subscription.id}}"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  # Create Subscriptions Workflow
+  
+  Creates a workflow with 3 steps:
+  1. **lookup customer** - Looks up customer by reference (skipped if customer id already provided)
+  2. **lookup payment profile** - Gets the last payment profile for the customer (skipped if payment profile id provided)
+  3. **create subscription** - Creates the subscription with all settings
+  
+  ## Required Environment Variables
+  - `connection_id` - ID of the connection to use
+  
+  ## Expected CSV Columns
+  
+  ### Customer/Payment
+  - Customer Reference, Customer ID (optional)
+  - Payment Profile ID (optional)
+  
+  ### Subscription Settings
+  - Subscription Reference, Product, Product Price Point (or Product Price Point Handle)
+  - Currency, Payment Collection Method, Net Terms
+  - Dunning Exempt, Receives Invoice Emails
+  - Referral Code
+  
+  ### Dates
+  - Previous Billing At, Next Billing At, Initial Billing At
+  - Canceled At (or Cancelled At), Activated At, Expires At
+  
+  ### Balances
+  - Service Credit Balance, Prepayment Balance
+  
+  ### Subscription Groups
+  - Subscription Group (TRUE/FALSE)
+  - Group Payer (self/parent/eldest)
+  - Align Billing Date
+  
+  ### Components (numbered 1-10)
+  - Component 1, Component Quantity 1, Component Price Point 1
+  - Component 2, Component Quantity 2, Component Price Point 2
+  - etc.
+  
+  ### Coupons (numbered 1-10)
+  - Coupon 1, Coupon 2, etc.
+  
+  ### Custom Fields
+  - Custom Field [field name] - for metafields
+}
+
