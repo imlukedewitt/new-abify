@@ -111,6 +111,6 @@ class WorkflowExecutor
       rows.each { |row| row.update!(batch_id: batch.id) }
     end
 
-    BatchExecutor.new(batch: batch, workflow: workflow, workflow_execution: @execution).call
+    BatchExecutor.new(batch: batch, workflow: workflow, workflow_execution: @execution, rows: rows).call
   end
 end

@@ -2,9 +2,9 @@
 
 # Executes a batch of rows with the given workflow
 class BatchExecutor
-  attr_reader :batch, :workflow, :workflow_execution, :execution
+  attr_reader :batch, :workflow, :workflow_execution, :execution, :rows
 
-  def initialize(batch:, workflow:, workflow_execution:)
+  def initialize(batch:, workflow:, workflow_execution:, rows: nil)
     raise ArgumentError, "batch is required" if batch.nil?
     raise ArgumentError, "workflow is required" if workflow.nil?
     raise ArgumentError, "workflow_execution is required" if workflow_execution.nil?
@@ -12,6 +12,7 @@ class BatchExecutor
     @batch = batch
     @workflow = workflow
     @workflow_execution = workflow_execution
+    @rows = rows || batch.rows
     @execution = BatchExecution.new(batch: batch, workflow: workflow)
   end
 
@@ -34,7 +35,7 @@ class BatchExecutor
   private
 
   def process_in_parallel
-    row_executors = batch.rows.map do |row|
+    row_executors = rows.map do |row|
       row_executor = RowExecutor.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
       row_executor.call
       row_executor
@@ -44,7 +45,7 @@ class BatchExecutor
   end
 
   def process_sequentially
-    batch.rows.each do |row|
+    rows.each do |row|
       row_executor = RowExecutor.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
       row_executor.call
       HydraManager.instance.run
