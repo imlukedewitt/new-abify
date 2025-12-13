@@ -10,6 +10,7 @@
 class RowExecution < ApplicationRecord
   include Executable
   belongs_to :row
+  belongs_to :workflow_execution
   has_many :step_executions
 
   def fail!

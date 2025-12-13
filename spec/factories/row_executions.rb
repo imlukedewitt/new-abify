@@ -3,6 +3,7 @@
 FactoryBot.define do
   factory :row_execution do
     row
+    workflow_execution
     status { 'pending' }
 
     trait :processing do

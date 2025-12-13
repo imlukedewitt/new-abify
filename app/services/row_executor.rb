@@ -3,14 +3,16 @@
 # Runs a Workflow on a single Row,
 # creating StepExecutors for each step
 class RowExecutor
-  attr_reader :row, :workflow
+  attr_reader :row, :workflow, :workflow_execution
 
-  def initialize(row:, workflow:)
+  def initialize(row:, workflow:, workflow_execution:)
     raise ArgumentError, "row is required" if row.nil?
     raise ArgumentError, "workflow is required" if workflow.nil?
+    raise ArgumentError, "workflow_execution is required" if workflow_execution.nil?
 
     @row = row
     @workflow = workflow
+    @workflow_execution = workflow_execution
     @ordered_steps = workflow.steps.sort_by(&:order)
     @current_step_index = 0
     @completion_semaphore = Thread::ConditionVariable.new
@@ -43,7 +45,7 @@ class RowExecutor
   private
 
   def execution
-    @execution ||= RowExecution.new(row: @row)
+    @execution ||= RowExecution.new(row: @row, workflow_execution: @workflow_execution)
   end
 
   def process_current_step

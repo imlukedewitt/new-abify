@@ -3,21 +3,23 @@
 require "rails_helper"
 
 RSpec.describe BatchExecutor do
-  subject(:processor) { described_class.new(batch: batch_object, workflow: workflow) }
+  subject(:processor) { described_class.new(batch: batch_object, workflow: workflow, workflow_execution: workflow_execution) }
 
   let(:batch_object) { build(:batch) }
   let(:workflow) { build(:workflow) }
+  let(:workflow_execution) { build(:workflow_execution, workflow: workflow) }
 
   describe "#initialize" do
-    it "creates a new instance with a batch and workflow" do
-      processor = described_class.new(batch: batch_object, workflow: workflow)
+    it "creates a new instance with a batch, workflow, and workflow_execution" do
+      processor = described_class.new(batch: batch_object, workflow: workflow, workflow_execution: workflow_execution)
       expect(processor).to be_a(BatchExecutor)
     end
 
-    it "stores the batch and workflow as attributes" do
-      processor = described_class.new(batch: batch_object, workflow: workflow)
+    it "stores the batch, workflow, and workflow_execution as attributes" do
+      processor = described_class.new(batch: batch_object, workflow: workflow, workflow_execution: workflow_execution)
       expect(processor.batch).to eq(batch_object)
       expect(processor.workflow).to eq(workflow)
+      expect(processor.workflow_execution).to eq(workflow_execution)
     end
 
     it "creates a new batch execution" do
@@ -30,7 +32,7 @@ RSpec.describe BatchExecutor do
       let(:batch_object) { nil }
 
       it "raises an ArgumentError" do
-        expect { described_class.new(batch: batch_object, workflow: workflow) }
+        expect { described_class.new(batch: batch_object, workflow: workflow, workflow_execution: workflow_execution) }
           .to raise_error(ArgumentError, "batch is required")
       end
     end
@@ -39,8 +41,17 @@ RSpec.describe BatchExecutor do
       let(:workflow) { nil }
 
       it "raises an ArgumentError" do
-        expect { described_class.new(batch: batch_object, workflow: workflow) }
+        expect { described_class.new(batch: batch_object, workflow: workflow, workflow_execution: workflow_execution) }
           .to raise_error(ArgumentError, "workflow is required")
+      end
+    end
+
+    context "when workflow_execution is nil" do
+      let(:workflow_execution) { nil }
+
+      it "raises an ArgumentError" do
+        expect { described_class.new(batch: batch_object, workflow: workflow, workflow_execution: workflow_execution) }
+          .to raise_error(ArgumentError, "workflow_execution is required")
       end
     end
   end
@@ -65,7 +76,7 @@ RSpec.describe BatchExecutor do
         row_processor_double = row_processor_doubles[index]
 
         expect(RowExecutor).to receive(:new)
-          .with(row: row, workflow: workflow)
+          .with(row: row, workflow: workflow, workflow_execution: workflow_execution)
           .and_return(row_processor_double)
           .ordered
         expect(row_processor_double).to receive(:call).ordered
@@ -87,7 +98,7 @@ RSpec.describe BatchExecutor do
       rows.each_with_index do |row, index|
         row_processor_double = row_processor_doubles[index]
         expect(RowExecutor).to receive(:new)
-          .with(row: row, workflow: workflow)
+          .with(row: row, workflow: workflow, workflow_execution: workflow_execution)
           .and_return(row_processor_double)
         expect(row_processor_double).to receive(:call)
         expect(row_processor_double).to receive(:wait_for_completion)

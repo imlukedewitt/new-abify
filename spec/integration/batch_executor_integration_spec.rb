@@ -36,12 +36,12 @@ RSpec.describe BatchExecutor, :integration, :vcr do
   end
 
   let(:data_source) { create(:data_source) }
-  let(:workflow_execution) { create(:workflow_execution, workflow: workflow) }
+  let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: data_source) }
 
   let(:batch) do
-    create(:batch).tap do |b|
+    create(:batch, workflow_execution: workflow_execution).tap do |b|
       3.times do |i|
-        create(:row, batch: b, workflow_execution: workflow_execution, data_source: data_source,
+        create(:row, batch: b, data_source: data_source,
                      data: { 'source_row_index': i + 1 })
       end
     end
@@ -51,7 +51,7 @@ RSpec.describe BatchExecutor, :integration, :vcr do
     it 'processes all rows in the batch' do
       expect(batch.rows.count).to eq(3)
 
-      processor = described_class.new(batch: batch, workflow: workflow)
+      processor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
       processor.call
 
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)
@@ -87,7 +87,7 @@ RSpec.describe BatchExecutor, :integration, :vcr do
              })
       workflow.reload
 
-      processor = described_class.new(batch: batch, workflow: workflow)
+      processor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
       processor.call
 
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)
@@ -112,7 +112,7 @@ RSpec.describe BatchExecutor, :integration, :vcr do
              })
       workflow.reload
 
-      processor = described_class.new(batch: batch, workflow: workflow)
+      processor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
       processor.call
 
       execution = BatchExecution.find_by(batch: batch, workflow: workflow)

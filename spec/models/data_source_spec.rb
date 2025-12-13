@@ -63,8 +63,7 @@ RSpec.describe DataSource, type: :model do
 
     it 'can be associated with rows' do
       data_source = create(:data_source)
-      workflow_execution = create(:workflow_execution, data_source: data_source)
-      row = create(:row, data_source: data_source, workflow_execution: workflow_execution)
+      row = create(:row, data_source: data_source)
 
       expect(data_source.rows).to include(row)
     end

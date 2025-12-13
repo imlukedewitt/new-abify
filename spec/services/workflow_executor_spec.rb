@@ -61,11 +61,14 @@ RSpec.describe WorkflowExecutor do
       allow(workflow).to receive(:config).and_return(workflow_config) # TODO: Assumes workflow_config is defined in including context
       allow(data_source).to receive(:rows).and_return(rows_relation)
       allow(BatchExecutor).to receive(:new).with(batch: batch_a,
-                                                  workflow: workflow).and_return(batch_processor_a)
+                                                 workflow: workflow,
+                                                 workflow_execution: workflow_execution).and_return(batch_processor_a)
       allow(BatchExecutor).to receive(:new).with(batch: batch_b,
-                                                  workflow: workflow).and_return(batch_processor_b)
+                                                 workflow: workflow,
+                                                 workflow_execution: workflow_execution).and_return(batch_processor_b)
       allow(BatchExecutor).to receive(:new).with(batch: batch_ungrouped,
-                                                  workflow: workflow).and_return(batch_processor_ungrouped)
+                                                 workflow: workflow,
+                                                 workflow_execution: workflow_execution).and_return(batch_processor_ungrouped)
     end
 
     def expect_ordered_call(receiver, method, args, return_value)
@@ -120,8 +123,7 @@ RSpec.describe WorkflowExecutor do
       allow(workflow_execution).to receive(:fail!)
     end
 
-    it 'creates and starts a workflow execution and updates rows' do
-      expect(rows_relation).to receive(:update_all).with(workflow_execution_id: workflow_execution.id)
+    it 'creates and starts a workflow execution' do
       expect(workflow_execution).to receive(:start!)
 
       result = workflow_executor.call
@@ -143,11 +145,11 @@ RSpec.describe WorkflowExecutor do
           )
         ).and_return(batch_double)
         allow(BatchExecutor).to receive(:new).with(batch: batch_double,
-                                                    workflow: workflow).and_return(batch_processor_double)
+                                                   workflow: workflow,
+                                                   workflow_execution: workflow_execution).and_return(batch_processor_double)
       end
 
       it 'processes all rows in a single batch' do
-        expect(rows_relation).to receive(:update_all).with(workflow_execution_id: workflow_execution.id).ordered
         expect(rows_relation).to receive(:update_all).with(batch_id: batch_double.id).ordered
 
         workflow_executor.call
@@ -268,10 +270,12 @@ RSpec.describe WorkflowExecutor do
         def setup_batch_processor_mocks
           sort_batch_processor_a = instance_double(BatchExecutor, call: true)
           sort_batch_processor_b = instance_double(BatchExecutor, call: true)
-          allow(BatchExecutor).to receive(:new).with(batch: @sort_batch_a, workflow: workflow)
-                                                .and_return(sort_batch_processor_a)
-          allow(BatchExecutor).to receive(:new).with(batch: @sort_batch_b, workflow: workflow)
-                                                .and_return(sort_batch_processor_b)
+          allow(BatchExecutor).to receive(:new).with(batch: @sort_batch_a, workflow: workflow,
+                                                     workflow_execution: workflow_execution)
+                                               .and_return(sort_batch_processor_a)
+          allow(BatchExecutor).to receive(:new).with(batch: @sort_batch_b, workflow: workflow,
+                                                     workflow_execution: workflow_execution)
+                                               .and_return(sort_batch_processor_b)
         end
 
         it 'sorts rows within each group by priority (lowest first)' do

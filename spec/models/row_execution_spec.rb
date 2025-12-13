@@ -9,6 +9,11 @@ RSpec.describe RowExecution, type: :model do
       expect(association.macro).to eq :belongs_to
     end
 
+    it 'belongs to a workflow_execution' do
+      association = described_class.reflect_on_association(:workflow_execution)
+      expect(association.macro).to eq :belongs_to
+    end
+
     it 'has many step_executions' do
       association = described_class.reflect_on_association(:step_executions)
       expect(association.macro).to eq :has_many

@@ -3,10 +3,11 @@
 require "rails_helper"
 
 RSpec.describe RowExecutor do
-  subject(:processor) { described_class.new(row: row, workflow: workflow) }
+  subject(:processor) { described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution) }
 
   let(:row) { build(:row) }
   let(:workflow) { build(:workflow) }
+  let(:workflow_execution) { build(:workflow_execution, workflow: workflow) }
 
   describe "#initialize" do
     it "creates a new instance with a row and workflow" do
@@ -47,7 +48,7 @@ RSpec.describe RowExecutor do
       let(:execution_double) { instance_double(RowExecution) }
 
       before do
-        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
       end
 
       it "blocks until the row processing is complete" do
@@ -201,7 +202,7 @@ RSpec.describe RowExecutor do
                                 })
       allow(workflow).to receive(:steps).and_return([step_without_data])
 
-      processor = described_class.new(row: row, workflow: workflow)
+      test_processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
       step_processor = instance_double(StepExecutor)
 
       expect(StepExecutor).to receive(:new)
@@ -210,10 +211,10 @@ RSpec.describe RowExecutor do
       allow(step_processor).to receive(:should_skip?).and_return(false)
       expect(step_processor).to receive(:call)
 
-      processor.call
+      test_processor.call
 
       expect do
-        processor.send(:handle_step_completion, { success: true, data: {} })
+        test_processor.send(:handle_step_completion, { success: true, data: {} })
       end.not_to raise_error
     end
 
@@ -231,7 +232,7 @@ RSpec.describe RowExecutor do
         allow(step_processor_double).to receive(:call)
 
         execution_double = instance_double(RowExecution, processing?: false)
-        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete?)
 
@@ -257,7 +258,7 @@ RSpec.describe RowExecutor do
         allow(second_sp_double).to receive(:call)
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true)
         allow(execution_double).to receive(:complete?)
@@ -279,13 +280,13 @@ RSpec.describe RowExecutor do
         allow(workflow).to receive(:steps).and_return([])
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
         allow(execution_double).to receive(:complete!)
         allow(execution_double).to receive(:complete?)
         allow(execution_double).to receive(:failed?).and_return(false)
 
         # Create processor after setting up the mocks
-        row_processor = described_class.new(row: row, workflow: workflow)
+        row_processor = described_class.new(row: row, workflow: workflow, workflow_execution: workflow_execution)
 
         expect(StepExecutor).not_to receive(:new)
         row_processor.call
@@ -298,7 +299,7 @@ RSpec.describe RowExecutor do
         allow(step_processor_double).to receive(:call)
 
         execution_double = instance_double(RowExecution, processing?: false)
-        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete!)
         allow(execution_double).to receive(:complete?)
@@ -323,7 +324,7 @@ RSpec.describe RowExecutor do
         allow(second_sp_double).to receive(:call)
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
         allow(execution_double).to receive(:processing?).and_return(false)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:complete?)
@@ -351,7 +352,7 @@ RSpec.describe RowExecutor do
         allow(third_sp).to receive(:call)
 
         execution_double = instance_double(RowExecution)
-        allow(RowExecution).to receive(:new).with(row: row).and_return(execution_double)
+        allow(RowExecution).to receive(:new).with(row: row, workflow_execution: workflow_execution).and_return(execution_double)
         allow(execution_double).to receive(:start!)
         allow(execution_double).to receive(:processing?).and_return(false, true, true)
         allow(execution_double).to receive(:complete?)

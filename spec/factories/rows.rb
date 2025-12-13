@@ -2,7 +2,6 @@
 
 FactoryBot.define do
   factory :row do
-    workflow_execution
     data_source
     status { 'pending' }
     sequence(:source_index) { |n| n }
