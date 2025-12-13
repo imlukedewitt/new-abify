@@ -8,15 +8,15 @@
   - take a data source
   - ~~in the future we can parse user-provided yaml/json and do all the liquid validation~~ we dont need this
 - [x] dont store api credentials in plaintext
-- [ ] move liquid rendering stuff out of step executor
+- [x] move liquid rendering stuff out of step executor
 - [ ] remove status from rows table
 
 # Later
-- [ ] make sure row/step execution classes are not too tightly coupled
-- [ ] there's something wrong with storing the step success_data in row.data. You can use the same data source for multiple workflow executions
+- [-] make sure row/step execution classes are not too tightly coupled
+- [x] there's something wrong with storing the step success_data in row.data. You can use the same data source for multiple workflow executions
 - [ ] hydra manager shouldn't be a singleton. Maybe we need to find difference between system wide concurrency limit and per-execution concurrency limit
 - [ ] process rows/steps in Sidekiq or ActiveJob, remove the DIY threading that it currently does
-- [ ] make sure we're not re-rendering the same liquid templates over and over again
+- [x] make sure we're not re-rendering the same liquid templates over and over again
   - along these same lines, it'd be good to validate and render as much as possible before the workflow executes
 
 # OLD NOTES
