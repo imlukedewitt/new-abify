@@ -14,18 +14,25 @@ body:json {
   {
     "name": "Create Customers",
     "connection_id": {{connection_id}},
+    "config": {
+      "workflow": {
+        "liquid_templates": {
+          "group_by": "{% if row['has parent'] == 'TRUE' %}2{% else %}1{% endif %}"
+        }
+      }
+    },
     "steps_attributes": [
       {
         "name": "lookup parent customer",
         "config": {
           "liquid_templates": {
             "name": "lookup parent customer",
-            "url": "{\{base_url}}/customers/lookup.json?reference={\{row.parent_reference | url_encode}}",
+            "url": "{\{base_url}}/customers/lookup.json?reference={\{row['parent reference'] | url_encode}}",
             "method": "get",
             "required": "true",
-            "skip_condition": "{\% if row.has_parent == false or row.has_parent == 'false' %}true{\% elsif row.parent_customer_id != blank %}true{\% else %}false{\% endif %}",
+            "skip_condition": "{% if row['has parent'] == blank or row['has parent'] == '' %}true{% elsif row['parent customer id'] != blank %}true{% else %}false{% endif %}",
             "success_data": {
-              "parent_customer_id": "{\{response.customer.id}}"
+              "parent customer id": "{\{response.customer.id}}"
             }
           }
         }
@@ -40,28 +47,28 @@ body:json {
             "required": "true",
             "body": {
               "customer": {
-                "parent_id": "{\{row.parent_customer_id}}",
+                "parent_id": "{\{row['parent customer id']}}",
                 "organization": "{\{row.organization}}",
-                "reference": "{\{row.customer_reference}}",
-                "first_name": "{\{row.first_name}}",
-                "last_name": "{\{row.last_name}}",
+                "reference": "{\{row['customer reference']}}",
+                "first_name": "{\{row['first name']}}",
+                "last_name": "{\{row['last name']}}",
                 "email": "{\{row.email}}",
-                "cc_emails": "{\{row.cc_emails}}",
+                "cc_emails": "{\{row['cc emails']}}",
                 "phone": "{\{row.phone}}",
-                "address": "{\{row.shipping_address}}",
-                "address_2": "{\{row.shipping_address_2}}",
-                "city": "{\{row.shipping_city}}",
-                "state": "{\{row.shipping_state}}",
-                "country": "{\{row.shipping_country}}",
-                "zip": "{\{row.shipping_zip}}",
-                "tax_exempt": "{\{row.tax_exempt}}",
-                "vat_number": "{\{row.vat_number}}",
+                "address": "{\{row['shipping address']}}",
+                "address_2": "{\{row['shipping address 2']}}",
+                "city": "{\{row['shipping city']}}",
+                "state": "{\{row['shipping state']}}",
+                "country": "{\{row['shipping country']}}",
+                "zip": "{\{row['shipping zip']}}",
+                "tax_exempt": "{\{row['tax exempt']}}",
+                "vat_number": "{\{row['vat number']}}",
                 "verified": "{\{row.verified}}"
               }
             },
             "success_data": {
-              "customer_id": "{\{response.customer.id}}",
-              "customer_url": "{\{base_url}}/customers/{\{response.customer.id}}"
+              "customer id": "{\{response.customer.id}}",
+              "customer url": "{\{base_url}}/customers/{\{response.customer.id}}"
             }
           }
         }
@@ -74,37 +81,35 @@ body:json {
             "url": "{\{base_url}}/payment_profiles.json",
             "method": "post",
             "required": "true",
-            "skip_condition": "{\% if row.create_payment_profile == false or row.create_payment_profile == 'false' %}true{\% else %}false{\% endif %}",
+            "skip_condition": "{% if row['create payment profile'] == blank or row['create payment profile'] == '' or row['create payment profile'] == 'FALSE' %}true{% else %}false{% endif %}",
             "body": {
               "payment_profile": {
-                "customer_id": "{\{row.customer_id}}",
-                "payment_type": "{\{row.payment_profile_type}}",
-                "current_vault": "{\{row.current_vault}}",
-                "gateway_handle": "{\{row.gateway_handle}}",
-                "vault_token": "{\{row.vault_token}}",
-                "customer_vault_token": "{\{row.customer_vault_token}}",
-                "paypal_email": "{\{row.paypal_email}}",
-                "first_name": "{\{row.payment_profile_first_name}}",
-                "last_name": "{\{row.payment_profile_last_name}}",
-                "last_four": "{\{row.last_four}}",
-                "card_type": "{\{row.card_type}}",
-                "expiration_year": "{\{row.expiration_year}}",
-                "expiration_month": "{\{row.expiration_month}}",
-                "bank_name": "{\{row.bank_name}}",
-                "bank_account_number": "{\{row.bank_account_last_four}}",
-                "bank_routing_number": "{\{row.bank_routing_last_four}}",
-                "billing_address": "{\{row.billing_address}}",
-                "billing_address_2": "{\{row.billing_address_2}}",
-                "billing_city": "{\{row.billing_city}}",
-                "billing_state": "{\{row.billing_state}}",
-                "billing_country": "{\{row.billing_country}}",
-                "billing_zip": "{\{row.billing_zip}}",
-                "verified": "{\{row.stripe_verified}}"
+                "customer_id": "{\{row['customer id']}}",
+                "payment_type": "{\{row['payment profile type']}}",
+                "current_vault": "{\{row['current vault']}}",
+                "gateway_handle": "{\{row['gateway handle']}}",
+                "vault_token": "{\{row['vault token']}}",
+                "customer_vault_token": "{\{row['customer vault token']}}",
+                "first_name": "{\{row['billing first name']}}",
+                "last_name": "{\{row['billing last name']}}",
+                "last_four": "{\{row['last four']}}",
+                "card_type": "{\{row['card type']}}",
+                "expiration_year": "{\{row['exp year']}}",
+                "expiration_month": "{\{row['exp month']}}",
+                "bank_name": "{\{row['bank name']}}",
+                "bank_account_number": "{\{row['bank account last four']}}",
+                "bank_routing_number": "{\{row['bank routing last four']}}",
+                "billing_address": "{\{row['billing address']}}",
+                "billing_address_2": "{\{row['billing address 2']}}",
+                "billing_city": "{\{row['billing city']}}",
+                "billing_state": "{\{row['billing state']}}",
+                "billing_country": "{\{row['billing country']}}",
+                "billing_zip": "{\{row['billing zip']}}"
               }
             },
             "success_data": {
-              "payment_profile_id": "{\{response.payment_profile.id}}",
-              "payment_profile_url": "{\{base_url}}/customers/{\{response.payment_profile.customer_id}}/payment_profiles?id={\{response.payment_profile.id}}"
+              "payment profile id": "{\{response.payment_profile.id}}",
+              "payment profile url": "{\{base_url}}/customers/{\{response.payment_profile.customer_id}}/payment_profiles?id={\{response.payment_profile.id}}"
             }
           }
         }
@@ -113,37 +118,41 @@ body:json {
   }
 }
 
+vars:pre-request {
+  connection_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
 docs {
   # Create Customers Workflow
   
   Creates a workflow with 3 steps:
   1. **lookup parent customer** - Looks up parent customer by reference (skipped if no parent or parent_customer_id already set)
   2. **create customer** - Creates the customer record
-  3. **create payment profile** - Creates payment profile (skipped if create_payment_profile is false)
+  3. **create payment profile** - Creates payment profile (skipped if create_payment_profile is FALSE or blank)
+  
+  ## Batch Execution
+  Uses `group_by` to ensure parent customers are created before children:
+  - Batch "1": Rows with `Has Parent` blank/empty (parents/normal customers) - run in parallel
+  - Batch "2": Rows with `Has Parent = TRUE` (children) - run in parallel after batch 1 completes
   
   ## Required Environment Variables
   - `connection_id` - ID of the connection to use
   
-  ## Expected Row Data
-  ### For Customer:
-  - parent_reference, has_parent, parent_customer_id
-  - organization, customer_reference
-  - first_name, last_name, email, cc_emails, phone
-  - shipping_address, shipping_address_2, shipping_city, shipping_state, shipping_country, shipping_zip
-  - tax_exempt, vat_number, verified
-  
-  ### For Payment Profile:
-  - create_payment_profile (boolean)
-  - payment_profile_type, current_vault, gateway_handle
-  - vault_token, customer_vault_token, paypal_email
-  - payment_profile_first_name, payment_profile_last_name
-  - last_four, card_type, expiration_year, expiration_month
-  - bank_name, bank_account_last_four, bank_routing_last_four
-  - billing_address, billing_address_2, billing_city, billing_state, billing_country, billing_zip
-  - stripe_verified
-}
-
-settings {
-  encodeUrl: true
-  timeout: 0
+  ## Expected CSV Columns (matching testcx-10.csv template)
+  - Customer Reference, Organization, Has Parent, Parent Reference
+  - First Name, Last Name, Email, CC Emails, Phone
+  - Shipping Address, Shipping Address 2, Shipping City, Shipping State, Shipping Country, Shipping Zip
+  - Tax Exempt, VAT Number, Verified, Locale
+  - Create Payment Profile (TRUE/FALSE)
+  - Payment Profile Type, Current Vault, Gateway Handle
+  - Vault Token, Customer Vault Token
+  - Billing First Name, Billing Last Name
+  - Card Type, Last Four, Exp Month, Exp Year
+  - Bank Name, Bank Account Last Four, Bank Routing Last Four
+  - Billing Address, Billing Address 2, Billing City, Billing State, Billing Country, Billing Zip
 }
