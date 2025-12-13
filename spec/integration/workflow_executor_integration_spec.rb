@@ -111,7 +111,7 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
 
       let(:grouping_workflow_executor) { described_class.new(grouping_workflow, grouping_data_source) }
 
-      it 'correctly processes rows, creating appropriate sequential and parallel batches' do
+      it 'correctly processes rows, creating parallel batches sorted by group key' do
         initial_workflow_execution_count = WorkflowExecution.count
         initial_batch_count = Batch.count
 
@@ -128,7 +128,7 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
         execution_batches = workflow_execution_result.batches.includes(:rows)
         expect(execution_batches.count).to eq(3)
 
-        # --- Verify Batch for Category A (Sequential) ---
+        # --- Verify Batch for Category A (Parallel) ---
         rows_cat_a_initial = grouping_data_source.rows.select { |r| r.data['category'] == 'A' }
         expect(rows_cat_a_initial.count).to eq(2)
         # All rows from the same group should be in the same batch
@@ -136,7 +136,7 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
         expect(batch_ids_cat_a.count).to eq(1)
         batch_a = Batch.find(batch_ids_cat_a.first)
 
-        expect(batch_a.processing_mode).to eq('sequential')
+        expect(batch_a.processing_mode).to eq('parallel')
         expect(batch_a.rows.count).to eq(2)
         batch_a.rows.sort_by { |row| row.data['id_input'].to_i }.each do |row|
           row_exec = row.row_executions.first
@@ -150,14 +150,14 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
           end
         end
 
-        # --- Verify Batch for Category B (Sequential) ---
+        # --- Verify Batch for Category B (Parallel) ---
         rows_cat_b_initial = grouping_data_source.rows.select { |r| r.data['category'] == 'B' }
         expect(rows_cat_b_initial.count).to eq(1)
         batch_ids_cat_b = rows_cat_b_initial.map { |r| r.reload.batch_id }.uniq
         expect(batch_ids_cat_b.count).to eq(1)
         batch_b = Batch.find(batch_ids_cat_b.first)
 
-        expect(batch_b.processing_mode).to eq('sequential')
+        expect(batch_b.processing_mode).to eq('parallel')
         expect(batch_b.rows.count).to eq(1)
         row_b = batch_b.rows.first
         success_data_b = row_b.row_executions.first.merged_success_data
