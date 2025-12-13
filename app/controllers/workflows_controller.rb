@@ -4,6 +4,9 @@
 class WorkflowsController < ApiController
   include Serializable
   def create
+    connection_error = validate_connection
+    return render json: { error: connection_error }, status: :unprocessable_content if connection_error
+
     workflow = Workflow.new(workflow_params_with_connection)
 
     if workflow.save
@@ -45,6 +48,15 @@ class WorkflowsController < ApiController
     connection = Connection.find_by(handle: params[:connection_handle])
     permitted[:connection_id] = connection&.id
     permitted
+  end
+
+  def validate_connection
+    if params[:connection_id].present?
+      return "Connection not found" unless Connection.exists?(params[:connection_id])
+    elsif params[:connection_handle].present?
+      return "Connection not found" unless Connection.exists?(handle: params[:connection_handle])
+    end
+    nil
   end
 
   def serialization_options

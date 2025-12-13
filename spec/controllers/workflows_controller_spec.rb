@@ -231,12 +231,20 @@ RSpec.describe WorkflowsController, type: :controller do
       expect(workflow.connection_id).to eq(connection.id)
     end
 
-    it 'creates workflow with nil connection when handle not found' do
+    it 'returns error when connection_handle not found' do
       post :create, params: { name: 'Workflow', connection_handle: 'nonexistent' }
 
-      expect(response).to have_http_status(:created)
-      workflow = Workflow.last
-      expect(workflow.connection_id).to be_nil
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to eq('Connection not found')
+    end
+
+    it 'returns error when connection_id not found' do
+      post :create, params: { name: 'Workflow', connection_id: 99999 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      json = JSON.parse(response.body)
+      expect(json['error']).to eq('Connection not found')
     end
   end
 end

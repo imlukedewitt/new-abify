@@ -11,11 +11,11 @@ post {
 }
 
 body:form-urlencoded {
-  file:
+  file: 
 }
 
 body:multipart-form {
-  source: @file(/Users/luke/Documents/sandbox/new-abify/data/testcx-10.csv)
+  source: @file(/Users/luke/Documents/sandbox/new-abify/data/test_customers.csv)
 }
 
 body:file {
@@ -24,4 +24,5 @@ body:file {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
