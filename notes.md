@@ -1,3 +1,97 @@
+# Branch Changes Summary (User Auth & Resource Scoping)
+
+This section summarizes the changes made in this branch for reference when re-implementing.
+
+## Overview
+Added user authentication and scoped all resources (connections, workflows, data sources) to the authenticated user.
+
+## Dependencies Added
+- `bcrypt` gem for `has_secure_password`
+
+## Database/Migration Changes
+
+### `users` table
+- Added `role` column (string, default: 'admin', not null)
+- Added `api_key` column (string, unique index)
+- Added `password_digest` column (string) for `has_secure_password`
+- Added unique index on `email`
+
+### `workflows` table
+- Added `user_id` column (references users, not null, foreign key)
+- Changed `handle` unique index to be scoped: `[:user_id, :handle]`
+
+### `data_sources` table
+- Added `user_id` column (references users, not null, foreign key)
+
+## Model Changes
+
+### `User` model
+- Added `has_secure_password`
+- Added `ROLES = %w[owner admin member]`
+- Added associations: `has_many :workflows`, `has_many :data_sources`
+- Added validations: email presence/uniqueness, role presence/inclusion, api_key uniqueness
+- Added `before_create :generate_api_key` callback
+- Added role helper methods: `owner?`, `admin?`, `member?`, `can_manage_users?`, `can_crud_resources?`
+- Added `regenerate_api_key!` method
+
+### `Workflow` model
+- Added `belongs_to :user`
+- Changed handle uniqueness validation to `scope: :user_id`
+
+### `DataSource` model
+- Added `belongs_to :user`
+
+## Controller Changes
+
+### `ApiController` (base class)
+- Added `before_action :authenticate!`
+- Added `current_user` method
+- Added `authenticate_from_token` (Bearer token in Authorization header)
+- Added `authenticate_from_session` (session-based auth)
+
+### `ConnectionsController`
+- Changed to scope all queries to `current_user.connections`
+- Removed `user_id` from permitted params (uses `current_user` instead)
+- Removed manual `rescue_from` blocks (handled by base `ApiController`)
+
+### `WorkflowsController`
+- Changed to scope all queries to `current_user.workflows`
+- Added `find_workflow!` helper method
+- Connection lookups now scoped to `current_user.connections`
+
+### `DataSourcesController`
+- Changed to scope all queries to `current_user.data_sources`
+- Builder now receives `user: current_user`
+
+### `StepsController`
+- Workflow lookup scoped to `current_user.workflows`
+- Connection lookups scoped to `current_user.connections`
+
+### `WorkflowExecutionsController`
+- Added `find_workflow_by_id_or_handle` helper scoped to `current_user`
+- Data source lookup scoped to `current_user.data_sources`
+
+## Service Changes
+
+### `DataSources::Builder`
+- Now accepts `user:` parameter
+- Passes user to data source on creation
+
+## Test Changes
+- Added `spec/support/authentication_helper.rb` with `authenticate_user` and `authenticated_headers` helpers
+- All controller/request specs updated to authenticate before requests
+- Added tests for:
+  - Resource scoping (can't access other user's resources)
+  - Returns 404 (not 403) for other user's resources
+  - Authentication required (401 without auth)
+  - Handle uniqueness scoped to user
+
+## Factory Changes
+- User factory needs `password` attribute
+- User factory has `:owner` and `:member` traits
+
+---
+
 # Sooner
 - [X] we need better logging
   - update 2025-09-01: good enough for now, can add per-workflow file logging later
