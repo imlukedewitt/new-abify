@@ -4,6 +4,8 @@
 # Base controller for API endpoints
 # Provides common functionality for all API controllers including CSRF protection handling
 class ApiController < ApplicationController
+  include Authentication
+
   # Skip CSRF protection for API requests since we're typically using token-based authentication
   skip_before_action :verify_authenticity_token
 
