@@ -20,6 +20,10 @@ module Authentication
     render_unauthorized unless Current.user.present?
   end
 
+  def require_admin
+    render_unauthorized unless Current.user.admin?
+  end
+
   def render_unauthorized
     render json: { error: 'Unauthorized' }, status: :unauthorized
   end
