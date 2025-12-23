@@ -11,6 +11,7 @@ RSpec.describe User::Role, type: :model do
       expect(user.admin?).to be true
       expect(user.owner?).to be false
       expect(user.member?).to be false
+      expect(user.role).to eq('admin')
     end
   end
 end
