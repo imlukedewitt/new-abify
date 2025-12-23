@@ -2,7 +2,7 @@
 
 ##
 # WorkflowExecutionsController is responsible for creating workflow executions.
-class WorkflowExecutionsController < ApiController
+class WorkflowExecutionsController < ApplicationController
   def create
     workflow = find_workflow
     return unless workflow
@@ -21,7 +21,7 @@ class WorkflowExecutionsController < ApiController
     workflow = Workflow.find_by_id_or_handle(identifier)
     return workflow if workflow
 
-    render json: { error: "Workflow not found" }, status: :unprocessable_content
+    render json: { error: 'Workflow not found' }, status: :unprocessable_content
     nil
   end
 
@@ -29,7 +29,7 @@ class WorkflowExecutionsController < ApiController
     data_source = DataSource.find_by(id: params[:data_source_id])
     return data_source if data_source
 
-    render json: { error: "Data source not found" }, status: :unprocessable_content
+    render json: { error: 'Data source not found' }, status: :unprocessable_content
     nil
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ## WorkflowsController
-class WorkflowsController < ApiController
+class WorkflowsController < ApplicationController
   include Serializable
   def create
     connection_error = validate_connection
@@ -52,9 +52,9 @@ class WorkflowsController < ApiController
 
   def validate_connection
     if params[:connection_id].present?
-      return "Connection not found" unless Connection.exists?(params[:connection_id])
+      return 'Connection not found' unless Connection.exists?(params[:connection_id])
     elsif params[:connection_handle].present?
-      return "Connection not found" unless Connection.exists?(handle: params[:connection_handle])
+      return 'Connection not found' unless Connection.exists?(handle: params[:connection_handle])
     end
     nil
   end

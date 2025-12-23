@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ## StepsController
-class StepsController < ApiController
+class StepsController < ApplicationController
   def create
     workflow = Workflow.find(params[:workflow_id])
     connection_error = validate_connection
@@ -38,9 +38,9 @@ class StepsController < ApiController
 
   def validate_connection
     if params.dig(:step, :connection_id).present?
-      return "Connection not found" unless Connection.exists?(params.dig(:step, :connection_id))
+      return 'Connection not found' unless Connection.exists?(params.dig(:step, :connection_id))
     elsif params.dig(:step, :connection_handle).present?
-      return "Connection not found" unless Connection.exists?(handle: params.dig(:step, :connection_handle))
+      return 'Connection not found' unless Connection.exists?(handle: params.dig(:step, :connection_handle))
     end
     nil
   end

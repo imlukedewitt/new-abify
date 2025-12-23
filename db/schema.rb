@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_13_202441) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -106,8 +106,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_13_202441) do
     t.string "email"
     t.string "first_name"
     t.string "last_name"
+    t.string "role", default: "member"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "api_token"
   end
 
   create_table "workflow_executions", force: :cascade do |t|

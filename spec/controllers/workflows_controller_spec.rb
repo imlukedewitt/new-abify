@@ -168,21 +168,21 @@ RSpec.describe WorkflowsController, type: :controller do
       end
     end
 
-    context "with an invalid workflow id" do
+    context 'with an invalid workflow id' do
       let(:id) { 1337 }
       it 'returns an error' do
         expect(response.status).to eq(400)
         json = JSON.parse(response.body)
-        expect(json["errors"]).to include("Couldn't find Workflow")
+        expect(json['errors']).to include("Couldn't find Workflow")
       end
     end
 
-    context "with an invalid workflow handle" do
+    context 'with an invalid workflow handle' do
       let(:id) { 'nonexistent-handle' }
       it 'returns an error' do
         expect(response.status).to eq(400)
         json = JSON.parse(response.body)
-        expect(json["errors"]).to include("Couldn't find Workflow")
+        expect(json['errors']).to include("Couldn't find Workflow")
       end
     end
   end
@@ -240,7 +240,7 @@ RSpec.describe WorkflowsController, type: :controller do
     end
 
     it 'returns error when connection_id not found' do
-      post :create, params: { name: 'Workflow', connection_id: 99999 }
+      post :create, params: { name: 'Workflow', connection_id: 99_999 }
 
       expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
