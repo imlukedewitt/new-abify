@@ -9,7 +9,6 @@ class ApplicationController < ActionController::Base
   # For example Fizzy uses a custom class instead RequestForgeryProtection
   protect_from_forgery with: :null_session
 
-  # Rescue from common exceptions with format-aware responses
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
   rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
   rescue_from ActionController::ParameterMissing, with: :bad_request
