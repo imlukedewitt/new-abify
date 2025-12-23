@@ -6,6 +6,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   # TODO: look into what this is and potentially remove it
+  # For example Fizzy uses a custom class instead RequestForgeryProtection
   protect_from_forgery with: :null_session
 
   # Rescue from common exceptions with format-aware responses
