@@ -13,5 +13,12 @@ RSpec.describe User::Role, type: :model do
       expect(user.member?).to be false
       expect(user.role).to eq('admin')
     end
+
+    it 'counts owners as admins' do
+      user = User.new(role: :owner)
+      expect(user.owner?).to be true
+      expect(user.admin?).to be true
+      expect(user.member?).to be false
+    end
   end
 end
