@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  include Role
+
   after_initialize :set_api_token, if: :new_record?
 
   has_many :connections, dependent: :destroy
