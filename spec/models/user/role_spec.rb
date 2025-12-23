@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe User::Role, type: :model do
   describe 'role enum' do
     it 'defines the correct roles' do
-      expect(User.roles).to eq({ 'owner' => 'owner', 'admin' => 'admin', 'member' => 'member' })
+      expect(User.roles).to eq({ 'owner' => 'owner', 'admin' => 'admin', 'member' => 'member', 'system' => 'system' })
     end
 
     it 'allows setting and querying roles' do
