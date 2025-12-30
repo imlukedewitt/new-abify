@@ -14,6 +14,11 @@ gem 'puma', '>= 5.0'
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[windows jruby]
 
+# frontend
+gem 'importmap-rails'
+gem 'stimulus-rails'
+gem 'turbo-rails'
+
 # Non default gems
 gem 'liquid'
 gem 'typhoeus'
@@ -23,7 +28,7 @@ group :development, :test do
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
   gem 'factory_bot_rails'
   gem 'pry'
-  gem "pry-byebug"
+  gem 'pry-byebug'
   gem 'pry-rails'
   gem 'rspec-rails', '~> 6.1.0'
   gem 'rubocop', require: false
@@ -31,6 +36,6 @@ group :development, :test do
   gem 'webmock'
 end
 
-gem "csv"
+gem 'csv'
 
-gem "rspec-core", "~> 3.13"
+gem 'rspec-core', '~> 3.13'
