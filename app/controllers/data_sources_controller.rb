@@ -10,8 +10,11 @@ class DataSourcesController < ApplicationController
   end
 
   def index
-    data_sources = DataSource.find_each.to_a
-    render json: { data_sources: data_sources }
+    @data_sources = DataSource.all
+    respond_to do |format|
+      format.json { render json: { data_sources: @data_sources } }
+      format.html { render :index  }
+    end
   end
 
   def show
