@@ -6,7 +6,7 @@ meta {
 
 get {
   url: {{base}}/data_sources
-  body: multipartForm
+  body: json
   auth: inherit
 }
 
@@ -20,4 +20,5 @@ body:file {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
