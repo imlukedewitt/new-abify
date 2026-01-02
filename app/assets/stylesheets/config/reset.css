@@ -1,4 +1,20 @@
-*,
+h1 {
+    font-size: var(--font-size-xxxl);
+}
+
+h2 {
+    font-size: var(--font-size-xxl);
+}
+
+h3 {
+    font-size: var(--font-size-xl);
+}
+
+h4 {
+    font-size: var(--font-size-l);
+}
+
+/**,
 *::before,
 *::after {
     box-sizing: border-box;
@@ -34,19 +50,4 @@ h6 {
     color: var(--color-text-header);
     line-height: var(--line-height-headers);
 }
-
-h1 {
-    font-size: var(--font-size-xxxl);
-}
-
-h2 {
-    font-size: var(--font-size-xxl);
-}
-
-h3 {
-    font-size: var(--font-size-xl);
-}
-
-h4 {
-    font-size: var(--font-size-l);
-}
+*/
