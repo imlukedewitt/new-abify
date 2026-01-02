@@ -111,6 +111,8 @@ GEM
     ffi (1.17.2-x86_64-darwin)
     ffi (1.17.2-x86_64-linux-gnu)
     ffi (1.17.2-x86_64-linux-musl)
+    foreman (0.90.0)
+      thor (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
     hashdiff (1.2.0)
@@ -288,6 +290,16 @@ GEM
       railties (>= 6.0.0)
     stringio (3.1.7)
     strscan (3.1.5)
+    tailwindcss-rails (4.4.0)
+      railties (>= 7.0.0)
+      tailwindcss-ruby (~> 4.0)
+    tailwindcss-ruby (4.1.18)
+    tailwindcss-ruby (4.1.18-aarch64-linux-gnu)
+    tailwindcss-ruby (4.1.18-aarch64-linux-musl)
+    tailwindcss-ruby (4.1.18-arm64-darwin)
+    tailwindcss-ruby (4.1.18-x86_64-darwin)
+    tailwindcss-ruby (4.1.18-x86_64-linux-gnu)
+    tailwindcss-ruby (4.1.18-x86_64-linux-musl)
     thor (1.4.0)
     timeout (0.4.3)
     turbo-rails (2.0.20)
@@ -328,6 +340,7 @@ DEPENDENCIES
   csv
   debug
   factory_bot_rails
+  foreman
   importmap-rails
   liquid
   propshaft
@@ -341,6 +354,7 @@ DEPENDENCIES
   rubocop
   sqlite3 (>= 2.1)
   stimulus-rails
+  tailwindcss-rails (~> 4.4)
   turbo-rails
   typhoeus
   tzinfo-data

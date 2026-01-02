@@ -27,6 +27,7 @@ group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
   gem 'factory_bot_rails'
+  gem 'foreman'
   gem 'pry'
   gem 'pry-byebug'
   gem 'pry-rails'
@@ -39,3 +40,5 @@ end
 gem 'csv'
 
 gem 'rspec-core', '~> 3.13'
+
+gem 'tailwindcss-rails', '~> 4.4'

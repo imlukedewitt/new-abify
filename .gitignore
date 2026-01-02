@@ -40,3 +40,6 @@
 
 # ignore data files i use for testing
 /data/*
+
+/app/assets/builds/*
+!/app/assets/builds/.keep
