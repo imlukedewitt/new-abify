@@ -1,5 +1,5 @@
-<main class="container prose">
-    <h1 class="text-2xl">Data Sources</h1>
+<main class="container">
+    <h1>Data Sources</h1>
     <br>
     <table class="table">
         <thead>
@@ -10,6 +10,6 @@
                 <th>Created At</th>
             </tr>
         </thead>
-        <%= render @data_sources %>
+        <%= render partial: 'data_source', collection: @data_sources %>
     </table>
 </main>

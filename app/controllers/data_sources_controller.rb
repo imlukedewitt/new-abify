@@ -18,7 +18,13 @@ class DataSourcesController < ApplicationController
   end
 
   def show
-    data_source = DataSource.find(params[:id])
-    render json: { data_source: data_source }
+    @data_source = DataSource.find(params[:id])
+    respond_to do |format|
+      format.json { render json: { data_source: @data_source } }
+      format.html do
+        @workflows = Workflow.all
+        render :show
+      end
+    end
   end
 end

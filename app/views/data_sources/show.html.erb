@@ -1,0 +1,12 @@
+<div class="container">
+    <%= link_to "← Back to Data Sources", data_sources_path, class: "link-primary text-sm" %>
+    <h1><%= @data_source.name %> </h1>
+    <br>
+    <h2>Run Workflow</h2>
+    <select class="select">
+        <option value="" disabled selected>Select a workflow</option>
+        <% @workflows.each do |workflow| %>
+          <option value="<%= workflow.id %>"><%= workflow.name %></option>
+        <% end %>
+    </select>
+</div>
