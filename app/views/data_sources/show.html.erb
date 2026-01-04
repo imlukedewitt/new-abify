@@ -3,7 +3,7 @@
         <h2>Run Workflow</h2>
         <%= form_with url: workflow_executions_path, method: :post do |form| %>
             <%= form.hidden_field :data_source_id, value: @data_source.id %>
-            <%= form.select :workflow_id, 
+            <%= form.select :workflow_id,
                 options_from_collection_for_select(@workflows, :id, :name),
                 { prompt: "Select a workflow" },
                 { class: "select" } %>
@@ -14,18 +14,17 @@
         <%= link_to "← Back to Data Sources", data_sources_path, class: "link-primary text-sm" %>
         <h1><%= @data_source.name %> </h1>
         <% rows = @data_source.rows.limit(50) %>
-        <% keys = rows.map { |row| row.data.keys || [] }.flatten.uniq.sort %>
+        <% keys = rows.map { |row| row.data.keys || [] }.flatten.uniq %>
 
         <% if keys.any? %>
             <p class="text-sm text-gray-500 mb-4">Showing first 50 of <%= @data_source.rows.count %> total rows</p>
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Source Index</th>
+                        <th></th>
                         <% keys.each do |key| %>
                             <th><%= key %></th>
                         <% end %>
-                        <th>Created At</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,11 +35,10 @@
                     <% else %>
                         <% rows.each do |row| %>
                             <tr>
-                                <td><%= row.source_index %></td>
+                                <th><%= row.source_index %></th>
                                 <% keys.each do |key| %>
                                     <td><%= row.data[key] %></td>
                                 <% end %>
-                                <td><%= row.created_at.strftime("%B %d, %Y") %></td>
                             </tr>
                         <% end %>
                     <% end %>
