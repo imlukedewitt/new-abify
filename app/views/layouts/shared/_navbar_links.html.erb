@@ -1,0 +1,15 @@
+<% active_item = active_menu_item %>
+
+<div class="navbar-center">
+    <ul class="menu menu-horizontal">
+        <li>
+            <%= link_to "Data Sources", data_sources_path, class: active_item == :data_sources ? "text-info" : "" %>
+        </li>
+        <li>
+            <%= link_to "Workflows", data_sources_path, class: active_item == :workflows ? "text-info" : "" %>
+        </li>
+        <li>
+            <%= link_to "Logs", data_sources_path, class: active_item == :logs ? "text-info" : "" %>
+        </li>
+    </ul>
+</div>
