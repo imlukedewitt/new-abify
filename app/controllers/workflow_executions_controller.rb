@@ -3,6 +3,22 @@
 ##
 # WorkflowExecutionsController is responsible for creating workflow executions.
 class WorkflowExecutionsController < ApplicationController
+  def index
+    @workflow_executions = WorkflowExecution.all
+    respond_to do |format|
+      format.json { render json: { workflow_executions: @workflow_executions } }
+      format.html { render :index }
+    end
+  end
+
+  def show
+    @workflow_execution = WorkflowExecution.find(params[:id])
+    respond_to do |format|
+      format.json { render json: { workflow_execution: @workflow_execution } }
+      format.html { render :show }
+    end
+  end
+
   def create
     workflow = find_workflow
     return unless workflow
@@ -43,7 +59,7 @@ class WorkflowExecutionsController < ApplicationController
     workflow_execution = WorkflowExecutor.new(workflow, data_source).call
     respond_to do |format|
       format.json { render json: { workflow_execution_id: workflow_execution.id }, status: :created }
-      format.html { redirect_to data_source_path(data_source), notice: "Workflow started" }
+      format.html { redirect_to data_source_path(data_source), notice: 'Workflow started' }
     end
   rescue StandardError => e
     respond_to do |format|
