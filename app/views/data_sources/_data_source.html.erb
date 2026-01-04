@@ -1,7 +1,7 @@
 <div class="data_source">
     <tr>
         <th><%= data_source.id %></th>
-        <td><%= link_to data_source.name, data_source_path(data_source), class: "link-primary" %></td>
+        <td><%= link_to data_source.name, data_source_path(data_source), class: "link link-accent" %></td>
         <td><%= data_source.type %></td>
         <td><%= data_source.created_at.strftime("%B %d, %Y") %></td>
     </tr>

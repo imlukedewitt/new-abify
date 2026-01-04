@@ -1,6 +1,6 @@
-<main class="container">
+<div class="container p-4">
     <h1>Data Sources</h1>
-    <br>
+    <%= link_to "New Data Source", new_data_source_path, class: "btn btn-primary btn-xs" %>
     <table class="table">
         <thead>
             <tr>
@@ -12,4 +12,4 @@
         </thead>
         <%= render partial: 'data_source', collection: @data_sources %>
     </table>
-</main>
+</div>
