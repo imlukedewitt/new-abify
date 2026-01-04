@@ -1,0 +1,17 @@
+body {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    width: 100dvw;
+}
+
+:where(#header) {
+    position: sticky;
+    z-index: var(--z-nav);
+    top: 0;
+}
+
+:is(#header, #footer) {
+    @media print {
+        display: none;
+    }
+}
