@@ -10,7 +10,7 @@ module DataSources
     def self.call(source:, type: 'csv')
       unless source.is_a?(ActionDispatch::Http::UploadedFile) || source.is_a?(Rack::Test::UploadedFile)
         raise InvalidSourceError,
-              "Source must be a file upload"
+              'Source must be a file upload'
       end
 
       validate_file_type!(source, type)
@@ -29,9 +29,9 @@ module DataSources
 
       case type.downcase
       when 'csv'
-        raise InvalidSourceError, "Unsupported file type" unless valid_csv_file?(source)
+        raise InvalidSourceError, 'Unsupported file type' unless valid_csv_file?(source)
       when 'json'
-        raise InvalidSourceError, "Unsupported file type" unless valid_json_file?(source)
+        raise InvalidSourceError, 'Unsupported file type' unless valid_json_file?(source)
       else
         raise InvalidSourceError, "Unsupported data source type: #{type}"
       end
