@@ -1,18 +1,51 @@
 <div class="grid h-[calc(100dvh-var(--header-height))] grid-cols-[var(--sidebar-width)_1fr]">
     <div class="bg-base-300 p-4">
         <h2>Run Workflow</h2>
-        <select class="select">
-            <option value="" disabled selected>Select a workflow</option>
-            <% @workflows.each do |workflow| %>
-              <option value="<%= workflow.id %>"><%= workflow.name %></option>
-            <% end %>
-        </select>
+        <%= form_with url: workflow_executions_path, method: :post do |form| %>
+            <%= form.hidden_field :data_source_id, value: @data_source.id %>
+            <%= form.select :workflow_id, 
+                options_from_collection_for_select(@workflows, :id, :name),
+                { prompt: "Select a workflow" },
+                { class: "select" } %>
+            <%= form.submit "Run", class: "btn btn-primary mt-2" %>
+        <% end %>
     </div>
     <div class="bg-base p-4 overflow-auto">
         <%= link_to "← Back to Data Sources", data_sources_path, class: "link-primary text-sm" %>
         <h1><%= @data_source.name %> </h1>
-        <%= @data_source.rows.each do |row| %>
+        <% rows = @data_source.rows.limit(50) %>
+        <% keys = rows.map { |row| row.data.keys || [] }.flatten.uniq.sort %>
 
+        <% if keys.any? %>
+            <p class="text-sm text-gray-500 mb-4">Showing first 50 of <%= @data_source.rows.count %> total rows</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Source Index</th>
+                        <% keys.each do |key| %>
+                            <th><%= key %></th>
+                        <% end %>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if rows.empty? %>
+                        <tr>
+                            <td colspan="<%= keys.size + 2 %>" class="text-center">No rows found</td>
+                        </tr>
+                    <% else %>
+                        <% rows.each do |row| %>
+                            <tr>
+                                <td><%= row.source_index %></td>
+                                <% keys.each do |key| %>
+                                    <td><%= row.data[key] %></td>
+                                <% end %>
+                                <td><%= row.created_at.strftime("%B %d, %Y") %></td>
+                            </tr>
+                        <% end %>
+                    <% end %>
+                </tbody>
+            </table>
         <% end %>
     </div>
 </div>
