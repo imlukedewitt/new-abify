@@ -1,0 +1,22 @@
+<div class="p-4 min-w-3/5 place-self-center">
+  <div class="flex items-center gap-3 mb-4">
+    <h1 class="text-2xl font-bold">Workflow Execution <%= @workflow_execution.id %></h1>
+  </div>
+
+  <div class="flex items-center gap-4 mb-6 text-sm text-neutral-content/70">
+    <span>Workflow: <strong class="text-base-content"><%= @workflow_execution.workflow.name %></strong></span>
+    <span>Rows: <%= @workflow_execution.row_executions.count %></span>
+    <span>Complete: <%= @workflow_execution.row_executions.where(status: 'complete').count %></span>
+    <span>Failed: <%= @workflow_execution.row_executions.where(status: 'failed').count %></span>
+    <% if @workflow_execution.started_at.present? %>
+      <span>Started: <%= @workflow_execution.started_at.strftime('%Y-%m-%d %H:%M:%S') %></span>
+    <% end %>
+    <% if @workflow_execution.completed_at.present? %>
+      <span>Completed: <%= @workflow_execution.completed_at.strftime('%Y-%m-%d %H:%M:%S') %></span>
+    <% end %>
+  </div>
+
+  <div class="rounded-box shadow-md bg-base-200 divide-y divide-base-300">
+    <%= render partial: 'row_execution', collection: @workflow_execution.row_executions.includes(:step_executions) %>
+  </div>
+</div>
