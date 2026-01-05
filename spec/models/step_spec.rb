@@ -40,6 +40,37 @@ RSpec.describe Step, type: :model do
     end
   end
 
+  describe '#set_default_order' do
+    let(:workflow) { create(:workflow) }
+    let(:step_config) do
+      { 'liquid_templates' => { 'name' => 'test', 'url' => 'http://example.com' } }
+    end
+
+    it 'auto-increments order for steps created individually' do
+      step1 = create(:step, workflow: workflow, order: nil)
+      step2 = create(:step, workflow: workflow, order: nil)
+      step3 = create(:step, workflow: workflow, order: nil)
+
+      expect(step1.order).to eq(1)
+      expect(step2.order).to eq(2)
+      expect(step3.order).to eq(3)
+    end
+
+    it 'auto-increments order for steps created via nested attributes' do
+      workflow = Workflow.create!(
+        name: 'Test Workflow',
+        steps_attributes: [
+          { name: 'Step A', config: step_config },
+          { name: 'Step B', config: step_config },
+          { name: 'Step C', config: step_config }
+        ]
+      )
+
+      orders = workflow.steps.order(:order).pluck(:name, :order)
+      expect(orders).to eq([['Step A', 1], ['Step B', 2], ['Step C', 3]])
+    end
+  end
+
   describe '#config' do
     it 'validates config is present and is a hash' do
       step = build(:step, config: 'not a hash')
