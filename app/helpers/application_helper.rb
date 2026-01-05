@@ -7,14 +7,14 @@ module ApplicationHelper
     }.fetch(controller_name.to_sym, nil)
   end
 
-  def status_badge_class(status)
+  def execution_status_color(status)
     case status
-    when 'pending'             then 'badge-neutral'
-    when 'processing'          then 'badge-warning'
-    when 'success', 'complete' then 'badge-success'
-    when 'failed'              then 'badge-error'
-    when 'skipped'             then 'badge-info'
-    else 'badge-neutral'
+    when 'pending'             then 'neutral'
+    when 'processing'          then 'warning'
+    when 'success', 'complete' then 'success'
+    when 'failed'              then 'error'
+    when 'skipped'             then 'info'
+    else 'neutral'
     end
   end
 end
