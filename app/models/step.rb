@@ -41,8 +41,9 @@ class Step < ApplicationRecord
   def set_default_order
     return if order.present?
 
-    max_order = workflow.steps.maximum(:order) || 0
-    self.order = max_order + 1
+    persisted_max = workflow.steps.maximum(:order) || 0
+    unsaved_max = workflow.steps.reject(&:persisted?).reject { |s| s == self }.map(&:order).compact.max || 0
+    self.order = [persisted_max, unsaved_max].max + 1
   end
 
   def validate_config
