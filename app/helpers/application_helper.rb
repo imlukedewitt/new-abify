@@ -8,13 +8,13 @@ module ApplicationHelper
   end
 
   def execution_status_color(status)
-    case status
-    when 'pending'             then 'neutral'
-    when 'processing'          then 'warning'
-    when 'success', 'complete' then 'success'
-    when 'failed'              then 'error'
-    when 'skipped'             then 'info'
-    else 'neutral'
-    end
+    {
+      'pending' => 'neutral',
+      'processing' => 'warning',
+      'success' => 'success',
+      'complete' => 'success',
+      'failed' => 'error',
+      'skipped' => 'info'
+    }.fetch(status, 'neutral')
   end
 end
