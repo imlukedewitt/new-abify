@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "./safelist.rb";
 @source not "./daisyui{,*}.mjs";
 @plugin "./daisyui.mjs" {
     themes:
