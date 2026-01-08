@@ -9,6 +9,14 @@
         <td>
             <%= link_to workflow_execution.data_source.name, data_source_path(workflow_execution.data_source), class: "link" %>
         </td>
+        <td>
+            <div class="text opacity-70"><%= workflow_execution.rows.count %></div>
+        </td>
+        <td>
+            <div class="text opacity-70">
+                <%= workflow_execution.workflow.connection.name %>
+            </div>
+        </td>
         <td> <div class="text opacity-70"><%= workflow_execution.started_at&.iso8601 %></div> </td>
         <td> <div class="text opacity-70"><%= workflow_execution.completed_at&.iso8601 %></div> </td>
         <td>

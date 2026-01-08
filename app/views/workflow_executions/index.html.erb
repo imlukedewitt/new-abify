@@ -6,11 +6,13 @@
                 <th>ID</th>
                 <th>Workflow</th>
                 <th>Data Source</th>
+                <th>Rows</th>
+                <th>Connection</th>
                 <th>Started At</th>
                 <th>Completed At</th>
                 <th>Status</th>
             </tr>
         </thead>
-        <%= render partial: 'workflow_execution', collection: @workflow_executions %>
+        <%= render partial: 'workflow_execution', collection: @workflow_executions.order(id: :desc) %>
     </table>
 </div>
