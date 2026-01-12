@@ -1,15 +1,17 @@
-<div class="container p-4">
-    <h1>Data Sources</h1>
-    <%= link_to "New Data Source", new_data_source_path, class: "btn btn-primary btn-xs" %>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Created At</th>
-            </tr>
-        </thead>
-        <%= render partial: 'data_source', collection: @data_sources %>
-    </table>
+<div class="p-4">
+  <h1>Data Sources</h1>
+  <%= link_to "New Data Source", new_data_source_path, class: "btn btn-primary btn-xs" %>
+  <table class="table table-zebra">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Created At</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= render partial: 'data_source', collection: @data_sources.order(id: :desc) %>
+    </tbody>
+  </table>
 </div>

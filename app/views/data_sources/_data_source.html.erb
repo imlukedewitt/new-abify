@@ -1,8 +1,6 @@
-<div class="data_source">
-    <tr>
-        <th><%= data_source.id %></th>
-        <td><%= link_to data_source.name, data_source_path(data_source), class: "link" %></td>
-        <td><%= data_source.type %></td>
-        <td><%= data_source.created_at.strftime("%B %d, %Y") %></td>
-    </tr>
-</div>
+<tr>
+  <th><%= data_source.id %></th>
+  <td><%= link_to data_source.name, data_source_path(data_source), class: "link" %></td>
+  <td class="opacity-60"><%= data_source.type.to_s.demodulize %></td>
+  <td class="opacity-60"><%= data_source.created_at.strftime("%B %d, %Y") %></td>
+</tr>
