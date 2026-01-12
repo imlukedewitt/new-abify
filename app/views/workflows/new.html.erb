@@ -1,0 +1,5 @@
+<div class="container p-4 max-w-2xl">
+  <%= link_to "← Back to Workflows", workflows_path, class: "link-primary text-sm" %>
+  <h1 class="mt-2">New Workflow</h1>
+  <%= render "form", workflow: @workflow, connections: @connections %>
+</div>

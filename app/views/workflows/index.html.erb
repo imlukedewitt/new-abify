@@ -1,0 +1,36 @@
+<div class="container p-4">
+  <h1>Workflows</h1>
+  <%= link_to "New Workflow", new_workflow_path, class: "btn btn-primary btn-xs" %>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Handle</th>
+        <th>Steps</th>
+        <th>Connection</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @workflows.each do |workflow| %>
+        <tr>
+          <th><%= workflow.id %></th>
+          <td>
+            <%= link_to workflow.name, workflow_path(workflow), class: "link" %>
+          </td>
+          <td class="opacity-70"><%= workflow.handle %></td>
+          <td><%= workflow.steps.size %></td>
+          <td class="opacity-70"><%= workflow.connection&.name || "-" %></td>
+          <td>
+            <%= link_to "Edit", edit_workflow_path(workflow), class: "btn btn-ghost btn-xs" %>
+            <%= button_to "Delete", workflow_path(workflow), method: :delete, 
+                            class: "btn btn-ghost btn-xs text-error",
+                            data: { turbo_confirm: "Are you sure you want to delete this workflow?" } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
