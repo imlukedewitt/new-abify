@@ -1,0 +1,5 @@
+<div class="p-4">
+  <%= link_to "← #{@step.name}", workflow_step_path(@workflow, @step), class: "link link-hover text-sm opacity-70" %>
+  <h1 class="mt-2 mb-6">Edit Step</h1>
+  <%= render "form", step: @step, workflow: @workflow, connections: @connections %>
+</div>

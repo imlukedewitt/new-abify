@@ -1,0 +1,124 @@
+<%
+  config = step.config || {}
+    liquid_templates = config['liquid_templates'] || {}
+%>
+<%= form_with model: [workflow, step],
+    class: "space-y-6 min-w-[600px] px-4 pt-4 mx-auto grid grid-cols-[1fr_1fr] gap-4",
+    data: { controller: "form" } do |form| %>
+  <% if step.errors.any? %>
+    <div class="alert alert-error">
+      <ul class="list-disc list-inside">
+        <% step.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- request config -->
+  <div class="card bg-base-200">
+    <div class="card-body gap-4">
+      <h3 class="card-title text-base">Request</h3>
+      <div class="form-control">
+        <%= form.label :name, "Step Name", class: "label label-text" %>
+        <%= form.text_field :name, 
+                    class: "input input-bordered input-sm w-full", 
+                    required: true,
+                    placeholder: "e.g. Create Customer" %>
+      </div>
+      <div class="flex gap-3">
+        <div class="form-control w-28">
+          <label class="label label-text">Method</label>
+          <%= select_tag "step[config][liquid_templates][method]",
+                        options_for_select([%w[GET GET], %w[POST POST], %w[PUT PUT], %w[PATCH PATCH], %w[DELETE DELETE]], 
+                            liquid_templates['method'] || 'GET'),
+                        class: "select select-bordered select-sm w-full" %>
+        </div>
+        <div class="form-control flex-1">
+          <label class="label label-text">URL</label>
+          <%= text_field_tag "step[config][liquid_templates][url]",
+                        liquid_templates['url'],
+                        class: "input input-bordered input-sm w-full font-mono text-xs",
+                        placeholder: "{{ base_url }}/customers/{{ row.customer_id }}",
+                        required: true %>
+        </div>
+      </div>
+      <div class="form-control">
+        <label class="label label-text">Request Body <span class="opacity-50">(optional)</span></label>
+        <%= text_area_tag "step[config][liquid_templates][body]",
+                    liquid_templates['body'],
+                    class: "textarea textarea-bordered w-full font-mono text-xs leading-relaxed",
+                    rows: 5,
+                    placeholder: '{"customer": "{{ row.customer_id }}", "amount": {{ row.amount }}}' %>
+      </div>
+    </div>
+  </div>
+
+  <!-- response & connection -->
+  <div class="card bg-base-200">
+    <div class="card-body gap-4">
+      <h3 class="card-title text-base">Response & Connection</h3>
+      <div class="form-control">
+        <label class="label label-text">Success Data <span class="opacity-50">(optional)</span></label>
+        <%= text_area_tag "step[config][liquid_templates][success_data]",
+                    liquid_templates['success_data'].is_a?(Hash) ? JSON.pretty_generate(liquid_templates['success_data']) : liquid_templates['success_data'],
+                    class: "textarea textarea-bordered w-full font-mono text-xs leading-relaxed",
+                    rows: 3,
+                    placeholder: '{"customer_id": "{{ response.customer.id }}"}' %>
+        <label class="label"><span class="label-text-alt opacity-60">Extract data from response. Available to subsequent steps as <code class="text-info">response.*</code></span></label>
+      </div>
+      <div class="flex gap-4 items-end">
+        <div class="form-control flex-1">
+          <label class="label label-text">Connection Override <span class="opacity-50">(optional)</span></label>
+          <%= form.select :connection_id,
+                        options_from_collection_for_select(connections, :id, :name, step.connection_id),
+                        { include_blank: "Use workflow default" },
+                        { class: "select select-bordered select-sm w-full" } %>
+        </div>
+        <label class="label cursor-pointer gap-2 pb-2">
+          <%= check_box_tag "step[config][liquid_templates][required]", 'true',
+                        liquid_templates['required'] == true || liquid_templates['required'] == 'true',
+                        class: "checkbox checkbox-sm" %>
+          <span class="label-text">Required</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- skip condition -->
+  <div class="card bg-base-200 h-full">
+    <div class="card-body gap-4">
+      <h3 class="card-title text-base">Conditional Logic</h3>
+      <div class="form-control">
+        <label class="label label-text">Skip Condition <span class="opacity-50">(optional)</span></label>
+        <%= text_field_tag "step[config][liquid_templates][skip_condition]",
+                    liquid_templates['skip_condition'],
+                    class: "input input-bordered input-sm w-full font-mono text-xs",
+                    placeholder: "{{ row.amount | blank? }}" %>
+        <label class="label"><span class="label-text-alt opacity-60">Liquid expression. Step is skipped if this evaluates to <code class="text-info">true</code></span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- variables reference -->
+  <div class="card bg-base-200 h-full">
+    <div class="card-body gap-2">
+      <h3 class="card-title text-base">Available Variables</h3>
+      <div class="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-sm">
+        <div><code class="text-info">{{ row.* }}</code> <span class="opacity-60">- Current row data</span></div>
+        <div><code class="text-info">{{ base_url }}</code> <span class="opacity-60">- Connection base URL</span></div>
+        <div><code class="text-info">{{ response.* }}</code> <span class="opacity-60">- Previous step responses</span></div>
+        <div><code class="text-info">{{ subdomain }}</code> <span class="opacity-60">- Connection subdomain</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</details>
+
+<!-- actions -->
+<div class="flex gap-2 pt-2 px-8">
+  <%= form.submit class: "btn btn-primary btn-sm" %>
+  <%= link_to "Cancel", step.persisted? ? workflow_step_path(workflow, step) : workflow_path(workflow), class: "btn btn-ghost btn-sm" %>
+</div>
+<% end %>
