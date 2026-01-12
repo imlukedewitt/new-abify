@@ -56,15 +56,16 @@ class WorkflowExecutionsController < ApplicationController
   end
 
   def process_workflow_execution(workflow, data_source)
-    workflow_execution = WorkflowExecutor.new(workflow, data_source).call
-    respond_to do |format|
-      format.json { render json: { workflow_execution_id: workflow_execution.id }, status: :created }
-      format.html { redirect_to data_source_path(data_source), notice: 'Workflow started' }
+    # TODO: Replace with proper background job (Sidekiq/ActiveJob)
+    Thread.new do
+      WorkflowExecutor.new(workflow, data_source).call
+    rescue StandardError => e
+      Rails.logger.error "Workflow execution failed: #{e.message}"
     end
-  rescue StandardError => e
+
     respond_to do |format|
-      format.json { render json: { error: "Processing error: #{e.message}" }, status: :unprocessable_content }
-      format.html { redirect_to data_source_path(data_source), alert: "Error: #{e.message}" }
+      format.json { render json: { message: 'Workflow started' }, status: :accepted }
+      format.html { redirect_to data_source_path(data_source), notice: 'Workflow started' }
     end
   end
 end
