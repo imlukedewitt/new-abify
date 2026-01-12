@@ -3,14 +3,13 @@
   <%= render "layouts/shared/head" %>
   <body>
     <header id="header" class="w-full">
-        <div class="navbar bg-neutral">
-            <div class="navbar-start">
-                <button class="btn btn-ghost btn-sm">ABify</button>
-            </div>
-            <%= render "layouts/shared/navbar_links" %>
+      <div class="navbar bg-neutral">
+        <div class="navbar-start">
+          <button class="btn btn-ghost btn-sm">ABify</button>
         </div>
+        <%= render "layouts/shared/navbar_links" %>
+      </div>
     </header>
-
     <main id="main" class="w-full h-full">
       <%= render "layouts/shared/flash" %>
       <%= yield %>
