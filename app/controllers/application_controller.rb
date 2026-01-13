@@ -2,6 +2,7 @@
 
 class ApplicationController < ActionController::Base
   include Authentication
+  include Respondable
 
   allow_browser versions: :modern
 
@@ -18,7 +19,7 @@ class ApplicationController < ActionController::Base
   def not_found(exception)
     respond_to do |format|
       format.html { render file: Rails.public_path.join('404.html'), status: :not_found, layout: false }
-      format.json { render json: { error: exception.message }, status: :not_found }
+      format.json { render json: { errors: [exception.message] }, status: :not_found }
     end
   end
 

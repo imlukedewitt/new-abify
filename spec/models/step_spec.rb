@@ -95,7 +95,6 @@ RSpec.describe Step, type: :model do
     it 'validates required liquid_template fields' do
       step = build(:step, config: { 'liquid_templates' => {} })
       expect(step).not_to be_valid
-      expect(step.errors[:config]).to include('step config must include name in liquid_templates')
       expect(step.errors[:config]).to include('step config must include url in liquid_templates')
     end
 
@@ -109,6 +108,38 @@ RSpec.describe Step, type: :model do
                    })
       expect(step).not_to be_valid
       expect(step.errors[:config]).to include('unexpected key in step liquid_templates: unsupported_key')
+    end
+  end
+
+  describe 'connection validation' do
+    let(:workflow) { create(:workflow) }
+    let(:user) { create(:user) }
+    let(:valid_config) { { 'liquid_templates' => { 'name' => 'test', 'url' => 'http://example.com' } } }
+
+    context 'with connection_handle' do
+      it 'resolves connection_id from handle' do
+        connection = create(:connection, user: user, handle: 'my-handle')
+        step = build(:step, workflow: workflow, config: valid_config, connection_handle: 'my-handle')
+
+        expect(step).to be_valid
+        expect(step.connection_id).to eq(connection.id)
+      end
+
+      it 'adds error when handle not found' do
+        step = build(:step, workflow: workflow, config: valid_config, connection_handle: 'nonexistent')
+
+        expect(step).not_to be_valid
+        expect(step.errors[:connection]).to include('not found')
+      end
+    end
+
+    context 'with connection_id' do
+      it 'adds error when connection_id not found' do
+        step = build(:step, workflow: workflow, config: valid_config, connection_id: 99_999)
+
+        expect(step).not_to be_valid
+        expect(step.errors[:connection]).to include('not found')
+      end
     end
   end
 
@@ -150,6 +181,58 @@ RSpec.describe Step, type: :model do
 
         expect(step.resolved_auth_config).to eq({})
       end
+    end
+  end
+
+  describe '#normalize_config' do
+    let(:workflow) { create(:workflow) }
+
+    it 'parses success_data from JSON string' do
+      step = build(:step, workflow: workflow, config: {
+                     'liquid_templates' => { 'name' => 'test', 'url' => 'http://example.com', 'success_data' => '{"foo":"bar"}' }
+                   })
+      step.valid?
+      expect(step.config['liquid_templates']['success_data']).to eq({ 'foo' => 'bar' })
+    end
+
+    it 'keeps success_data as string if not valid JSON' do
+      step = build(:step, workflow: workflow, config: {
+                     'liquid_templates' => { 'name' => 'test', 'url' => 'http://example.com', 'success_data' => 'not json' }
+                   })
+      step.valid?
+      expect(step.config['liquid_templates']['success_data']).to eq('not json')
+    end
+
+    it 'coerces required string "true" to boolean' do
+      step = build(:step, workflow: workflow, config: {
+                     'liquid_templates' => { 'name' => 'test', 'url' => 'http://example.com', 'required' => 'true' }
+                   })
+      step.valid?
+      expect(step.config['liquid_templates']['required']).to eq(true)
+    end
+
+    it 'coerces required to false when not "true"' do
+      step = build(:step, workflow: workflow, config: {
+                     'liquid_templates' => { 'name' => 'test', 'url' => 'http://example.com', 'required' => 'false' }
+                   })
+      step.valid?
+      expect(step.config['liquid_templates']['required']).to eq(false)
+    end
+
+    it 'copies name to liquid_templates if blank' do
+      step = build(:step, name: 'My Step', workflow: workflow, config: {
+                     'liquid_templates' => { 'url' => 'http://example.com' }
+                   })
+      step.valid?
+      expect(step.config['liquid_templates']['name']).to eq('My Step')
+    end
+
+    it 'does not overwrite existing liquid_templates name' do
+      step = build(:step, name: 'My Step', workflow: workflow, config: {
+                     'liquid_templates' => { 'name' => 'Existing Name', 'url' => 'http://example.com' }
+                   })
+      step.valid?
+      expect(step.config['liquid_templates']['name']).to eq('Existing Name')
     end
   end
 end

@@ -6,6 +6,8 @@
 class Workflow < ApplicationRecord
   HANDLE_FORMAT = /\A[a-z][a-z0-9_-]*\z/
 
+  attr_accessor :connection_handle
+
   belongs_to :connection, optional: true
   has_many :steps, dependent: :destroy
   has_many :workflow_executions, dependent: :restrict_with_error
@@ -16,7 +18,9 @@ class Workflow < ApplicationRecord
     message: 'must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores'
   }, if: -> { handle.present? }
   validates :handle, uniqueness: true, allow_nil: true
+  before_validation :resolve_connection_from_handle
   validate :validate_config
+  validate :validate_connection_exists
 
   accepts_nested_attributes_for :steps
 
@@ -76,5 +80,19 @@ class Workflow < ApplicationRecord
     return if validator.valid?
 
     validator.errors.each { |error| errors.add(:config, error) }
+  end
+
+  def resolve_connection_from_handle
+    return if connection_handle.blank? || connection_id.present?
+
+    self.connection_id = Connection.find_by(handle: connection_handle)&.id
+  end
+
+  def validate_connection_exists
+    if connection_id.present? && !Connection.exists?(connection_id)
+      errors.add(:connection, 'not found')
+    elsif connection_handle.present? && connection_id.blank?
+      errors.add(:connection, 'not found')
+    end
   end
 end
