@@ -373,7 +373,6 @@ RSpec.describe Workflow, type: :model do
     context 'with both connection_id and connection_handle' do
       it 'prefers connection_id over connection_handle' do
         connection1 = create(:connection, user: user, handle: 'handle-1')
-        connection2 = create(:connection, user: user, handle: 'handle-2')
         workflow = build(:workflow, connection_id: connection1.id, connection_handle: 'handle-2')
 
         expect(workflow).to be_valid
@@ -416,7 +415,7 @@ RSpec.describe Workflow, type: :model do
 
     context 'when identifier does not match' do
       it 'returns nil for non-existent ID' do
-        expect(described_class.find_by_id_or_handle(99999)).to be_nil
+        expect(described_class.find_by_id_or_handle(9999)).to be_nil
       end
 
       it 'returns nil for non-existent handle' do
