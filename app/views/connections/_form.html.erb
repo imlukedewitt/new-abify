@@ -1,0 +1,60 @@
+<%= form_with model: connection, class: "space-y-4 mt-4" do |form| %>
+  <% if connection.errors.any? %>
+    <div class="alert alert-error">
+      <ul>
+        <% connection.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form.hidden_field :user_id, value: connection.user_id || Current.user&.id %>
+
+  <div class="form-control">
+    <%= form.label :name, class: "label" %>
+    <%= form.text_field :name, class: "input input-bordered w-full", required: true %>
+  </div>
+
+  <div class="form-control">
+    <%= form.label :handle, class: "label" %>
+    <%= form.text_field :handle, class: "input input-bordered w-full", required: true,
+            placeholder: "my-connection" %>
+    <label class="label">
+      <span class="label-text-alt opacity-70">Lowercase letters, numbers, hyphens, underscores. Must start with a letter.</span>
+    </label>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div class="form-control">
+      <%= form.label :subdomain, class: "label" %>
+      <%= form.text_field :subdomain, class: "input input-bordered w-full",
+              placeholder: "acme" %>
+    </div>
+    <div class="form-control">
+      <%= form.label :domain, class: "label" %>
+      <%= form.text_field :domain, class: "input input-bordered w-full",
+              placeholder: "example.com" %>
+    </div>
+  </div>
+  <label class="label -mt-2">
+    <span class="label-text-alt opacity-70">Base URL will be https://subdomain.domain</span>
+  </label>
+
+  <div class="form-control">
+    <%= form.label :credentials, "Credentials (JSON)", class: "label" %>
+    <%= form.text_area :credentials,
+            value: connection.credentials.present? ? JSON.pretty_generate(connection.credentials) : "",
+            class: "textarea textarea-bordered w-full font-mono text-sm",
+            rows: 4,
+            placeholder: '{"type": "bearer", "token": "your-token"}' %>
+    <label class="label">
+      <span class="label-text-alt opacity-70">JSON object with authentication credentials. Will be encrypted.</span>
+    </label>
+  </div>
+
+  <div class="flex gap-2">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", connection.persisted? ? connection_path(connection) : connections_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

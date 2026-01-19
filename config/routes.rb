@@ -23,5 +23,5 @@ Rails.application.routes.draw do
       end
     end
   end
-  resources :connections, only: %i[create index show update destroy]
+  resources :connections
 end

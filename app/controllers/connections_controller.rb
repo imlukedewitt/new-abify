@@ -2,53 +2,70 @@
 
 ## ConnectionsController
 class ConnectionsController < ApplicationController
-  def create
-    connection = Connection.new(connection_params)
+  include Respondable
 
-    if connection.save
-      render json: { connection_id: connection.id }, status: :created
-    else
-      render json: { error: connection.errors.full_messages.join(', ') }, status: :unprocessable_content
-    end
-  end
+  before_action :set_connection, only: %i[show edit update destroy]
 
   def index
-    connections = Connection.all
-    connections = connections.where(user_id: params[:user_id]) if params[:user_id]
-    render json: { connections: connections.map { |c| serialize_connection(c) } }
+    @connections = Connection.all
+    @connections = @connections.where(user_id: params[:user_id]) if params[:user_id]
+
+    respond_to do |format|
+      format.html
+      format.json { render json: { connections: @connections.map { |c| serialize_connection(c) } } }
+    end
   end
 
   def show
-    connection = Connection.find(params[:id])
-    render json: { connection: serialize_connection(connection) }
-  rescue ActiveRecord::RecordNotFound => e
-    render json: { errors: e }, status: :bad_request
+    respond_to do |format|
+      format.html
+      format.json { render json: { connection: serialize_connection(@connection) } }
+    end
+  end
+
+  def new
+    @connection = Connection.new
+  end
+
+  def edit; end
+
+  def create
+    @connection = Connection.new(connection_params)
+
+    return respond_with_errors(@connection, :new) unless @connection.save
+
+    respond_to do |format|
+      format.html { redirect_to connection_path(@connection), notice: 'Connection created successfully' }
+      format.json { render json: { connection_id: @connection.id }, status: :created }
+    end
   end
 
   def update
-    connection = Connection.find(params[:id])
+    return respond_with_errors(@connection, :edit) unless @connection.update(connection_params)
 
-    if connection.update(connection_params)
-      render json: { connection: serialize_connection(connection) }
-    else
-      render json: { error: connection.errors.full_messages.join(', ') }, status: :unprocessable_content
+    respond_to do |format|
+      format.html { redirect_to connection_path(@connection), notice: 'Connection updated successfully' }
+      format.json { render json: { connection: serialize_connection(@connection) } }
     end
-  rescue ActiveRecord::RecordNotFound => e
-    render json: { errors: e }, status: :bad_request
   end
 
   def destroy
-    connection = Connection.find(params[:id])
-    connection.destroy
-    head :no_content
-  rescue ActiveRecord::RecordNotFound => e
-    render json: { errors: e }, status: :bad_request
+    @connection.destroy
+
+    respond_to do |format|
+      format.html { redirect_to connections_path, notice: 'Connection deleted successfully' }
+      format.json { head :no_content }
+    end
   end
 
   private
 
+  def set_connection
+    @connection = Connection.find(params[:id])
+  end
+
   def connection_params
-    params.permit(:user_id, :name, :handle, :subdomain, :domain, credentials: {})
+    params.require(:connection).permit(:user_id, :name, :handle, :subdomain, :domain, credentials: {})
   end
 
   def serialize_connection(connection)
