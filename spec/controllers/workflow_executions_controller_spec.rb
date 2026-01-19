@@ -3,6 +3,40 @@
 require 'rails_helper'
 
 RSpec.describe WorkflowExecutionsController, type: :controller do
+  describe 'GET #index' do
+    let!(:execution1) { create(:workflow_execution) }
+    let!(:execution2) { create(:workflow_execution) }
+
+    it 'returns all workflow executions' do
+      get :index, as: :json
+      expect(response).to be_successful
+      json_response = JSON.parse(response.body)
+      expect(json_response).to have_key('workflow_executions')
+      expect(json_response['workflow_executions'].count).to eq(2)
+    end
+  end
+
+  describe 'GET #show' do
+    let!(:execution) { create(:workflow_execution) }
+
+    context 'with valid execution id' do
+      it 'returns the workflow execution' do
+        get :show, params: { id: execution.id }, as: :json
+        expect(response).to be_successful
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('workflow_execution')
+        expect(json_response['workflow_execution']['id']).to eq(execution.id)
+      end
+    end
+
+    context 'with invalid execution id' do
+      it 'returns not found' do
+        get :show, params: { id: 99_999 }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
   describe 'POST #create' do
     let(:workflow) { create(:workflow, :with_handle) }
     let(:data_source) { create(:data_source) }

@@ -189,6 +189,77 @@ RSpec.describe WorkflowsController, type: :controller do
     end
   end
 
+  describe 'PATCH #update' do
+    let!(:workflow) { create(:workflow, :with_handle, name: 'Original Name') }
+
+    context 'with valid parameters' do
+      it 'updates the workflow' do
+        patch :update, params: { id: workflow.id, workflow: { name: 'Updated Name' } }, as: :json
+        expect(response).to be_successful
+        expect(workflow.reload.name).to eq('Updated Name')
+      end
+
+      it 'finds workflow by handle' do
+        patch :update, params: { id: workflow.handle, workflow: { name: 'Updated via Handle' } }, as: :json
+        expect(response).to be_successful
+        expect(workflow.reload.name).to eq('Updated via Handle')
+      end
+    end
+
+    context 'with invalid parameters' do
+      it 'returns unprocessable content' do
+        patch :update, params: { id: workflow.id, workflow: { name: '' } }, as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it 'returns error messages' do
+        patch :update, params: { id: workflow.id, workflow: { name: '' } }, as: :json
+        json = JSON.parse(response.body)
+        expect(json).to have_key('errors')
+        expect(json['errors']).to include("Name can't be blank")
+      end
+    end
+
+    context 'with invalid workflow id' do
+      it 'returns not found' do
+        patch :update, params: { id: 99_999, workflow: { name: 'Test' } }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  describe 'DELETE #destroy' do
+    let!(:workflow) { create(:workflow, :with_handle) }
+
+    context 'with valid workflow id' do
+      it 'deletes the workflow' do
+        expect do
+          delete :destroy, params: { id: workflow.id }, as: :json
+        end.to change(Workflow, :count).by(-1)
+      end
+
+      it 'returns no content' do
+        delete :destroy, params: { id: workflow.id }, as: :json
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context 'with valid workflow handle' do
+      it 'deletes the workflow by handle' do
+        expect do
+          delete :destroy, params: { id: workflow.handle }, as: :json
+        end.to change(Workflow, :count).by(-1)
+      end
+    end
+
+    context 'with invalid workflow id' do
+      it 'returns not found' do
+        delete :destroy, params: { id: 99_999 }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
   describe 'POST #create with handle' do
     it 'creates a workflow with a handle' do
       post :create, params: { name: 'Handled Workflow', handle: 'my-workflow' }, as: :json
