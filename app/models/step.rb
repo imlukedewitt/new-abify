@@ -86,8 +86,14 @@ class Step < ApplicationRecord
     return unless (templates = liquid_templates)
 
     templates['name'] = name if name.present? && templates['name'].blank?
-    templates['required'] = templates['required'].in?([true, 'true'])
+    templates['required'] = normalize_required(templates['required'])
     templates['success_data'] = parse_json(templates['success_data'])
+  end
+
+  def normalize_required(value)
+    return value unless value.is_a?(String) && !value.include?('{{')
+
+    value == 'true'
   end
 
   def liquid_templates
