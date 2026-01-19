@@ -63,10 +63,10 @@ class StepExecutor
   end
 
   def process_response(response)
-    return fail_response("No response received") if response.nil?
+    return fail_response('No response received') if response.nil?
 
     parsed = parse_json_response(response.body)
-    return fail_response("Invalid JSON response") if parsed.nil?
+    return fail_response('Invalid JSON response') if parsed.nil?
 
     response.code.between?(200, 299) ? handle_success(parsed) : handle_error(parsed, response.code)
   rescue StandardError => e
@@ -81,7 +81,7 @@ class StepExecutor
   end
 
   def handle_error(parsed, code)
-    error = parsed["errors"] || "Request failed with status #{code}"
+    error = parsed['errors'] || "Request failed with status #{code}"
     fail_response(error)
   end
 

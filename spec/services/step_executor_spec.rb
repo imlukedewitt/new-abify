@@ -107,7 +107,7 @@ RSpec.describe StepExecutor do
       processor.call
 
       expect(callback_spy).to have_received(:call)
-        .with(success: false, error: "Request failed with status 404")
+        .with(success: false, error: 'Request failed with status 404')
     end
 
     it 'handles invalid JSON responses' do
@@ -123,7 +123,7 @@ RSpec.describe StepExecutor do
       processor.call
 
       expect(callback_spy).to have_received(:call)
-        .with(success: false, error: "Invalid JSON response")
+        .with(success: false, error: 'Invalid JSON response')
     end
 
     it 'handles nil on_complete gracefully' do
