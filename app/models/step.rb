@@ -83,12 +83,15 @@ class Step < ApplicationRecord
   end
 
   def normalize_config
-    return unless config.is_a?(Hash) && config.dig('liquid_templates')
+    return unless (templates = liquid_templates)
 
-    templates = config['liquid_templates']
     templates['name'] = name if name.present? && templates['name'].blank?
     templates['required'] = templates['required'].in?([true, 'true'])
     templates['success_data'] = parse_json(templates['success_data'])
+  end
+
+  def liquid_templates
+    config['liquid_templates'] if config.is_a?(Hash)
   end
 
   def parse_json(value)
