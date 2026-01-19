@@ -101,7 +101,7 @@ RSpec.describe StepsController, type: :controller do
 
       it 'returns unprocessable entity status' do
         post :create, params: invalid_params, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
 
       it 'returns error messages' do

@@ -88,7 +88,7 @@ class WorkflowsController < ApplicationController
   def respond_with_destroy_error
     respond_to do |format|
       format.html { redirect_to workflow_path(@workflow), alert: @workflow.errors.full_messages.join(', ') }
-      format.json { render json: { errors: @workflow.errors.full_messages }, status: :unprocessable_entity }
+      format.json { render json: { errors: @workflow.errors.full_messages }, status: :unprocessable_content }
     end
   end
 

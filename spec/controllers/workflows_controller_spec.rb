@@ -99,7 +99,7 @@ RSpec.describe WorkflowsController, type: :controller do
 
       it 'returns an error' do
         post :create, params: invalid_config, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
         expect(json_response['errors']).to include(
@@ -123,7 +123,7 @@ RSpec.describe WorkflowsController, type: :controller do
 
       it 'returns an error' do
         post :create, params: config_without_name, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
         expect(json_response['errors']).to include("Name can't be blank")
@@ -201,7 +201,7 @@ RSpec.describe WorkflowsController, type: :controller do
     it 'rejects invalid handle format' do
       post :create, params: { name: 'Bad Handle', handle: '123-invalid' }, as: :json
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['errors']).to include(a_string_including('must start with a letter'))
     end
@@ -212,7 +212,8 @@ RSpec.describe WorkflowsController, type: :controller do
     let(:connection) { create(:connection, user: user, handle: 'my-connection') }
 
     it 'creates a workflow using connection_handle' do
-      post :create, params: { workflow: { name: 'Connected Workflow', connection_handle: connection.handle } }, as: :json
+      post :create, params: { workflow: { name: 'Connected Workflow', connection_handle: connection.handle } },
+                    as: :json
 
       expect(response).to have_http_status(:created)
       workflow = Workflow.last
@@ -238,7 +239,7 @@ RSpec.describe WorkflowsController, type: :controller do
     it 'returns error when connection_handle not found' do
       post :create, params: { workflow: { name: 'Workflow', connection_handle: 'nonexistent' } }, as: :json
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['errors']).to eq(['Connection not found'])
     end
@@ -246,7 +247,7 @@ RSpec.describe WorkflowsController, type: :controller do
     it 'returns error when connection_id not found' do
       post :create, params: { workflow: { name: 'Workflow', connection_id: 99_999 } }, as: :json
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['errors']).to eq(['Connection not found'])
     end

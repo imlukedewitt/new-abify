@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :null_session
 
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
-  rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
+  rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_content
   rescue_from ActionController::ParameterMissing, with: :bad_request
 
   private
@@ -23,11 +23,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def unprocessable_entity(exception)
+  def unprocessable_content(exception)
     respond_to do |format|
-      format.html { render :edit, status: :unprocessable_entity }
+      format.html { render :edit, status: :unprocessable_content }
       format.json do
-        render json: { error: exception.record.errors.full_messages.join(', ') }, status: :unprocessable_entity
+        render json: { error: exception.record.errors.full_messages.join(', ') }, status: :unprocessable_content
       end
     end
   end

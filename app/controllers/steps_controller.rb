@@ -73,7 +73,7 @@ class StepsController < ApplicationController
   def respond_with_destroy_error
     respond_to do |format|
       format.html { redirect_to workflow_step_path(@workflow, @step), alert: @step.errors.full_messages.join(', ') }
-      format.json { render json: { errors: @step.errors.full_messages }, status: :unprocessable_entity }
+      format.json { render json: { errors: @step.errors.full_messages }, status: :unprocessable_content }
     end
   end
 
