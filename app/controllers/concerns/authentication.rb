@@ -9,9 +9,11 @@ module Authentication
   private
 
   def authenticate
-    # TODO: Remove this temporry bypass once session auth is set up
-    Current.user ||= User.last
-    return unless request.authorization.to_s.include?('Bearer')
+    # TODO: Remove this bypass once session auth is implemented
+    if Rails.env.development? && !request.authorization.present?
+      Current.user ||= User.last
+      return
+    end
 
     authenticate_or_request_with_http_token do |token|
       Current.user = User.find_by(api_token: token)
