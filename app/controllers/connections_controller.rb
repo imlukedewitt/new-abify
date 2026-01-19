@@ -65,14 +65,12 @@ class ConnectionsController < ApplicationController
   end
 
   def connection_params
-    permitted = params.require(:connection).permit(:user_id, :name, :handle, :subdomain, :domain, :credentials)
+    permitted = params.require(:connection).permit(:user_id, :name, :handle, :subdomain, :domain, credentials: {})
     # this is just temporary while the UI form is basic
-    if permitted[:credentials].is_a?(String) && permitted[:credentials].present?
-      permitted[:credentials] = JSON.parse(permitted[:credentials])
-    end
+    raw_creds = params[:connection][:credentials]
+    permitted[:credentials] = JSON.parse(raw_creds) if raw_creds.is_a?(String) && raw_creds.present?
     permitted
   rescue JSON::ParserError
-    permitted[:credentials] = nil
     permitted
   end
 
