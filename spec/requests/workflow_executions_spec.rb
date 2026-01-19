@@ -8,8 +8,8 @@ RSpec.describe 'WorkflowExecutions', type: :request do
     let(:data_source) { create(:data_source) }
 
     it 'creates a new WorkflowExecution' do
-      post '/workflow_executions', params: { workflow_id: workflow.id, data_source_id: data_source.id }
-      expect(response).to have_http_status(:created)
+      post '/workflow_executions', params: { workflow_id: workflow.id, data_source_id: data_source.id }, as: :json
+      expect(response).to have_http_status(:accepted)
       expect(JSON.parse(response.body)).to have_key('workflow_execution_id')
     end
   end

@@ -18,6 +18,7 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('message')
         expect(json_response['message']).to eq('Workflow started')
+        expect(json_response).to have_key('workflow_execution_id')
       end
 
       it 'creates a new workflow execution with workflow_handle' do
@@ -27,6 +28,8 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
         }, as: :json
 
         expect(response).to have_http_status(:accepted)
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('workflow_execution_id')
       end
 
       it 'prefers workflow_handle over workflow_id when both provided' do
@@ -39,6 +42,8 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
         }, as: :json
 
         expect(response).to have_http_status(:accepted)
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('workflow_execution_id')
       end
     end
 

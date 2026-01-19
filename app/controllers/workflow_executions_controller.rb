@@ -3,6 +3,9 @@
 ##
 # WorkflowExecutionsController is responsible for creating workflow executions.
 class WorkflowExecutionsController < ApplicationController
+  before_action :set_workflow, only: :create
+  before_action :set_data_source, only: :create
+
   def index
     @workflow_executions = WorkflowExecution.all
     respond_to do |format|
@@ -20,52 +23,42 @@ class WorkflowExecutionsController < ApplicationController
   end
 
   def create
-    workflow = find_workflow
-    return unless workflow
+    return if performed?
 
-    data_source = find_data_source
-    return unless data_source
-
-    process_workflow_execution(workflow, data_source)
-    nil
-  end
-
-  private
-
-  def find_workflow
-    identifier = params[:workflow_handle].presence || params[:workflow_id]
-    workflow = Workflow.find_by_id_or_handle(identifier)
-    return workflow if workflow
-
-    respond_to do |format|
-      format.json { render json: { error: 'Workflow not found' }, status: :unprocessable_content }
-      format.html { redirect_to data_sources_path, alert: 'Workflow not found' }
-    end
-    nil
-  end
-
-  def find_data_source
-    data_source = DataSource.find_by(id: params[:data_source_id])
-    return data_source if data_source
-
-    respond_to do |format|
-      format.json { render json: { error: 'Data source not found' }, status: :unprocessable_content }
-      format.html { redirect_to data_sources_path, alert: 'Data source not found' }
-    end
-    nil
-  end
-
-  def process_workflow_execution(workflow, data_source)
     # TODO: Replace with proper background job (Sidekiq/ActiveJob)
     Thread.new do
-      WorkflowExecutor.new(workflow, data_source).call
+      WorkflowExecutor.new(@workflow, @data_source, execution: execution).call
     rescue StandardError => e
       Rails.logger.error "Workflow execution failed: #{e.message}"
     end
 
     respond_to do |format|
-      format.json { render json: { message: 'Workflow started' }, status: :accepted }
-      format.html { redirect_to data_source_path(data_source), notice: 'Workflow started' }
+      format.json { render json: { message: 'Workflow started', workflow_execution_id: execution.id }, status: :accepted }
+      format.html { redirect_to data_source_path(@data_source), notice: 'Workflow started' }
+    end
+  end
+
+  private
+
+  def execution
+    @execution ||= WorkflowExecution.create!(workflow: @workflow, data_source: @data_source)
+  end
+
+  def set_workflow
+    identifier = params[:workflow_handle].presence || params[:workflow_id]
+    @workflow = Workflow.find_by_id_or_handle(identifier)
+    render_not_found('Workflow') unless @workflow
+  end
+
+  def set_data_source
+    @data_source = DataSource.find_by(id: params[:data_source_id])
+    render_not_found('Data source') unless @data_source
+  end
+
+  def render_not_found(resource)
+    respond_to do |format|
+      format.json { render json: { error: "#{resource} not found" }, status: :unprocessable_content }
+      format.html { redirect_to data_sources_path, alert: "#{resource} not found" }
     end
   end
 end

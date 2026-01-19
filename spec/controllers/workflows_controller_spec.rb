@@ -102,7 +102,9 @@ RSpec.describe WorkflowsController, type: :controller do
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
-        expect(json_response['errors']).to include(a_string_including('unexpected section in workflow config: invalid_section'))
+        expect(json_response['errors']).to include(
+          a_string_including('unexpected section in workflow config: invalid_section')
+        )
       end
     end
 

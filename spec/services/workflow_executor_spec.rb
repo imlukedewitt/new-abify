@@ -22,6 +22,21 @@ RSpec.describe WorkflowExecutor do
     it 'raises ArgumentError when data_source is nil' do
       expect { described_class.new(workflow, nil) }.to raise_error(ArgumentError, 'data_source is required')
     end
+
+    it 'uses provided execution instead of creating a new one' do
+      existing_execution = WorkflowExecution.create!(workflow: workflow, data_source: data_source)
+      executor = described_class.new(workflow, data_source, execution: existing_execution)
+
+      expect(executor.execution).to eq(existing_execution)
+      expect(WorkflowExecution.count).to eq(1)
+    end
+
+    it 'creates a new execution when none is provided' do
+      executor = described_class.new(workflow, data_source)
+
+      expect(executor.execution).to be_a(WorkflowExecution)
+      expect(WorkflowExecution.count).to eq(1)
+    end
   end
 
   describe '#call' do

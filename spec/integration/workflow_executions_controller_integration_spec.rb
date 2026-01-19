@@ -34,6 +34,7 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
         expect(response).to have_http_status(:accepted)
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('Workflow started')
+        expect(json_response).to have_key('workflow_execution_id')
 
         # TODO: Controller runs async in a thread, so we can't verify execution results here.
         # Consider using a proper background job system with test mode for integration testing.
