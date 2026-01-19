@@ -65,7 +65,15 @@ class ConnectionsController < ApplicationController
   end
 
   def connection_params
-    params.require(:connection).permit(:user_id, :name, :handle, :subdomain, :domain, credentials: {})
+    permitted = params.require(:connection).permit(:user_id, :name, :handle, :subdomain, :domain, :credentials)
+    # this is just temporary while the UI form is basic
+    if permitted[:credentials].is_a?(String) && permitted[:credentials].present?
+      permitted[:credentials] = JSON.parse(permitted[:credentials])
+    end
+    permitted
+  rescue JSON::ParserError
+    permitted[:credentials] = nil
+    permitted
   end
 
   def serialize_connection(connection)
