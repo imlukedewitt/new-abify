@@ -9,24 +9,26 @@ RSpec.describe ConnectionsController, type: :controller do
     context 'with valid parameters' do
       let(:valid_params) do
         {
-          user_id: user.id,
-          name: 'My Salesforce',
-          handle: 'salesforce_prod',
-          credentials: {
-            type: 'bearer',
-            token: 'sk-secret-123'
+          connection: {
+            user_id: user.id,
+            name: 'My Salesforce',
+            handle: 'salesforce_prod',
+            credentials: {
+              type: 'bearer',
+              token: 'sk-secret-123'
+            }
           }
         }
       end
 
       it 'creates a new connection' do
         expect do
-          post :create, params: valid_params
+          post :create, params: valid_params, as: :json
         end.to change(Connection, :count).by(1)
       end
 
       it 'returns the connection id' do
-        post :create, params: valid_params
+        post :create, params: valid_params, as: :json
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('connection_id')
@@ -36,17 +38,19 @@ RSpec.describe ConnectionsController, type: :controller do
     context 'with subdomain and domain' do
       let(:params_with_url_fields) do
         {
-          user_id: user.id,
-          name: 'Salesforce with Domain',
-          handle: 'salesforce_custom',
-          credentials: { type: 'bearer', token: 'token123' },
-          subdomain: 'mycompany',
-          domain: 'salesforce.com'
+          connection: {
+            user_id: user.id,
+            name: 'Salesforce with Domain',
+            handle: 'salesforce_custom',
+            credentials: { type: 'bearer', token: 'token123' },
+            subdomain: 'mycompany',
+            domain: 'salesforce.com'
+          }
         }
       end
 
       it 'creates connection with subdomain and domain' do
-        post :create, params: params_with_url_fields
+        post :create, params: params_with_url_fields, as: :json
         expect(response).to have_http_status(:created)
 
         connection = Connection.last
@@ -58,48 +62,52 @@ RSpec.describe ConnectionsController, type: :controller do
     context 'with invalid parameters' do
       let(:invalid_params) do
         {
-          user_id: user.id,
-          name: 'My Connection',
-          handle: 'INVALID-HANDLE',
-          credentials: { type: 'bearer', token: 'token' }
+          connection: {
+            user_id: user.id,
+            name: 'My Connection',
+            handle: 'INVALID-HANDLE',
+            credentials: { type: 'bearer', token: 'token' }
+          }
         }
       end
 
       it 'returns an error' do
-        post :create, params: invalid_params
+        post :create, params: invalid_params, as: :json
         expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
-        expect(json_response).to have_key('error')
-        expect(json_response['error']).to include('Handle must start with a letter')
+        expect(json_response).to have_key('errors')
+        expect(json_response['errors']).to include(a_string_including('Handle must start with a letter'))
       end
     end
 
     context 'with missing name' do
       let(:params_without_name) do
         {
-          user_id: user.id,
-          handle: 'test_handle',
-          credentials: { type: 'bearer', token: 'token' }
+          connection: {
+            user_id: user.id,
+            handle: 'test_handle',
+            credentials: { type: 'bearer', token: 'token' }
+          }
         }
       end
 
       it 'returns an error' do
-        post :create, params: params_without_name
+        post :create, params: params_without_name, as: :json
         expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
-        expect(json_response).to have_key('error')
-        expect(json_response['error']).to include("Name can't be blank")
+        expect(json_response).to have_key('errors')
+        expect(json_response['errors']).to include("Name can't be blank")
       end
     end
   end
 
   describe 'GET #index' do
-    let!(:connection_1) { create(:connection, user: user) }
-    let!(:connection_2) { create(:connection, user: user) }
+    let!(:first_connection) { create(:connection, user: user) }
+    let!(:second_connection) { create(:connection, user: user) }
     let!(:other_user_connection) { create(:connection, user: create(:user)) }
 
     it 'returns all connections' do
-      get :index
+      get :index, as: :json
       expect(response).to be_successful
       json_response = JSON.parse(response.body, symbolize_names: true)
 
@@ -109,17 +117,17 @@ RSpec.describe ConnectionsController, type: :controller do
     end
 
     it 'filters by user_id when provided' do
-      get :index, params: { user_id: user.id }
+      get :index, params: { user_id: user.id }, as: :json
       expect(response).to be_successful
       json_response = JSON.parse(response.body, symbolize_names: true)
 
       connections = json_response[:connections]
       expect(connections.count).to eq(2)
-      expect(connections.pluck(:id)).to match_array([connection_1.id, connection_2.id])
+      expect(connections.pluck(:id)).to match_array([first_connection.id, second_connection.id])
     end
 
     it 'does not expose credentials' do
-      get :index
+      get :index, as: :json
       json_response = JSON.parse(response.body, symbolize_names: true)
 
       json_response[:connections].each do |connection|
@@ -133,7 +141,7 @@ RSpec.describe ConnectionsController, type: :controller do
 
     context 'with a valid connection id' do
       it 'returns the connection' do
-        get :show, params: { id: connection.id }
+        get :show, params: { id: connection.id }, as: :json
         expect(response).to be_successful
         json_response = JSON.parse(response.body, symbolize_names: true)
         expect(json_response[:connection][:id]).to eq(connection.id)
@@ -141,7 +149,7 @@ RSpec.describe ConnectionsController, type: :controller do
       end
 
       it 'does not expose credentials' do
-        get :show, params: { id: connection.id }
+        get :show, params: { id: connection.id }, as: :json
         json_response = JSON.parse(response.body, symbolize_names: true)
         expect(json_response[:connection]).not_to have_key(:credentials)
       end
@@ -152,7 +160,7 @@ RSpec.describe ConnectionsController, type: :controller do
                                      subdomain: 'acme',
                                      domain: 'salesforce.com')
 
-        get :show, params: { id: connection_with_url.id }
+        get :show, params: { id: connection_with_url.id }, as: :json
         json_response = JSON.parse(response.body, symbolize_names: true)
 
         expect(json_response[:connection][:subdomain]).to eq('acme')
@@ -162,12 +170,9 @@ RSpec.describe ConnectionsController, type: :controller do
     end
 
     context 'with an invalid connection id' do
-      it 'returns an error' do
-        get :show, params: { id: 99999 }
-        expect(response.status).to eq(400)
-        expect(JSON.parse(response.body)).to eq(
-          { "errors" => "Couldn't find Connection with 'id'=99999" }
-        )
+      it 'returns not found' do
+        get :show, params: { id: 99_999 }, as: :json
+        expect(response).to have_http_status(:not_found)
       end
     end
   end
@@ -179,12 +184,14 @@ RSpec.describe ConnectionsController, type: :controller do
       let(:update_params) do
         {
           id: connection.id,
-          name: 'Updated Name'
+          connection: {
+            name: 'Updated Name'
+          }
         }
       end
 
       it 'updates the connection' do
-        patch :update, params: update_params
+        patch :update, params: update_params, as: :json
         expect(response).to be_successful
         expect(connection.reload.name).to eq('Updated Name')
       end
@@ -192,11 +199,13 @@ RSpec.describe ConnectionsController, type: :controller do
       it 'updates subdomain and domain' do
         update_params = {
           id: connection.id,
-          subdomain: 'newcompany',
-          domain: 'my-app.com'
+          connection: {
+            subdomain: 'newcompany',
+            domain: 'my-app.com'
+          }
         }
 
-        patch :update, params: update_params
+        patch :update, params: update_params, as: :json
         expect(response).to be_successful
 
         connection.reload
@@ -209,15 +218,24 @@ RSpec.describe ConnectionsController, type: :controller do
       let(:invalid_update_params) do
         {
           id: connection.id,
-          handle: 'INVALID-HANDLE'
+          connection: {
+            handle: 'INVALID-HANDLE'
+          }
         }
       end
 
       it 'returns an error' do
-        patch :update, params: invalid_update_params
+        patch :update, params: invalid_update_params, as: :json
         expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
-        expect(json_response).to have_key('error')
+        expect(json_response).to have_key('errors')
+      end
+    end
+
+    context 'with invalid connection id' do
+      it 'returns not found' do
+        patch :update, params: { id: 99_999, connection: { name: 'Test' } }, as: :json
+        expect(response).to have_http_status(:not_found)
       end
     end
   end
@@ -227,19 +245,19 @@ RSpec.describe ConnectionsController, type: :controller do
 
     it 'deletes the connection' do
       expect do
-        delete :destroy, params: { id: connection.id }
+        delete :destroy, params: { id: connection.id }, as: :json
       end.to change(Connection, :count).by(-1)
     end
 
     it 'returns no content' do
-      delete :destroy, params: { id: connection.id }
+      delete :destroy, params: { id: connection.id }, as: :json
       expect(response).to have_http_status(:no_content)
     end
 
     context 'with invalid connection id' do
-      it 'returns an error' do
-        delete :destroy, params: { id: 99999 }
-        expect(response.status).to eq(400)
+      it 'returns not found' do
+        delete :destroy, params: { id: 99_999 }, as: :json
+        expect(response).to have_http_status(:not_found)
       end
     end
   end

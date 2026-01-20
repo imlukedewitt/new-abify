@@ -9,17 +9,17 @@ require_relative 'liquid/context_builder'
 class WorkflowExecutor
   attr_reader :workflow, :data_source, :hydra_manager, :response, :execution
 
-  def initialize(workflow, data_source, hydra_manager = HydraManager.instance)
+  def initialize(workflow, data_source, execution: nil, hydra_manager: HydraManager.instance)
     raise ArgumentError, 'workflow is required' unless workflow
     raise ArgumentError, 'data_source is required' unless data_source
 
     @hydra_manager = hydra_manager
     @workflow = workflow
     @data_source = data_source
+    @execution = execution || WorkflowExecution.create!(workflow: workflow, data_source: data_source)
   end
 
   def call
-    @execution = WorkflowExecution.create!(workflow: workflow, data_source: data_source)
     @execution.start!
     @step_templates = compile_step_templates
     Rails.logger.info "\nStarting workflow execution for #{@workflow.name} at #{@execution.started_at}"

@@ -7,7 +7,7 @@ RSpec.describe 'Workflows', type: :request do
     let!(:workflows) { create_list(:workflow, 3) }
 
     it 'returns a list of workflows' do
-      get workflows_path
+      get workflows_path, as: :json
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body, symbolize_names: true)
 
@@ -22,7 +22,7 @@ RSpec.describe 'Workflows', type: :request do
       let!(:workflows) { create_list(:workflow, 3, :with_steps) }
 
       it 'includes the steps' do
-        get workflows_path(include_steps: true)
+        get workflows_path(include_steps: true), as: :json
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body, symbolize_names: true)
 
@@ -45,7 +45,7 @@ RSpec.describe 'Workflows', type: :request do
 
     context 'when include_config is true' do
       it 'includes the config' do
-        get workflows_path(include_config: true)
+        get workflows_path(include_config: true), as: :json
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body, symbolize_names: true)
 

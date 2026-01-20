@@ -334,6 +334,53 @@ RSpec.describe Workflow, type: :model do
     end
   end
 
+  describe 'connection validation' do
+    let(:user) { create(:user) }
+
+    context 'with connection_handle' do
+      it 'resolves connection_id from handle' do
+        connection = create(:connection, user: user, handle: 'my-handle')
+        workflow = build(:workflow, connection_handle: 'my-handle')
+
+        expect(workflow).to be_valid
+        expect(workflow.connection_id).to eq(connection.id)
+      end
+
+      it 'adds error when handle not found' do
+        workflow = build(:workflow, connection_handle: 'nonexistent')
+
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:connection]).to include('not found')
+      end
+    end
+
+    context 'with connection_id' do
+      it 'adds error when connection_id not found' do
+        workflow = build(:workflow, connection_id: 99_999)
+
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:connection]).to include('not found')
+      end
+
+      it 'is valid when connection exists' do
+        connection = create(:connection, user: user)
+        workflow = build(:workflow, connection_id: connection.id)
+
+        expect(workflow).to be_valid
+      end
+    end
+
+    context 'with both connection_id and connection_handle' do
+      it 'prefers connection_id over connection_handle' do
+        connection1 = create(:connection, user: user, handle: 'handle-1')
+        workflow = build(:workflow, connection_id: connection1.id, connection_handle: 'handle-2')
+
+        expect(workflow).to be_valid
+        expect(workflow.connection_id).to eq(connection1.id)
+      end
+    end
+  end
+
   describe '.find_by_id_or_handle' do
     let!(:workflow) { create(:workflow, :with_handle) }
 
@@ -368,7 +415,7 @@ RSpec.describe Workflow, type: :model do
 
     context 'when identifier does not match' do
       it 'returns nil for non-existent ID' do
-        expect(described_class.find_by_id_or_handle(99999)).to be_nil
+        expect(described_class.find_by_id_or_handle(9999)).to be_nil
       end
 
       it 'returns nil for non-existent handle' do

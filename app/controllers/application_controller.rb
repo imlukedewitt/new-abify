@@ -2,6 +2,7 @@
 
 class ApplicationController < ActionController::Base
   include Authentication
+  include Respondable
 
   allow_browser versions: :modern
 
@@ -10,7 +11,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :null_session
 
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
-  rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
+  rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_content
   rescue_from ActionController::ParameterMissing, with: :bad_request
 
   private
@@ -18,15 +19,15 @@ class ApplicationController < ActionController::Base
   def not_found(exception)
     respond_to do |format|
       format.html { render file: Rails.public_path.join('404.html'), status: :not_found, layout: false }
-      format.json { render json: { error: exception.message }, status: :not_found }
+      format.json { render json: { errors: [exception.message] }, status: :not_found }
     end
   end
 
-  def unprocessable_entity(exception)
+  def unprocessable_content(exception)
     respond_to do |format|
-      format.html { render :edit, status: :unprocessable_entity }
+      format.html { render :edit, status: :unprocessable_content }
       format.json do
-        render json: { error: exception.record.errors.full_messages.join(', ') }, status: :unprocessable_entity
+        render json: { error: exception.record.errors.full_messages.join(', ') }, status: :unprocessable_content
       end
     end
   end

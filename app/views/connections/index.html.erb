@@ -1,0 +1,18 @@
+<div class="p-4">
+  <h1>Connections</h1>
+  <%= link_to "New Connection", new_connection_path, class: "btn btn-primary btn-xs" %>
+  <table class="table table-zebra">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Handle</th>
+        <th>Base URL</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= render partial: 'connection', collection: @connections.order(id: :desc) %>
+    </tbody>
+  </table>
+</div>

@@ -10,6 +10,8 @@
 #
 # @attr [Workflow] workflow The workflow this step belongs to
 class Step < ApplicationRecord
+  attr_accessor :connection_handle
+
   belongs_to :workflow
   belongs_to :connection, optional: true
   has_many :step_executions, dependent: :destroy
@@ -19,7 +21,10 @@ class Step < ApplicationRecord
   validates :name, presence: true
   validates :order, presence: true, numericality: { only_integer: true, greater_than: 0 }
   before_validation :set_default_order, on: :create
+  before_validation :resolve_connection_from_handle
+  before_validation :normalize_config
   validate :validate_config
+  validate :validate_connection_exists
 
   def step_config
     return nil if config.nil?
@@ -41,8 +46,9 @@ class Step < ApplicationRecord
   def set_default_order
     return if order.present?
 
-    max_order = workflow.steps.maximum(:order) || 0
-    self.order = max_order + 1
+    persisted_max = workflow.steps.maximum(:order) || 0
+    unsaved_max = workflow.steps.reject(&:persisted?).reject { |s| s == self }.map(&:order).compact.max || 0
+    self.order = [persisted_max, unsaved_max].max + 1
   end
 
   def validate_config
@@ -60,5 +66,45 @@ class Step < ApplicationRecord
     return if validator.valid?
 
     validator.errors.each { |error| errors.add(:config, error) }
+  end
+
+  def resolve_connection_from_handle
+    return if connection_handle.blank? || connection_id.present?
+
+    self.connection_id = Connection.find_by(handle: connection_handle)&.id
+  end
+
+  def validate_connection_exists
+    if connection_id.present? && !Connection.exists?(connection_id)
+      errors.add(:connection, 'not found')
+    elsif connection_handle.present? && connection_id.blank?
+      errors.add(:connection, 'not found')
+    end
+  end
+
+  def normalize_config
+    return unless (templates = liquid_templates)
+
+    templates['name'] = name if name.present? && templates['name'].blank?
+    templates['required'] = normalize_required(templates['required'])
+    templates['success_data'] = parse_json(templates['success_data'])
+  end
+
+  def normalize_required(value)
+    return value unless value.is_a?(String) && !value.include?('{{')
+
+    value == 'true'
+  end
+
+  def liquid_templates
+    config['liquid_templates'] if config.is_a?(Hash)
+  end
+
+  def parse_json(value)
+    return value unless value.is_a?(String) && value.present?
+
+    JSON.parse(value)
+  rescue JSON::ParserError
+    value
   end
 end

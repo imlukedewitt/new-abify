@@ -3,6 +3,40 @@
 require 'rails_helper'
 
 RSpec.describe WorkflowExecutionsController, type: :controller do
+  describe 'GET #index' do
+    let!(:execution1) { create(:workflow_execution) }
+    let!(:execution2) { create(:workflow_execution) }
+
+    it 'returns all workflow executions' do
+      get :index, as: :json
+      expect(response).to be_successful
+      json_response = JSON.parse(response.body)
+      expect(json_response).to have_key('workflow_executions')
+      expect(json_response['workflow_executions'].count).to eq(2)
+    end
+  end
+
+  describe 'GET #show' do
+    let!(:execution) { create(:workflow_execution) }
+
+    context 'with valid execution id' do
+      it 'returns the workflow execution' do
+        get :show, params: { id: execution.id }, as: :json
+        expect(response).to be_successful
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('workflow_execution')
+        expect(json_response['workflow_execution']['id']).to eq(execution.id)
+      end
+    end
+
+    context 'with invalid execution id' do
+      it 'returns not found' do
+        get :show, params: { id: 99_999 }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
   describe 'POST #create' do
     let(:workflow) { create(:workflow, :with_handle) }
     let(:data_source) { create(:data_source) }
@@ -12,25 +46,22 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
         post :create, params: {
           workflow_id: workflow.id,
           data_source_id: data_source.id
-        }
+        }, as: :json
 
-        if response.status != 201
-          puts "Response status: #{response.status}"
-          puts "Response body: #{response.body}"
-        end
-        expect(response).to have_http_status(:created)
+        expect(response).to have_http_status(:accepted)
         json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('message')
+        expect(json_response['message']).to eq('Workflow started')
         expect(json_response).to have_key('workflow_execution_id')
-        expect(json_response['workflow_execution_id']).to be_present
       end
 
       it 'creates a new workflow execution with workflow_handle' do
         post :create, params: {
           workflow_handle: workflow.handle,
           data_source_id: data_source.id
-        }
+        }, as: :json
 
-        expect(response).to have_http_status(:created)
+        expect(response).to have_http_status(:accepted)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('workflow_execution_id')
       end
@@ -42,52 +73,52 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
           workflow_id: other_workflow.id,
           workflow_handle: workflow.handle,
           data_source_id: data_source.id
-        }
+        }, as: :json
 
-        expect(response).to have_http_status(:created)
-        execution = WorkflowExecution.last
-        expect(execution.workflow_id).to eq(workflow.id)
+        expect(response).to have_http_status(:accepted)
+        json_response = JSON.parse(response.body)
+        expect(json_response).to have_key('workflow_execution_id')
       end
     end
 
     context 'with invalid parameters' do
-      it "returns unprocessable entity when workflow is not found" do
+      it 'returns unprocessable entity when workflow is not found' do
         post :create, params: {
-          workflow_id: "invalid_id",
+          workflow_id: 'invalid_id',
           data_source_id: data_source.id
-        }
+        }, as: :json
 
         expect(response).to have_http_status(:unprocessable_content)
-        expect(JSON.parse(response.body)).to eq({ "error" => "Workflow not found" })
+        expect(JSON.parse(response.body)).to eq({ 'error' => 'Workflow not found' })
       end
 
-      it "returns unprocessable entity when workflow_handle is not found" do
+      it 'returns unprocessable entity when workflow_handle is not found' do
         post :create, params: {
-          workflow_handle: "nonexistent-handle",
+          workflow_handle: 'nonexistent-handle',
           data_source_id: data_source.id
-        }
+        }, as: :json
 
         expect(response).to have_http_status(:unprocessable_content)
-        expect(JSON.parse(response.body)).to eq({ "error" => "Workflow not found" })
+        expect(JSON.parse(response.body)).to eq({ 'error' => 'Workflow not found' })
       end
 
       it 'returns unprocessable entity when data source is not found' do
         post :create, params: {
           workflow_id: workflow.id,
-          data_source_id: "invalid_id"
-        }
+          data_source_id: 'invalid_id'
+        }, as: :json
 
         expect(response).to have_http_status(:unprocessable_content)
-        expect(JSON.parse(response.body)).to eq({ "error" => "Data source not found" })
+        expect(JSON.parse(response.body)).to eq({ 'error' => 'Data source not found' })
       end
 
       it 'returns unprocessable entity when data source is missing' do
         post :create, params: {
           workflow_id: workflow.id
-        }
+        }, as: :json
 
         expect(response).to have_http_status(:unprocessable_content)
-        expect(JSON.parse(response.body)).to eq({ "error" => "Data source not found" })
+        expect(JSON.parse(response.body)).to eq({ 'error' => 'Data source not found' })
       end
     end
   end

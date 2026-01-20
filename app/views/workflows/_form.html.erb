@@ -1,0 +1,41 @@
+<%= form_with model: workflow, class: "space-y-4" do |form| %>
+  <% if workflow.errors.any? %>
+    <div class="alert alert-error">
+      <ul>
+        <% workflow.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-control">
+    <%= form.label :name, class: "label" %>
+    <%= form.text_field :name, class: "input input-bordered w-full", required: true %>
+  </div>
+
+  <div class="form-control">
+    <%= form.label :handle, class: "label" %>
+    <%= form.text_field :handle, class: "input input-bordered w-full", 
+            placeholder: "optional-handle-for-api" %>
+    <label class="label">
+      <span class="label-text-alt opacity-70">Lowercase letters, numbers, hyphens, underscores. Used for API access.</span>
+    </label>
+  </div>
+
+  <div class="form-control">
+    <%= form.label :connection_id, "Default Connection", class: "label" %>
+    <%= form.select :connection_id,
+            options_from_collection_for_select(connections, :id, :name, workflow.connection_id),
+            { include_blank: "No default connection" },
+            { class: "select select-bordered w-full" } %>
+    <label class="label">
+      <span class="label-text-alt opacity-70">Steps will use this connection unless overridden.</span>
+    </label>
+  </div>
+
+  <div class="flex gap-2">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", workflow.persisted? ? workflow_path(workflow) : workflows_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

@@ -1,0 +1,12 @@
+<tr>
+  <th><%= connection.id %></th>
+  <td><%= link_to connection.name, connection_path(connection), class: "link" %></td>
+  <td class="opacity-60"><%= connection.handle %></td>
+  <td class="opacity-60"><%= connection.base_url || "-" %></td>
+  <td>
+    <%= link_to "Edit", edit_connection_path(connection), class: "btn btn-ghost btn-xs" %>
+    <%= button_to "Delete", connection_path(connection), method: :delete,
+                  class: "btn btn-ghost btn-xs text-error",
+                  data: { turbo_confirm: "Are you sure you want to delete this connection?" } %>
+  </td>
+</tr>

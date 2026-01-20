@@ -1,0 +1,11 @@
+<div class="container p-4">
+  <%= link_to "← Back to Data Sources", data_sources_path, class: "link link-accent text-xs mb-2" %>
+  <h1>New Data Source</h1>
+  <%= form_with model: @data_source, multipart: true do |form| %>
+    <fieldset class="fieldset">
+      <%= label_tag :source, "Source File" %>
+      <%= file_field_tag :source, class: "file-input" %>
+    </fieldset>
+    <%= form.submit "Create", class: "btn btn-primary mt-5" %>
+  <% end %>
+</div>

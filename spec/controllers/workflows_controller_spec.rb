@@ -25,7 +25,7 @@ RSpec.describe WorkflowsController, type: :controller do
 
       it 'creates a new workflow' do
         expect do
-          post :create, params: valid_config
+          post :create, params: valid_config, as: :json
         end.to change(Workflow, :count).by(1)
       end
     end
@@ -49,7 +49,7 @@ RSpec.describe WorkflowsController, type: :controller do
 
       it 'creates a workflow with the connection' do
         expect do
-          post :create, params: config_with_connection
+          post :create, params: config_with_connection, as: :json
         end.to change(Workflow, :count).by(1)
 
         workflow = Workflow.last
@@ -75,7 +75,7 @@ RSpec.describe WorkflowsController, type: :controller do
       end
 
       it 'creates nested steps' do
-        expect { post :create, params: config_with_steps }
+        expect { post :create, params: config_with_steps, as: :json }
           .to change(Workflow, :count)
           .by(1).and change(Step, :count).by(1)
 
@@ -98,11 +98,13 @@ RSpec.describe WorkflowsController, type: :controller do
       end
 
       it 'returns an error' do
-        post :create, params: invalid_config
+        post :create, params: invalid_config, as: :json
         expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
-        expect(json_response).to have_key('error')
-        expect(json_response['error']).to include('unexpected section in workflow config: invalid_section')
+        expect(json_response).to have_key('errors')
+        expect(json_response['errors']).to include(
+          a_string_including('unexpected section in workflow config: invalid_section')
+        )
       end
     end
 
@@ -120,11 +122,11 @@ RSpec.describe WorkflowsController, type: :controller do
       end
 
       it 'returns an error' do
-        post :create, params: config_without_name
+        post :create, params: config_without_name, as: :json
         expect(response).to have_http_status(:unprocessable_content)
         json_response = JSON.parse(response.body)
-        expect(json_response).to have_key('error')
-        expect(json_response['error']).to include("Name can't be blank")
+        expect(json_response).to have_key('errors')
+        expect(json_response['errors']).to include("Name can't be blank")
       end
     end
   end
@@ -134,7 +136,7 @@ RSpec.describe WorkflowsController, type: :controller do
     let!(:workflow_2) { create(:workflow) }
 
     it 'returns all workflows' do
-      get :index
+      get :index, as: :json
       expect(response).to be_successful
       json_response = JSON.parse(response.body, symbolize_names: true)
 
@@ -148,7 +150,7 @@ RSpec.describe WorkflowsController, type: :controller do
 
   describe 'GET #show' do
     let!(:workflow) { create(:workflow, :with_handle) }
-    let(:response) { get :show, params: { id: id } }
+    let(:response) { get :show, params: { id: id }, as: :json }
 
     context 'with a valid workflow id' do
       let(:id) { workflow.id }
@@ -171,25 +173,96 @@ RSpec.describe WorkflowsController, type: :controller do
     context 'with an invalid workflow id' do
       let(:id) { 1337 }
       it 'returns an error' do
-        expect(response.status).to eq(400)
+        expect(response).to have_http_status(:not_found)
         json = JSON.parse(response.body)
-        expect(json['errors']).to include("Couldn't find Workflow")
+        expect(json['errors']).to include(a_string_including("Couldn't find Workflow"))
       end
     end
 
     context 'with an invalid workflow handle' do
       let(:id) { 'nonexistent-handle' }
       it 'returns an error' do
-        expect(response.status).to eq(400)
+        expect(response).to have_http_status(:not_found)
         json = JSON.parse(response.body)
-        expect(json['errors']).to include("Couldn't find Workflow")
+        expect(json['errors']).to include(a_string_including("Couldn't find Workflow"))
+      end
+    end
+  end
+
+  describe 'PATCH #update' do
+    let!(:workflow) { create(:workflow, :with_handle, name: 'Original Name') }
+
+    context 'with valid parameters' do
+      it 'updates the workflow' do
+        patch :update, params: { id: workflow.id, workflow: { name: 'Updated Name' } }, as: :json
+        expect(response).to be_successful
+        expect(workflow.reload.name).to eq('Updated Name')
+      end
+
+      it 'finds workflow by handle' do
+        patch :update, params: { id: workflow.handle, workflow: { name: 'Updated via Handle' } }, as: :json
+        expect(response).to be_successful
+        expect(workflow.reload.name).to eq('Updated via Handle')
+      end
+    end
+
+    context 'with invalid parameters' do
+      it 'returns unprocessable content' do
+        patch :update, params: { id: workflow.id, workflow: { name: '' } }, as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it 'returns error messages' do
+        patch :update, params: { id: workflow.id, workflow: { name: '' } }, as: :json
+        json = JSON.parse(response.body)
+        expect(json).to have_key('errors')
+        expect(json['errors']).to include("Name can't be blank")
+      end
+    end
+
+    context 'with invalid workflow id' do
+      it 'returns not found' do
+        patch :update, params: { id: 99_999, workflow: { name: 'Test' } }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  describe 'DELETE #destroy' do
+    let!(:workflow) { create(:workflow, :with_handle) }
+
+    context 'with valid workflow id' do
+      it 'deletes the workflow' do
+        expect do
+          delete :destroy, params: { id: workflow.id }, as: :json
+        end.to change(Workflow, :count).by(-1)
+      end
+
+      it 'returns no content' do
+        delete :destroy, params: { id: workflow.id }, as: :json
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context 'with valid workflow handle' do
+      it 'deletes the workflow by handle' do
+        expect do
+          delete :destroy, params: { id: workflow.handle }, as: :json
+        end.to change(Workflow, :count).by(-1)
+      end
+    end
+
+    context 'with invalid workflow id' do
+      it 'returns not found' do
+        delete :destroy, params: { id: 99_999 }, as: :json
+        expect(response).to have_http_status(:not_found)
       end
     end
   end
 
   describe 'POST #create with handle' do
     it 'creates a workflow with a handle' do
-      post :create, params: { name: 'Handled Workflow', handle: 'my-workflow' }
+      post :create, params: { name: 'Handled Workflow', handle: 'my-workflow' }, as: :json
 
       expect(response).to have_http_status(:created)
       workflow = Workflow.last
@@ -197,11 +270,11 @@ RSpec.describe WorkflowsController, type: :controller do
     end
 
     it 'rejects invalid handle format' do
-      post :create, params: { name: 'Bad Handle', handle: '123-invalid' }
+      post :create, params: { name: 'Bad Handle', handle: '123-invalid' }, as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
-      expect(json['error']).to include('must start with a letter')
+      expect(json['errors']).to include(a_string_including('must start with a letter'))
     end
   end
 
@@ -210,7 +283,8 @@ RSpec.describe WorkflowsController, type: :controller do
     let(:connection) { create(:connection, user: user, handle: 'my-connection') }
 
     it 'creates a workflow using connection_handle' do
-      post :create, params: { name: 'Connected Workflow', connection_handle: connection.handle }
+      post :create, params: { workflow: { name: 'Connected Workflow', connection_handle: connection.handle } },
+                    as: :json
 
       expect(response).to have_http_status(:created)
       workflow = Workflow.last
@@ -221,10 +295,12 @@ RSpec.describe WorkflowsController, type: :controller do
       other_connection = create(:connection, user: user, handle: 'other-connection')
 
       post :create, params: {
-        name: 'Connected Workflow',
-        connection_id: connection.id,
-        connection_handle: other_connection.handle
-      }
+        workflow: {
+          name: 'Connected Workflow',
+          connection_id: connection.id,
+          connection_handle: other_connection.handle
+        }
+      }, as: :json
 
       expect(response).to have_http_status(:created)
       workflow = Workflow.last
@@ -232,19 +308,19 @@ RSpec.describe WorkflowsController, type: :controller do
     end
 
     it 'returns error when connection_handle not found' do
-      post :create, params: { name: 'Workflow', connection_handle: 'nonexistent' }
+      post :create, params: { workflow: { name: 'Workflow', connection_handle: 'nonexistent' } }, as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
-      expect(json['error']).to eq('Connection not found')
+      expect(json['errors']).to eq(['Connection not found'])
     end
 
     it 'returns error when connection_id not found' do
-      post :create, params: { name: 'Workflow', connection_id: 99_999 }
+      post :create, params: { workflow: { name: 'Workflow', connection_id: 99_999 } }, as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
-      expect(json['error']).to eq('Connection not found')
+      expect(json['errors']).to eq(['Connection not found'])
     end
   end
 end

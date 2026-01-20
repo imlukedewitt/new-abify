@@ -1,0 +1,20 @@
+<div class="p-4">
+  <h1>Workflow Executions</h1>
+  <table class="table table-zebra">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Workflow</th>
+        <th>Data Source</th>
+        <th>Rows</th>
+        <th>Connection</th>
+        <th>Started At</th>
+        <th>Completed At</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= render partial: 'workflow_execution', collection: @workflow_executions.order(id: :desc) %>
+    </tbody>
+  </table>
+</div>

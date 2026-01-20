@@ -1,0 +1,48 @@
+<%
+  status = step_execution.status
+  step = step_execution.step
+%>
+<li>
+  <% unless step_execution_counter_total == 1 || step_execution_counter == 0 %><hr class="bg-neutral"><% end %>
+  <div class="timeline-middle status status-xl %>"></div>
+  <div class="timeline-end timeline-box bg-base-300 w-full">
+    <div class="collapse collapse-arrow">
+      <input type="checkbox">
+      <div class="collapse-title p-0 min-h-0 flex items-center gap-2">
+        <span class="font-semibold text-sm">Step <%= step.order %>: <%= step.name %></span>
+        <span class="text-xs uppercase opacity-70 text-<%= execution_status_color(status) %>"><%= status %></span>
+      </div>
+      <div class="collapse-content p-0 text-sm">
+        <div class="pt-2 space-y-1">
+          <% if step_execution.started_at.present? %>
+            <p class="text-neutral-content/70">Started: <%= step_execution.started_at.strftime('%H:%M:%S') %></p>
+          <% end %>
+          <% if step_execution.completed_at.present? %>
+            <p class="text-neutral-content/70">Completed: <%= step_execution.completed_at.strftime('%H:%M:%S') %></p>
+          <% end %>
+          <% if step_execution.started_at.present? && step_execution.completed_at.present? %>
+            <p class="text-neutral-content/70">Duration: <%= ((step_execution.completed_at - step_execution.started_at) * 1000).round %>ms</p>
+          <% end %>
+          <% if step_execution.result.present? %>
+            <% if step_execution.result['errors'].present? %>
+              <div class="mt-2">
+                <p class="text-error font-semibold">Errors:</p>
+                <ul class="list-disc list-inside text-error">
+                  <% step_execution.result['errors'].each do |error| %>
+                    <li><%= error %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% elsif step_execution.result['data'].present? %>
+              <div class="mt-2">
+                <p class="text-success font-semibold">Result:</p>
+                <pre class="text-xs bg-base-200 p-2 rounded overflow-x-auto max-h-40"><%= JSON.pretty_generate(step_execution.result['data']) %></pre>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% unless step_execution_counter_total == 1 || step_execution_counter + 1 == step_execution_counter_total %><hr class="bg-neutral"><% end %>
+</li>
