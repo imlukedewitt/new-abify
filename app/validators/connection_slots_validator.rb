@@ -36,19 +36,23 @@ class ConnectionSlotsValidator
 
   def validate_slot_structures
     connection_slots.each_with_index do |slot, index|
-      unless slot.is_a?(Hash)
-        errors << "slot at index #{index} must be a hash"
-        next
-      end
-
-      unless slot.key?('handle')
-        errors << "slot at index #{index} must have a 'handle' key"
-        next
-      end
-
-      validate_slot_handle_format(slot['handle'], index)
-      validate_slot_optional_keys(slot, index)
+      validate_slot_structure(slot, index)
     end
+  end
+
+  def validate_slot_structure(slot, index)
+    unless slot.is_a?(Hash)
+      errors << "slot at index #{index} must be a hash"
+      return
+    end
+
+    unless slot.key?('handle')
+      errors << "slot at index #{index} must have a 'handle' key"
+      return
+    end
+
+    validate_slot_handle_format(slot['handle'], index)
+    validate_slot_optional_keys(slot, index)
   end
 
   def validate_slot_handles
@@ -61,22 +65,38 @@ class ConnectionSlotsValidator
   end
 
   def validate_slot_handle_format(handle, index)
+    unless handle.is_a?(String)
+      errors << "slot at index #{index} handle must be a string"
+      return
+    end
+
     return if handle =~ Workflow::HANDLE_FORMAT
 
-    errors << "slot at index #{index} handle '#{handle}' must start with a letter and contain only lowercase letters, numbers, hyphens, and underscores"
+    errors << "slot at index #{index} handle '#{handle}' must start with a letter and contain only " \
+               'lowercase letters, numbers, hyphens, and underscores'
   end
 
   def validate_slot_optional_keys(slot, index)
+    validate_slot_allowed_keys(slot, index)
+    validate_slot_description(slot, index)
+    validate_slot_default(slot, index)
+  end
+
+  def validate_slot_allowed_keys(slot, index)
     slot.each_key do |key|
       next if %w[handle description default].include?(key)
 
       errors << "slot at index #{index} has unexpected key '#{key}' (allowed: handle, description, default)"
     end
+  end
 
-    if slot.key?('description') && !slot['description'].is_a?(String)
-      errors << "slot at index #{index} description must be a string"
-    end
+  def validate_slot_description(slot, index)
+    return unless slot.key?('description') && !slot['description'].is_a?(String)
 
+    errors << "slot at index #{index} description must be a string"
+  end
+
+  def validate_slot_default(slot, index)
     return unless slot.key?('default') && ![true, false].include?(slot['default'])
 
     errors << "slot at index #{index} default must be a boolean"

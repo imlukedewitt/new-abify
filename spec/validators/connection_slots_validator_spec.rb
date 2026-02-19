@@ -69,6 +69,32 @@ RSpec.describe ConnectionSlotsValidator do
       end
     end
 
+    context 'when slot handle is not a string' do
+      it 'is invalid for integer handle' do
+        validator = described_class.new([{ 'handle' => 123 }])
+        expect(validator.valid?).to be false
+        expect(validator.errors).to include('slot at index 0 handle must be a string')
+      end
+
+      it 'is invalid for nil handle' do
+        validator = described_class.new([{ 'handle' => nil }])
+        expect(validator.valid?).to be false
+        expect(validator.errors).to include('slot at index 0 handle must be a string')
+      end
+
+      it 'is invalid for array handle' do
+        validator = described_class.new([{ 'handle' => ['array'] }])
+        expect(validator.valid?).to be false
+        expect(validator.errors).to include('slot at index 0 handle must be a string')
+      end
+
+      it 'is invalid for hash handle' do
+        validator = described_class.new([{ 'handle' => { 'nested' => 'hash' } }])
+        expect(validator.valid?).to be false
+        expect(validator.errors).to include('slot at index 0 handle must be a string')
+      end
+    end
+
     context 'when slot has unexpected key' do
       it 'is invalid' do
         validator = described_class.new([{ 'handle' => 'valid', 'extra' => 'key' }])
