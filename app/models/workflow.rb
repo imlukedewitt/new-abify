@@ -20,6 +20,7 @@ class Workflow < ApplicationRecord
   validates :handle, uniqueness: true, allow_nil: true
   before_validation :resolve_connection_from_handle
   validate :validate_config
+  validate :validate_connection_slots
   validate :validate_connection_exists
 
   accepts_nested_attributes_for :steps
@@ -80,6 +81,15 @@ class Workflow < ApplicationRecord
     return if validator.valid?
 
     validator.errors.each { |error| errors.add(:config, error) }
+  end
+
+  def validate_connection_slots
+    return if connection_slots.nil?
+
+    validator = ConnectionSlotsValidator.new(connection_slots)
+    return if validator.valid?
+
+    validator.errors.each { |error| errors.add(:connection_slots, error) }
   end
 
   def resolve_connection_from_handle

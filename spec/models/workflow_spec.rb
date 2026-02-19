@@ -23,6 +23,41 @@ RSpec.describe Workflow, type: :model do
     end
   end
 
+  describe 'connection_slots attribute' do
+    it 'exists as a JSON column' do
+      expect(Workflow.column_names).to include('connection_slots')
+    end
+
+    it 'defaults to an empty array' do
+      workflow = Workflow.new
+      expect(workflow.connection_slots).to eq([])
+    end
+
+    it 'serializes and deserializes array objects' do
+      workflow = build(:workflow, connection_slots: [
+                         { 'handle' => 'slot1', 'description' => 'First slot', 'default' => true },
+                         { 'handle' => 'slot2', 'description' => 'Second slot' }
+                       ])
+      expect(workflow.connection_slots).to be_a(Array)
+      expect(workflow.connection_slots.size).to eq(2)
+      expect(workflow.connection_slots[0]['handle']).to eq('slot1')
+      expect(workflow.connection_slots[0]['description']).to eq('First slot')
+      expect(workflow.connection_slots[0]['default']).to be true
+      expect(workflow.connection_slots[1]['handle']).to eq('slot2')
+      expect(workflow.connection_slots[1]['description']).to eq('Second slot')
+      expect(workflow.connection_slots[1]['default']).to be_nil
+
+      workflow.save!
+      workflow.reload
+      expect(workflow.connection_slots).to be_a(Array)
+      expect(workflow.connection_slots.size).to eq(2)
+      expect(workflow.connection_slots[0]['handle']).to eq('slot1')
+      expect(workflow.connection_slots[0]['description']).to eq('First slot')
+      expect(workflow.connection_slots[0]['default']).to be true
+      expect(workflow.connection_slots[1]['default']).to be_nil
+    end
+  end
+
   describe 'validations' do
     it 'validates presence of name' do
       workflow = build(:workflow, name: nil)
@@ -262,6 +297,55 @@ RSpec.describe Workflow, type: :model do
                            }
                          })
         expect(workflow).to be_valid
+      end
+    end
+  end
+
+  describe 'connection_slots validation' do
+    context 'when connection_slots is nil' do
+      it 'is valid' do
+        workflow = build(:workflow, connection_slots: nil)
+        expect(workflow).to be_valid
+      end
+    end
+
+    context 'when connection_slots is an empty array' do
+      it 'is valid' do
+        workflow = build(:workflow, connection_slots: [])
+        expect(workflow).to be_valid
+      end
+    end
+
+    context 'when connection_slots has valid slots' do
+      it 'is valid' do
+        workflow = build(:workflow, connection_slots: [
+                           { 'handle' => 'target_crm', 'description' => 'Target CRM system', 'default' => true }
+                         ])
+        expect(workflow).to be_valid
+      end
+    end
+
+    context 'when connection_slots has invalid slot structure' do
+      it 'is invalid' do
+        workflow = build(:workflow, connection_slots: [
+                           { 'handle' => 'invalid handle' }
+                         ])
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:connection_slots]).to include(
+          "slot at index 0 handle 'invalid handle' must start with a " \
+          'letter and contain only lowercase letters, numbers, hyphens, and underscores'
+        )
+      end
+    end
+
+    context 'when connection_slots has duplicate handles' do
+      it 'is invalid' do
+        workflow = build(:workflow, connection_slots: [
+                           { 'handle' => 'duplicate' },
+                           { 'handle' => 'duplicate' }
+                         ])
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:connection_slots]).to include("slot handle 'duplicate' is duplicated")
       end
     end
   end
