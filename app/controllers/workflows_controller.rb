@@ -81,6 +81,7 @@ class WorkflowsController < ApplicationController
           .permit(
             :name, :handle, :connection_id, :connection_handle,
             config: {},
+            connection_slots: %i[handle description default],
             steps_attributes: [:id, :name, { config: {} }]
           )
   end
