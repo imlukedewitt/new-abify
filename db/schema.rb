@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_18_154747) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -121,6 +121,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "connection_mappings", default: {}
     t.index ["data_source_id"], name: "index_workflow_executions_on_data_source_id"
     t.index ["workflow_id"], name: "index_workflow_executions_on_workflow_id"
   end
@@ -132,6 +133,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
     t.string "name"
     t.integer "connection_id"
     t.string "handle"
+    t.json "connection_slots", default: []
     t.index ["connection_id"], name: "index_workflows_on_connection_id"
     t.index ["handle"], name: "index_workflows_on_handle", unique: true
   end
