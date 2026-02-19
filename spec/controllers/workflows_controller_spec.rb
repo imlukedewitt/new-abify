@@ -323,4 +323,112 @@ RSpec.describe WorkflowsController, type: :controller do
       expect(json['errors']).to eq(['Connection not found'])
     end
   end
+
+  describe 'connection_slots' do
+    render_views
+    describe 'POST #create' do
+      it 'creates workflow with connection_slots' do
+        post :create, params: {
+          workflow: {
+            name: 'Workflow with slots',
+            connection_slots: [
+              { handle: 'target_crm', description: 'Target CRM System', default: true },
+              { handle: 'source_db', description: 'Source Database' }
+            ]
+          }
+        }, as: :json
+
+        expect(response).to have_http_status(:created)
+        workflow = Workflow.last
+        expect(workflow.connection_slots).to eq([
+                                                  { 'handle' => 'target_crm', 'description' => 'Target CRM System',
+                                                    'default' => true },
+                                                  { 'handle' => 'source_db', 'description' => 'Source Database' }
+                                                ])
+      end
+
+      it 'validates connection_slots format' do
+        post :create, params: {
+          workflow: {
+            name: 'Invalid slots',
+            connection_slots: [
+              { handle: 'invalid handle', description: 'Test' }
+            ]
+          }
+        }, as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+        json = JSON.parse(response.body)
+        expect(json['errors']).to include(a_string_including('must start with a letter'))
+      end
+
+      context 'with HTML format' do
+        it 're-renders form with validation errors for invalid connection_slots' do
+          post :create, params: {
+            workflow: {
+              name: 'Invalid slots HTML',
+              connection_slots: [
+                { handle: 'invalid handle', description: 'Test' }
+              ]
+            }
+          }, as: :html
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect(response.body).not_to be_empty
+          expect(response.body).to match(/must start with a letter/i)
+          expect(response.body).to include('Connection Slots')
+        end
+      end
+    end
+
+    describe 'GET #new and #edit' do
+      it 'includes connection slots fields in new form' do
+        get :new
+        expect(response).to be_successful
+        expect(response.body).to include('Connection Slots')
+        expect(response.body).to include('connection_slots')
+      end
+
+      it 'includes connection slots fields in edit form' do
+        workflow = create(:workflow)
+        get :edit, params: { id: workflow.id }
+        expect(response).to be_successful
+        expect(response.body).to include('Connection Slots')
+        expect(response.body).to include('connection_slots')
+      end
+    end
+
+    describe 'PATCH #update' do
+      let(:workflow) { create(:workflow) }
+
+      it 'updates workflow with connection_slots' do
+        patch :update, params: {
+          id: workflow.id,
+          workflow: {
+            connection_slots: [
+              { handle: 'new_slot', description: 'New Slot' }
+            ]
+          }
+        }, as: :json
+
+        expect(response).to be_successful
+        expect(workflow.reload.connection_slots).to eq([
+                                                         { 'handle' => 'new_slot', 'description' => 'New Slot' }
+                                                       ])
+      end
+
+      it 'clears connection_slots with empty array' do
+        workflow.update!(connection_slots: [{ handle: 'old', description: 'old' }])
+        patch :update, params: {
+          id: workflow.id,
+          workflow: {
+            connection_slots: []
+          }
+        }, as: :json
+
+        expect(response).to be_successful
+        expect(workflow.reload.connection_slots).to eq([])
+      end
+    end
+  end
 end
