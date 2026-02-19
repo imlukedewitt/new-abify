@@ -348,6 +348,20 @@ RSpec.describe Workflow, type: :model do
         expect(workflow.errors[:connection_slots]).to include("slot handle 'duplicate' is duplicated")
       end
     end
+
+    context 'when connection_slots has non-string handles' do
+      it 'is invalid for integer handle' do
+        workflow = build(:workflow, connection_slots: [{ 'handle' => 123 }])
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:connection_slots]).to include('slot at index 0 handle must be a string')
+      end
+
+      it 'is invalid for nil handle' do
+        workflow = build(:workflow, connection_slots: [{ 'handle' => nil }])
+        expect(workflow).not_to be_valid
+        expect(workflow.errors[:connection_slots]).to include('slot at index 0 handle must be a string')
+      end
+    end
   end
 
   describe '#resolved_auth_config' do
