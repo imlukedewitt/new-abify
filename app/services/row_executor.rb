@@ -6,9 +6,9 @@ class RowExecutor
   attr_reader :row, :workflow, :workflow_execution
 
   def initialize(row:, workflow:, workflow_execution:, step_templates: nil)
-    raise ArgumentError, "row is required" if row.nil?
-    raise ArgumentError, "workflow is required" if workflow.nil?
-    raise ArgumentError, "workflow_execution is required" if workflow_execution.nil?
+    raise ArgumentError, 'row is required' if row.nil?
+    raise ArgumentError, 'workflow is required' if workflow.nil?
+    raise ArgumentError, 'workflow_execution is required' if workflow_execution.nil?
 
     @row = row
     @workflow = workflow
