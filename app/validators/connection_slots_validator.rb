@@ -28,6 +28,7 @@ class ConnectionSlotsValidator
 
     validate_slot_structures
     validate_slot_handles
+    validate_unique_default
 
     errors.empty?
   end
@@ -62,6 +63,15 @@ class ConnectionSlotsValidator
     duplicate_handles.each do |handle|
       errors << "slot handle '#{handle}' is duplicated"
     end
+  end
+
+  def validate_unique_default
+    default_slots = connection_slots.filter_map do |slot|
+      slot['default'] if slot.is_a?(Hash) && slot['default'] == true
+    end
+    return if default_slots.size <= 1
+
+    errors << 'only one slot can be marked as default'
   end
 
   def validate_slot_handle_format(handle, index)

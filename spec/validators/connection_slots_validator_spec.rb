@@ -131,5 +131,28 @@ RSpec.describe ConnectionSlotsValidator do
         expect(validator.errors).to include('slot handle \'duplicate\' is duplicated')
       end
     end
+
+    context 'when multiple slots are marked as default' do
+      it 'is invalid' do
+        validator = described_class.new([
+                                          { 'handle' => 'slot1', 'default' => true },
+                                          { 'handle' => 'slot2', 'default' => true }
+                                        ])
+        expect(validator.valid?).to be false
+        expect(validator.errors).to include('only one slot can be marked as default')
+      end
+    end
+
+    context 'when one slot is marked as default' do
+      it 'is valid' do
+        validator = described_class.new([
+                                          { 'handle' => 'slot1', 'default' => true },
+                                          { 'handle' => 'slot2', 'default' => false },
+                                          { 'handle' => 'slot3' }
+                                        ])
+        expect(validator.valid?).to be true
+        expect(validator.errors).to be_empty
+      end
+    end
   end
 end
