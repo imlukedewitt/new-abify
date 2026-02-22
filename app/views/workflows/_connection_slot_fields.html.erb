@@ -1,10 +1,8 @@
 <%# Connection slots fields partial %>
 <% connection_slots = form.object.connection_slots.presence || [{}] %>
-
 <div class="form-control">
   <h3 class="text-lg font-semibold mb-2">Connection Slots (Optional)</h3>
-  <p class="text-sm opacity-70 mb-4">Define abstract connection slots with descriptive labels instead of selecting specific connections. Leave empty if not needed.</p>
-
+  <%= render 'shared/connection_slot_explanation' %>
   <% connection_slots.each_with_index do |slot, index| %>
     <div class="border border-base-300 rounded p-4 mb-4">
       <div class="grid grid-cols-2 gap-4">
@@ -31,7 +29,6 @@
             </div>
           <% end %>
         </div>
-
         <div class="form-control">
           <%= form.label "connection_slots][#{index}][description", "Description (optional)", class: "label" %>
           <%= form.text_field "connection_slots][#{index}][description",
@@ -40,7 +37,6 @@
                 placeholder: "Slot description" %>
         </div>
       </div>
-
       <div class="form-control mt-4">
         <label class="label cursor-pointer justify-start gap-2">
           <%= form.check_box "connection_slots][#{index}][default",
