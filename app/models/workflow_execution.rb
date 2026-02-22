@@ -13,6 +13,7 @@ class WorkflowExecution < ApplicationRecord
 
   validates :workflow, presence: true
   validates :data_source, presence: true
+  validate :validate_connection_mappings
 
   def fail!(message = nil)
     update!(
@@ -20,5 +21,16 @@ class WorkflowExecution < ApplicationRecord
       completed_at: Time.current,
       error_message: message
     )
+  end
+
+  private
+
+  def validate_connection_mappings
+    return if connection_mappings.nil?
+
+    validator = ConnectionMappingsValidator.new(connection_mappings)
+    return if validator.valid?
+
+    validator.errors.each { |error| errors.add(:connection_mappings, error) }
   end
 end

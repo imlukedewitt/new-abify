@@ -23,6 +23,18 @@ FactoryBot.define do
       end
     end
 
+    trait :with_connection_mappings do
+      connection_mappings do
+        {
+          'primary_db' => {
+            'connection_id' => 1,
+            'connection_name' => 'Primary Database',
+            'connection_handle' => 'primary-db'
+          }
+        }
+      end
+    end
+
     factory :complete_workflow_execution, traits: [:with_rows]
   end
 end
