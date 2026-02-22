@@ -77,13 +77,15 @@ class WorkflowsController < ApplicationController
   private
 
   def workflow_params
-    params.require(:workflow)
-          .permit(
-            :name, :handle, :connection_id, :connection_handle,
-            config: {},
-            connection_slots: %i[handle description default],
-            steps_attributes: [:id, :name, { config: {} }]
-          )
+    permitted = params.require(:workflow)
+                      .permit(
+                        :name, :handle, :connection_id, :connection_handle,
+                        config: {},
+                        connection_slots: %i[handle description default],
+                        steps_attributes: [:id, :name, { config: {} }]
+                      )
+    permitted[:connection_slots] = ConnectionSlot::Normalizer.call(permitted[:connection_slots])
+    permitted
   end
 
   def respond_with_destroy_error

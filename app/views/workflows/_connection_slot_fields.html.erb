@@ -1,24 +1,27 @@
 <%# Connection slots fields partial %>
-<% connection_slots = form.object.connection_slots || [] %>
-<% if connection_slots.empty? %>
-  <%# Render at least one empty slot field %>
-  <% connection_slots = [{}] %>
-<% end %>
+<% connection_slots = form.object.connection_slots.presence || [{}] %>
+
 <div class="form-control">
-  <h3 class="text-lg font-semibold mb-2">Connection Slots</h3>
-  <p class="text-sm opacity-70 mb-4">Define abstract connection slots with descriptive labels instead of selecting specific connections.</p>
+  <h3 class="text-lg font-semibold mb-2">Connection Slots (Optional)</h3>
+  <p class="text-sm opacity-70 mb-4">Define abstract connection slots with descriptive labels instead of selecting specific connections. Leave empty if not needed.</p>
+
   <% connection_slots.each_with_index do |slot, index| %>
     <div class="border border-base-300 rounded p-4 mb-4">
       <div class="grid grid-cols-2 gap-4">
         <div class="form-control">
-          <%= form.label "connection_slots[#{index}][handle]", "Slot Handle", class: "label" %>
-          <%= form.text_field "connection_slots[#{index}][handle]",
+          <%#
+            Trick: We use "connection_slots][#{index}][handle" because the form builder
+            already wraps the name in "workflow[...]". Closing the bracket manually
+            ensures valid parameter nesting.
+          %>
+          <%= form.label "connection_slots][#{index}][handle", "Slot Handle", class: "label" %>
+          <%= form.text_field "connection_slots][#{index}][handle",
                 value: slot['handle'],
                 class: "input input-bordered w-full",
                 placeholder: "slot-handle",
-                required: true %>
+                required: index == 0 %>
           <label class="label">
-            <span class="label-text-alt opacity-70">Lowercase letters, numbers, hyphens, underscores. Must be unique within workflow.</span>
+            <span class="label-text-alt opacity-70">Lowercase letters, numbers, hyphens, underscores.</span>
           </label>
           <% if form.object.errors[:connection_slots].any? %>
             <div class="text-error text-sm mt-1">
@@ -28,17 +31,19 @@
             </div>
           <% end %>
         </div>
+
         <div class="form-control">
-          <%= form.label "connection_slots[#{index}][description]", "Description (optional)", class: "label" %>
-          <%= form.text_field "connection_slots[#{index}][description]",
+          <%= form.label "connection_slots][#{index}][description", "Description (optional)", class: "label" %>
+          <%= form.text_field "connection_slots][#{index}][description",
                 value: slot['description'],
                 class: "input input-bordered w-full",
                 placeholder: "Slot description" %>
         </div>
       </div>
+
       <div class="form-control mt-4">
         <label class="label cursor-pointer justify-start gap-2">
-          <%= form.check_box "connection_slots[#{index}][default]",
+          <%= form.check_box "connection_slots][#{index}][default",
                 checked: slot['default'] == true,
                 class: "checkbox" %>
           <span class="label-text">Set as default connection slot</span>
