@@ -48,7 +48,9 @@ class WorkflowExecutionsController < ApplicationController
 
     if @workflow_execution.save
       # TODO: Replace with proper background job (Sidekiq/ActiveJob)
+      user_id = Current.user&.id
       Thread.new do
+        Current.user = User.find(user_id) if user_id
         WorkflowExecutor.new(@workflow, @data_source, execution: @workflow_execution).call
       rescue StandardError => e
         Rails.logger.error "Workflow execution failed: #{e.message}"
