@@ -1,0 +1,7 @@
+<div class="container p-4">
+  <%= link_to "← Back to Workflows", workflows_path, class: "link link-accent text-xs mb-2" %>
+  <h1 class="text-2xl font-bold mb-4">Execute Workflow: <%= @workflow.name %></h1>
+  <div class="bg-base-200 p-6 rounded-lg shadow-sm">
+    <%= render "form" %>
+  </div>
+</div>

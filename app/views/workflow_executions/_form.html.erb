@@ -1,0 +1,26 @@
+<%= form_with model: @workflow_execution, class: "space-y-4" do |form| %>
+  <% if @workflow_execution.errors.any? %>
+    <div class="alert alert-error">
+      <ul>
+        <% @workflow_execution.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <%= hidden_field_tag :workflow_id, @workflow.id %>
+  <div class="form-control">
+    <%= label_tag :data_source_id, "Data Source", class: "label" %>
+    <%= select_tag :data_source_id, 
+                   options_from_collection_for_select(DataSource.all, :id, :name),
+                   class: "select select-bordered w-full" %>
+  </div>
+  <% if @workflow.connection_slots.present? %>
+    <hr class="my-6 border-base-300" />
+    <%= render partial: 'connection_mapping_fields', locals: { form: form, workflow: @workflow } %>
+  <% end %>
+  <div class="flex gap-2">
+    <%= form.submit "Execute Workflow", class: "btn btn-primary" %>
+    <%= link_to "Cancel", workflows_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>
