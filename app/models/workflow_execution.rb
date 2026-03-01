@@ -16,11 +16,19 @@ class WorkflowExecution < ApplicationRecord
   validate :validate_connection_mappings
 
   def fail!(message = nil)
-    update!(
-      status: Executable::FAILED,
-      completed_at: Time.current,
-      error_message: message
-    )
+    if persisted?
+      update_columns(
+        status: Executable::FAILED,
+        completed_at: Time.current,
+        error_message: message
+      )
+    else
+      assign_attributes(
+        status: Executable::FAILED,
+        completed_at: Time.current,
+        error_message: message
+      )
+    end
   end
 
   private

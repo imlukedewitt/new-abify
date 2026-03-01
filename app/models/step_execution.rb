@@ -27,11 +27,19 @@ class StepExecution < ApplicationRecord
 
   def fail!(error)
     errors = error.is_a?(Array) ? error : [error]
-    update!(
-      status: Executable::FAILED,
-      result: { success: false, errors: errors },
-      completed_at: Time.current
-    )
+    if persisted?
+      update_columns(
+        status: Executable::FAILED,
+        result: { success: false, errors: errors },
+        completed_at: Time.current
+      )
+    else
+      assign_attributes(
+        status: Executable::FAILED,
+        result: { success: false, errors: errors },
+        completed_at: Time.current
+      )
+    end
   end
 
   def skip!
