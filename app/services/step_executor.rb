@@ -11,7 +11,8 @@ class StepExecutor
   attr_reader :step, :row, :config, :execution
 
   def initialize(step, row, step_templates:,
-                 row_execution: nil, hydra_manager: HydraManager.instance, on_complete: nil, priority: false)
+                 row_execution: nil, hydra_manager: HydraManager.instance, on_complete: nil, priority: false,
+                 resolved_connections: {})
     raise ArgumentError, 'step is required' unless step
     raise ArgumentError, 'row is required' unless row
 
@@ -21,7 +22,9 @@ class StepExecutor
     @config = @step.step_config.with_indifferent_access
     @hydra_manager = hydra_manager
     @on_complete = on_complete
-    @auth_config = @step.resolved_auth_config
+    @resolved_connections = resolved_connections
+    @connection = resolve_connection
+    @auth_config = @connection&.credentials || @step.workflow&.resolved_auth_config || {}
     @priority = priority
     @execution = StepExecution.new(step: @step, row: @row, row_execution: @row_execution)
     @templates = step_templates.fetch(@step.id)
@@ -31,6 +34,14 @@ class StepExecutor
     return skip! if should_skip?
 
     @execution.start!
+
+    # We only fail early if using the new connection slot system
+    if @connection.nil? && @step.workflow.connection_slots.present?
+      error = 'No connection available'
+      Rails.logger.error "Row #{@row.source_index} step #{@step.order} failed: #{error}"
+      return @on_complete&.call(fail_response(error))
+    end
+
     queue_request
   end
 
@@ -43,6 +54,32 @@ class StepExecutor
   end
 
   private
+
+  def resolve_connection
+    # 1. Check for explicit slot reference in step config
+    # We look in liquid_templates because that's where the validator expects it
+    slot_handle = @config.dig(:liquid_templates, :connection_slot)
+    if slot_handle.present?
+      connection = @resolved_connections[slot_handle]
+      return connection if connection
+    end
+
+    # 2. Check for step-level connection override
+    return @step.connection if @step.connection.present?
+
+    # 3. Check for workflow-level default slot
+    default_slot = @step.workflow.connection_slots&.find { |s| s['default'] }
+    if default_slot
+      connection = @resolved_connections[default_slot['handle']]
+      return connection if connection
+    end
+
+    # 4. Fallback to workflow-level default connection
+    # If using connection slots, we bypass the old hardcoded connection
+    return nil if @step.workflow.connection_slots.present?
+
+    @step.workflow.connection
+  end
 
   def skip!
     @execution.skip!
@@ -86,8 +123,17 @@ class StepExecutor
   end
 
   def fail_response(error)
-    @execution.fail!(error)
-    { success: false, error: error }
+    slot_handle = @config.dig(:liquid_templates, :connection_slot)
+    slot_info = slot_handle ? "slot '#{slot_handle}'" : 'default slot'
+    connection_name = @connection&.name
+
+    context = "Connection #{slot_info}"
+    context += " ('#{connection_name}')" if connection_name
+
+    full_error = "#{context}: #{error}"
+
+    @execution.fail!(full_error)
+    { success: false, error: full_error }
   end
 
   def parse_json_response(body)
@@ -102,7 +148,8 @@ class StepExecutor
     @context ||= Liquid::ContextBuilder.new(
       row: @row,
       workflow: @step.workflow,
-      row_execution: @row_execution
+      row_execution: @row_execution,
+      connection: @connection
     ).build
   end
 end

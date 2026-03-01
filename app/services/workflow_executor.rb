@@ -20,12 +20,13 @@ class WorkflowExecutor
   end
 
   def call
-    @execution.start!
-    @step_templates = compile_step_templates
-    Rails.logger.info "\nStarting workflow execution for #{@workflow.name} at #{@execution.started_at}"
-
-    # Process rows in batches
     begin
+      @execution.start!
+      @resolved_connections = resolve_connections
+      @step_templates = compile_step_templates
+      Rails.logger.info "\nStarting workflow execution for #{@workflow.name} at #{@execution.started_at}"
+
+      # Process rows in batches
       process_batches
       @execution.complete!
     rescue StandardError => e
@@ -37,6 +38,17 @@ class WorkflowExecutor
   end
 
   private
+
+  def resolve_connections
+    resolver = ConnectionSlot::Resolver.new(
+      workflow: workflow,
+      connection_mappings: @execution.connection_mappings || {}
+    )
+    result = resolver.call
+    raise "Connection resolution failed: #{result[:errors].join(', ')}" if result[:errors].any?
+
+    result[:connections]
+  end
 
   def compile_step_templates
     workflow.steps.each_with_object({}) do |step, hash|
@@ -63,14 +75,14 @@ class WorkflowExecutor
     sorted_keys = row_groups.keys.sort_by(&:to_s) # (lexicographic, blank first)
 
     sorted_keys.each do |group_key|
-      create_and_process_batch(row_groups[group_key], "parallel")
+      create_and_process_batch(row_groups[group_key], 'parallel')
     end
   end
 
   def group_rows_by_key(rows)
     rows.group_by do |row|
       context = context_for_row(row)
-      @templates.group_key(context) || ""
+      @templates.group_key(context) || ''
     end
   end
 
@@ -79,7 +91,7 @@ class WorkflowExecutor
   end
 
   def process_single_batch(rows)
-    create_and_process_batch(rows, "parallel")
+    create_and_process_batch(rows, 'parallel')
   end
 
   def create_and_process_batch(rows, processing_mode)
@@ -101,7 +113,8 @@ class WorkflowExecutor
       workflow: workflow,
       workflow_execution: @execution,
       rows: rows,
-      step_templates: @step_templates
+      step_templates: @step_templates,
+      resolved_connections: @resolved_connections
     ).call
   end
 end

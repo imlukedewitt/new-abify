@@ -5,7 +5,7 @@
 class RowExecutor
   attr_reader :row, :workflow, :workflow_execution
 
-  def initialize(row:, workflow:, workflow_execution:, step_templates: nil)
+  def initialize(row:, workflow:, workflow_execution:, step_templates: nil, resolved_connections: {})
     raise ArgumentError, 'row is required' if row.nil?
     raise ArgumentError, 'workflow is required' if workflow.nil?
     raise ArgumentError, 'workflow_execution is required' if workflow_execution.nil?
@@ -14,6 +14,7 @@ class RowExecutor
     @workflow = workflow
     @workflow_execution = workflow_execution
     @step_templates = step_templates
+    @resolved_connections = resolved_connections
     @ordered_steps = workflow.steps.sort_by(&:order)
     @current_step_index = 0
     @completion_semaphore = Thread::ConditionVariable.new
@@ -58,7 +59,8 @@ class RowExecutor
       hydra_manager: HydraManager.instance,
       on_complete: method(:handle_step_completion),
       priority: execution.processing?,
-      step_templates: @step_templates
+      step_templates: @step_templates,
+      resolved_connections: @resolved_connections
     )
 
     if @current_step_executor.should_skip?
