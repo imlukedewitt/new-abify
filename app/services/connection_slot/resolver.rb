@@ -24,6 +24,12 @@ module ConnectionSlot
     # @return [Hash] { connections: { handle => Connection }, errors: [String] }
     def call
       Rails.logger.info "Resolving connection slots for Workflow #{workflow.id}"
+
+      unless connection_mappings.is_a?(Hash)
+        errors << 'Mappings must be a hash'
+        return { connections: {}, errors: errors }
+      end
+
       validate_mappings
       resolve_connections
 
@@ -47,9 +53,11 @@ module ConnectionSlot
 
       # Check for missing mappings for workflow slots
       workflow_handles.each do |handle|
-        next if connection_mappings.key?(handle)
-
-        errors << "Missing mapping for slot '#{handle}'"
+        # Consider it missing if the key doesn't exist OR if connection_id is blank
+        if !connection_mappings.key?(handle) ||
+           (connection_mappings[handle].is_a?(Hash) && connection_mappings[handle]['connection_id'].blank?)
+          errors << "Missing mapping for slot '#{handle}'"
+        end
       end
 
       # Check for mappings that don't exist in the workflow
@@ -61,13 +69,15 @@ module ConnectionSlot
     end
 
     def resolve_connections
-      workflow_handles = workflow.connection_slots&.map { |s| s['handle'] } || []
+      # workflow.connection_slots&.map { |s| s['handle'] } || []
 
-      connection_ids = connection_mappings.values.map { |m| m['connection_id'] }.compact
+      connection_ids = connection_mappings.values.map { |m| m['connection_id'] }.compact_blank
       db_connections = Connection.where(user: Current.user, id: connection_ids).index_by(&:id)
 
       connection_mappings.each do |handle, metadata|
         connection_id = metadata['connection_id']
+        next if connection_id.blank? # Already handled in validate_mappings
+
         connection = db_connections[connection_id.to_i]
 
         if connection.nil?
