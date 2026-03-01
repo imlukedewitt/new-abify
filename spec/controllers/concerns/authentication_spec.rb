@@ -11,8 +11,9 @@ RSpec.describe Authentication, type: :controller do
 
   before do
     routes.draw { get 'index' => 'anonymous#index' }
-    # Clear the auto-set auth header so we can test auth logic manually
+    # Clear the auto-set auth header and force strict auth for testing the concern itself
     request.headers['Authorization'] = nil
+    request.headers['X-Strict-Auth'] = 'true'
   end
 
   describe '#authenticate' do

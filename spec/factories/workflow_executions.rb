@@ -24,12 +24,16 @@ FactoryBot.define do
     end
 
     trait :with_connection_mappings do
+      workflow do
+        association :workflow, connection_slots: [{ 'handle' => 'primary_db', 'description' => 'Primary Database' }]
+      end
       connection_mappings do
+        conn = create(:connection, user: Current.user || User.last || create(:user), name: 'Primary Database')
         {
           'primary_db' => {
-            'connection_id' => 1,
-            'connection_name' => 'Primary Database',
-            'connection_handle' => 'primary-db'
+            'connection_id' => conn.id.to_s,
+            'connection_name' => conn.name,
+            'connection_handle' => conn.handle
           }
         }
       end
