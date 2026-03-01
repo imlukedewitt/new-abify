@@ -26,6 +26,18 @@ class WorkflowExecution < ApplicationRecord
   private
 
   def validate_connection_mappings
+    return if workflow.nil?
+
+    # Use Resolver to check for missing slots and ownership
+    resolver = ConnectionSlot::Resolver.new(
+      workflow: workflow,
+      connection_mappings: connection_mappings || {}
+    )
+    resolution = resolver.call
+
+    resolution[:errors].each { |error| errors.add(:connection_mappings, error) } if resolution[:errors].any?
+
+    # Also check structure of what is there
     return if connection_mappings.nil?
 
     validator = ConnectionMappingsValidator.new(connection_mappings)
