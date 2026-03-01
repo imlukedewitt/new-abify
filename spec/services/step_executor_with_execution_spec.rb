@@ -49,7 +49,7 @@ RSpec.describe StepExecutor, type: :service do
       end
 
       it 'marks execution as failed when API returns error' do
-        expect(processor.execution).to receive(:fail!).with(["Not found"])
+        expect(processor.execution).to receive(:fail!).with(a_string_including('["Not found"]'))
 
         expect(hydra_manager).to receive(:queue) do |args|
           args[:on_complete].call(failure_response)

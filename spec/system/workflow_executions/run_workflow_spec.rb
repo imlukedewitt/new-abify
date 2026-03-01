@@ -7,7 +7,25 @@ RSpec.describe 'Run Workflow', type: :system do
   let!(:workflow) do
     create(:workflow, name: 'Sync Customers', connection_slots: [
              { 'handle' => 'crm', 'description' => 'Your primary CRM instance' }
-           ])
+           ]).tap do |w|
+      create(:step, workflow: w, config: {
+               'liquid_templates' => {
+                 'name' => 'Sync Step',
+                 'url' => 'https://api.example.com/sync',
+                 'method' => 'post',
+                 'connection_slot' => 'crm'
+               }
+             })
+    end
+  end
+
+  before do
+    # Stub HydraManager to prevent actual HTTP
+    allow(HydraManager.instance).to receive(:queue) do |**args|
+      response = double('Response', code: 200, body: '{"success": true}')
+      args[:on_complete]&.call(response)
+    end
+    allow(HydraManager.instance).to receive(:run)
   end
 
   before do
@@ -43,6 +61,16 @@ RSpec.describe 'Run Workflow', type: :system do
     expect(execution.data_source).to eq(data_source)
     expect(execution.connection_mappings['crm']['connection_id']).to eq(connection.id.to_s)
     expect(execution.connection_mappings['crm']['connection_name']).to eq('Main CRM')
+
+    # Wait for execution to finish
+    max_wait = 50
+    while execution.status == 'pending' && max_wait > 0
+      sleep 0.1
+      execution.reload
+      max_wait -= 1
+    end
+
+    expect(execution.status).to eq('complete')
   end
 
   it 'shows validation errors when required mappings are missing' do

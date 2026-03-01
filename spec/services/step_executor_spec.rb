@@ -3,13 +3,18 @@
 require 'rails_helper'
 
 RSpec.describe StepExecutor do
-  let(:workflow) { create(:workflow) }
+  let(:user) { create(:user) }
+  let(:connection) { create(:connection, user: user) }
+  let(:workflow) { create(:workflow, connection: connection) }
   let(:step) { create(:step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:step_templates) { build_step_templates_for(step) }
-  let(:hydra_manager) { instance_double(HydraManager) }
+  let(:hydra_manager) { spy(HydraManager) }
 
-  before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
+  before do
+    Current.user = user
+    allow(HydraManager).to receive(:instance).and_return(hydra_manager)
+  end
 
   def step_with_config(liquid_templates)
     step.update(config: { 'liquid_templates' => liquid_templates })
@@ -107,7 +112,7 @@ RSpec.describe StepExecutor do
       processor.call
 
       expect(callback_spy).to have_received(:call)
-        .with(success: false, error: 'Request failed with status 404')
+        .with(success: false, error: "Connection default slot ('My Test Connection'): Request failed with status 404")
     end
 
     it 'handles invalid JSON responses' do
@@ -123,7 +128,7 @@ RSpec.describe StepExecutor do
       processor.call
 
       expect(callback_spy).to have_received(:call)
-        .with(success: false, error: 'Invalid JSON response')
+        .with(success: false, error: "Connection default slot ('My Test Connection'): Invalid JSON response")
     end
 
     it 'handles nil on_complete gracefully' do
@@ -188,6 +193,67 @@ RSpec.describe StepExecutor do
       end
 
       described_class.new(step_with_connection, row, step_templates: templates).call
+    end
+
+    it 'uses connection from resolved_connections when connection_slot is specified' do
+      user = create(:user)
+      connection = create(:connection, user: user, subdomain: 'acme', domain: 'api.io',
+                                       credentials: { 'token' => 'abc' })
+      workflow_with_slots = create(:workflow, connection_slots: [{ 'handle' => 'primary', 'description' => '...' }])
+      step_with_slot = create(:step, workflow: workflow_with_slots, config: {
+                                'liquid_templates' => {
+                                  'name' => 'Slot Test',
+                                  'url' => '{{base_url}}/test',
+                                  'method' => 'get',
+                                  'connection_slot' => 'primary'
+                                }
+                              })
+      templates = build_step_templates_for(step_with_slot)
+      resolved_connections = { 'primary' => connection }
+
+      expect(hydra_manager).to receive(:queue) do |args|
+        expect(args[:url]).to eq('https://acme.api.io/test')
+        expect(args[:auth_config]).to eq({ 'token' => 'abc' })
+      end
+
+      processor = described_class.new(step_with_slot, row,
+                                      step_templates: templates,
+                                      resolved_connections: resolved_connections)
+      processor.call
+    end
+
+    it 'includes slot info and connection name in failure messages' do
+      user = create(:user)
+      connection = create(:connection, user: user, name: 'Target CRM')
+      workflow = create(:workflow, connection_slots: [
+                          { 'handle' => 'primary', 'description' => 'Primary slot', 'default' => true }
+                        ])
+      step = create(:step, workflow: workflow, config: {
+                      'liquid_templates' => {
+                        'name' => 'Fail Step',
+                        'url' => 'https://api.example.com/fail',
+                        'method' => 'get',
+                        'connection_slot' => 'primary'
+                      }
+                    })
+      templates = build_step_templates_for(step)
+      resolved_connections = { 'primary' => connection }
+
+      # Mock a timeout/failure
+      allow(hydra_manager).to receive(:queue) do |**args|
+        args[:on_complete]&.call(nil) # No response = timeout
+      end
+
+      callback_spy = spy('callback')
+      executor = described_class.new(step, row, step_templates: templates,
+                                                resolved_connections: resolved_connections,
+                                                on_complete: callback_spy)
+      executor.call
+
+      expect(callback_spy).to have_received(:call) do |result|
+        expect(result[:success]).to be false
+        expect(result[:error]).to include("Connection slot 'primary' ('Target CRM'): No response received")
+      end
     end
 
     it 'renders Liquid templates with row data' do

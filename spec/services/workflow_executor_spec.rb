@@ -201,6 +201,69 @@ RSpec.describe WorkflowExecutor do
       end
     end
 
+    context 'with connection slots' do
+      let(:user) { create(:user) }
+      let(:connection) { create(:connection, user: user, name: 'Main CRM', credentials: { 'api_key' => 'secret' }) }
+      let(:workflow) do
+        create(:workflow, connection_slots: [
+                 { 'handle' => 'crm', 'description' => 'CRM slot', 'default' => true }
+               ])
+      end
+      let(:workflow_execution) do
+        create(:workflow_execution,
+               workflow: workflow,
+               data_source: data_source,
+               connection_mappings: {
+                 'crm' => {
+                   'connection_id' => connection.id.to_s,
+                   'connection_name' => connection.name,
+                   'connection_handle' => connection.handle
+                 }
+               })
+      end
+
+      before do
+        Current.user = user
+        create(:row, data_source: data_source)
+        allow(HydraManager.instance).to receive(:queue) do |**args|
+          @captured_auth_config = args[:auth_config]
+          response = double('Response', code: 200, body: '{"id": "123"}')
+          args[:on_complete]&.call(response)
+        end
+      end
+
+      it 'resolves connections and passes them through to StepExecutor' do
+        create(:step, workflow: workflow, config: {
+                 'liquid_templates' => {
+                   'name' => 'Test Step',
+                   'url' => 'https://api.example.com/test',
+                   'method' => 'get',
+                   'connection_slot' => 'crm'
+                 }
+               })
+        workflow.reload
+
+        executor = described_class.new(workflow, data_source, execution: workflow_execution)
+        executor.call
+
+        expect(@captured_auth_config).to eq({ 'api_key' => 'secret' })
+        expect(workflow_execution.status).to eq('complete')
+      end
+
+      it 'fails if connection resolution fails' do
+        # Tamper with mapping to make it invalid
+        workflow_execution.update_columns(connection_mappings: { 'crm' => { 'connection_id' => '999',
+                                                                            'connection_name' => 'Non-existent', 'connection_handle' => 'none' } })
+
+        executor = described_class.new(workflow, data_source, execution: workflow_execution)
+
+        # It fails during start! because of validation
+        expect { executor.call }.to raise_error(ActiveRecord::RecordInvalid, /Connection for slot 'crm' not found/)
+        expect(workflow_execution.reload.status).to eq('failed')
+        expect(workflow_execution.error_message).to include('Connection for slot')
+      end
+    end
+
     context 'with nil category values' do
       let(:workflow) do
         create(:workflow, config: { 'liquid_templates' => { 'group_by' => '{{row.category}}' } })
