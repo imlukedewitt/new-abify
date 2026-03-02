@@ -1,0 +1,76 @@
+{
+"workflow_version": "1.2.0",
+"timestamps": {"started": "Sun Mar 01 2026", "last_updated": "Sun Mar 01 2026"},
+"mode": "initial_scan",
+"scan_level": "quick",
+"project_root": "/Users/luke/development/new-abify",
+"output_folder": "/Users/luke/development/new-abify/docs",
+"completed_steps": [
+    {"step": "step_1", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Classified as monolith with 1 part"},
+    {"step": "step_2", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Found 2 existing docs"},
+    {"step": "step_3", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Tech stack: Ruby on Rails Backend"},
+    {"step": "step_4", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Conditional analysis complete, 0 files written"},
+    {"step": "step_5", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Source tree documented"},
+    {"step": "step_6", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Dev/deployment guides written"},
+    {"step": "step_8", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Architecture docs written for 1 part"},
+    {"step": "step_9", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "All supporting docs written"},
+    {"step": "step_10", "status": "completed", "timestamp": "Sun Mar 01 2026", "summary": "Master index generated"}
+],
+"current_step": "step_11",
+"findings": {
+    "project_classification": {"repository_type": "monolith", "parts_count": 1, "primary_tech": "Ruby on Rails Backend"},
+    "existing_documentation_inventory": {
+        "README.md": {"type": "readme", "part": "main"},
+        "docs/auth_config.md": {"type": "documentation", "part": "main"}
+    },
+    "user_provided_context": "no i havent really put any time into docs before now",
+    "technology_stack": {
+        "main": {
+            "language": "Ruby",
+            "framework": "Ruby on Rails",
+            "database": "Relational DB",
+            "orchestration": "Docker / Docker Compose"
+        }
+    },
+    "architecture_patterns": {
+        "main": "Monolithic Web Application (MVC-based)"
+    },
+    "conditional_analysis": {
+        "main": {
+            "api_contracts_summary": "API endpoints in config/routes.rb, handled by app/controllers/. Service layer in app/services/.",
+            "data_models_summary": "Data models defined in app/models/, managed by db/migrate/.",
+            "config_management_summary": "Config files in config/, environment variables in .env (e.g., .posting/.env).",
+            "auth_security_summary": "Authentication concerns handled in app/controllers/concerns/authentication.rb.",
+            "entry_points_summary": "Primary entry point: config.ru, app/ (Rails convention).",
+            "shared_code_summary": "Shared code and utilities likely in lib/.",
+            "async_event_summary": "No explicit event-driven architecture patterns found.",
+            "ci_cd_summary": "Dockerfile, docker-compose.yml for containerization. No explicit CI/CD config files found.",
+            "protocol_schema_summary": "No explicit protocol schema definitions found."
+        }
+    },
+    "development_operational_info": {
+        "main": {
+            "development_setup_summary": "Prerequisites: Ruby, Bundler. Installation: bundle install. Environment: config/ files, .env files. Build/Tasks: rake commands. Run: rails server. Tests: rspec.",
+            "deployment_config_summary": "Containerization: Dockerfile, docker-compose.yml. No explicit CI/CD or IaC identified.",
+            "contribution_guidelines_summary": "No explicit contribution guidelines file found."
+        }
+    }
+},
+"project_types": [
+    {"part_id": "main", "project_type_id": "backend", "display_name": "Backend"}
+],
+"outputs_generated": [
+    "project-scan-report.json",
+    "source-tree-analysis.md",
+    "architecture.md",
+    "project-overview.md",
+    "component-inventory-main.md",
+    "development-guide-main.md",
+    "deployment-guide.md",
+    "contribution-guide.md",
+    "api-contracts-main.md",
+    "data-models-main.md",
+    "index.md"
+],
+"resume_instructions": "Starting from step 11"
+}
