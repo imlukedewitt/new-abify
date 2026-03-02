@@ -8,7 +8,7 @@ RSpec.describe 'WorkflowExecutions API', :request, :integration, :vcr do
     let(:valid_csv) { fixture_file_upload('simple.csv', 'text/csv') }
     let(:invalid_csv) { fixture_file_upload('malformed.csv', 'text/csv') }
     let!(:step1) do
-      create(:step, workflow: valid_workflow, order: 1, config: {
+      create(:step, workflow: valid_workflow, position: 1, config: {
                'liquid_templates' => {
                  'name' => 'Get Post',
                  'url' => 'https://jsonplaceholder.typicode.com/posts/{{row.source_index}}',

@@ -95,7 +95,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_22_202739) do
     t.datetime "updated_at", null: false
     t.integer "workflow_id", null: false
     t.json "config"
-    t.integer "order"
+    t.integer "position"
     t.string "name"
     t.index ["workflow_id"], name: "index_steps_on_workflow_id"
   end

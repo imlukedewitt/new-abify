@@ -5,7 +5,7 @@ FactoryBot.define do
     workflow
 
     sequence(:name) { |n| "Step #{n}" }
-    sequence(:order) { |n| n }
+    sequence(:position) { |n| n }
     config do
       {
         'liquid_templates' => {

@@ -7,7 +7,7 @@ RSpec.describe RowExecutor, :integration, :vcr do
   let(:data_source) { create(:data_source) }
   let(:workflow_execution) { create(:workflow_execution, workflow: workflow, data_source: data_source) }
   let(:step) do
-    create(:step, workflow: workflow, order: 1, config: {
+    create(:step, workflow: workflow, position: 1, config: {
              'liquid_templates' => {
                'name' => 'Get Post',
                'url' => 'https://jsonplaceholder.typicode.com/posts/1',
@@ -41,7 +41,7 @@ RSpec.describe RowExecutor, :integration, :vcr do
     step
 
     # Create second step that uses data from first step
-    step2 = create(:step, workflow: workflow, order: 2, config: {
+    step2 = create(:step, workflow: workflow, position: 2, config: {
                      'liquid_templates' => {
                        'name' => 'Get User',
                        'url' => 'https://jsonplaceholder.typicode.com/users/{{row.userId}}',
@@ -73,7 +73,7 @@ RSpec.describe RowExecutor, :integration, :vcr do
   end
 
   it 'handles a failed non-required step gracefully', vcr: { cassette_name: 'jsonplaceholder/not_found' } do
-    create(:step, workflow: workflow, order: 1, config: {
+    create(:step, workflow: workflow, position: 1, config: {
              'liquid_templates' => {
                'name' => 'Test 404',
                'url' => 'https://jsonplaceholder.typicode.com/nonexistent',

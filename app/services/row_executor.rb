@@ -15,7 +15,7 @@ class RowExecutor
     @workflow_execution = workflow_execution
     @step_templates = step_templates
     @resolved_connections = resolved_connections
-    @ordered_steps = workflow.steps.sort_by(&:order)
+    @ordered_steps = workflow.steps.sort_by(&:position)
     @current_step_index = 0
     @completion_semaphore = Thread::ConditionVariable.new
     @completion_mutex = Thread::Mutex.new

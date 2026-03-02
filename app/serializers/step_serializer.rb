@@ -14,7 +14,7 @@ class StepSerializer
     {
       id: @step.id,
       name: @step.name,
-      order: @step.order
+      position: @step.position
     }
   end
 end

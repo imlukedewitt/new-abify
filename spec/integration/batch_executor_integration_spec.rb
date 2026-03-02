@@ -6,7 +6,7 @@ RSpec.describe BatchExecutor, :integration, :vcr do
   let(:workflow) { create(:workflow) }
 
   let!(:step1) do
-    create(:step, workflow: workflow, order: 1, config: {
+    create(:step, workflow: workflow, position: 1, config: {
              'liquid_templates' => {
                'name' => 'Get Post',
                'url' => 'https://jsonplaceholder.typicode.com/posts/{{row.source_row_index}}',
@@ -21,7 +21,7 @@ RSpec.describe BatchExecutor, :integration, :vcr do
   end
 
   let!(:step2) do
-    create(:step, workflow: workflow, order: 2, config: {
+    create(:step, workflow: workflow, position: 2, config: {
              'liquid_templates' => {
                'name' => 'Get User',
                'url' => 'https://jsonplaceholder.typicode.com/users/{{row.post_id}}',
@@ -80,7 +80,7 @@ RSpec.describe BatchExecutor, :integration, :vcr do
 
     it 'handles failures in the batch' do
       workflow.steps.destroy_all
-      create(:step, workflow: workflow, order: 1, config: {
+      create(:step, workflow: workflow, position: 1, config: {
                'liquid_templates' => {
                  'name' => 'Test 404',
                  'url' => 'https://jsonplaceholder.typicode.com/nonexistent',
@@ -114,7 +114,7 @@ RSpec.describe BatchExecutor, :integration, :vcr do
 
     it 'processes a mix of successful and failed steps' do
       workflow.steps.where.not(id: step1.id).destroy_all
-      create(:step, workflow: workflow, order: 2, config: {
+      create(:step, workflow: workflow, position: 2, config: {
                'liquid_templates' => {
                  'name' => 'Test 404',
                  'url' => 'https://jsonplaceholder.typicode.com/nonexistent',

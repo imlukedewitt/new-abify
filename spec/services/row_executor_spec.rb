@@ -65,7 +65,7 @@ RSpec.describe RowExecutor do
 
     context 'with one step' do
       before do
-        create(:step, workflow: workflow, order: 1, config: {
+        create(:step, workflow: workflow, position: 1, config: {
                  'liquid_templates' => {
                    'name' => 'Test Step',
                    'url' => 'https://api.example.com/test',
@@ -88,10 +88,10 @@ RSpec.describe RowExecutor do
 
     context 'with multiple steps' do
       before do
-        create(:step, workflow: workflow, order: 1, name: 'First', config: {
+        create(:step, workflow: workflow, position: 1, name: 'First', config: {
                  'liquid_templates' => { 'name' => 'First', 'url' => 'https://api.example.com/first', 'method' => 'get' }
                })
-        create(:step, workflow: workflow, order: 2, name: 'Second', config: {
+        create(:step, workflow: workflow, position: 2, name: 'Second', config: {
                  'liquid_templates' => { 'name' => 'Second', 'url' => 'https://api.example.com/second', 'method' => 'get' }
                })
         workflow.reload
@@ -105,14 +105,14 @@ RSpec.describe RowExecutor do
         expect(StepExecution.count).to eq(2)
         expect(RowExecution.first.status).to eq('complete')
 
-        steps = StepExecution.joins(:step).order('steps."order"')
+        steps = StepExecution.joins(:step).order('steps.position')
         expect(steps.map { |se| se.step.name }).to eq(%w[First Second])
       end
     end
 
     context 'when a step should be skipped' do
       before do
-        create(:step, workflow: workflow, order: 1, name: 'Skippable', config: {
+        create(:step, workflow: workflow, position: 1, name: 'Skippable', config: {
                  'liquid_templates' => {
                    'name' => 'Skippable',
                    'url' => 'https://api.example.com/test',
@@ -151,7 +151,7 @@ RSpec.describe RowExecutor do
           args[:on_complete]&.call(response)
         end
 
-        create(:step, workflow: workflow, order: 1, name: 'Required Step', config: {
+        create(:step, workflow: workflow, position: 1, name: 'Required Step', config: {
                  'liquid_templates' => {
                    'name' => 'Required Step',
                    'url' => 'https://api.example.com/test',
@@ -159,7 +159,7 @@ RSpec.describe RowExecutor do
                    'required' => 'true'
                  }
                })
-        create(:step, workflow: workflow, order: 2, name: 'After Required', config: {
+        create(:step, workflow: workflow, position: 2, name: 'After Required', config: {
                  'liquid_templates' => { 'name' => 'After Required', 'url' => 'https://api.example.com/second', 'method' => 'get' }
                })
         workflow.reload
@@ -182,7 +182,7 @@ RSpec.describe RowExecutor do
           args[:on_complete]&.call(response)
         end
 
-        create(:step, workflow: workflow, order: 1, name: 'Optional Step', config: {
+        create(:step, workflow: workflow, position: 1, name: 'Optional Step', config: {
                  'liquid_templates' => {
                    'name' => 'Optional Step',
                    'url' => 'https://api.example.com/test',

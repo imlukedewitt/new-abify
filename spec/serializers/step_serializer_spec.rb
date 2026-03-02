@@ -12,7 +12,7 @@ RSpec.describe StepSerializer do
       {
         id: step.id,
         name: step.name,
-        order: step.order
+        position: step.position
       }
     )
   end

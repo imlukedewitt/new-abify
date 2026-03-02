@@ -43,7 +43,7 @@ class RowExecution < ApplicationRecord
     step_executions
       .where(status: 'success')
       .joins(:step)
-      .order(Arel.sql('steps."order"'))
+      .order('steps.position')
       .each_with_object({}) do |step_exec, merged|
         merged.merge!(step_exec.result&.dig('data') || {})
       end

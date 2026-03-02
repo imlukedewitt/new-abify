@@ -37,7 +37,7 @@ class StepExecutor
     # We only fail early if using the new connection slot system
     if @connection.nil? && @step.workflow.connection_slots.present?
       error = 'No connection available'
-      Rails.logger.error "Row #{@row.source_index} step #{@step.order} failed: #{error}"
+      Rails.logger.error "Row #{@row.source_index} step #{@step.position} failed: #{error}"
       return @on_complete&.call(fail_response(error))
     end
 
@@ -63,12 +63,12 @@ class StepExecutor
 
   def skip!
     @execution.skip!
-    Rails.logger.info "skipping row #{@row.source_index} step #{@step.order}"
+    Rails.logger.info "skipping row #{@row.source_index} step #{@step.position}"
   end
 
   def queue_request
     request_fields = @templates.render_request(context)
-    Rails.logger.info "Queueing request for row #{@row.source_index} step #{@step.order}:"
+    Rails.logger.info "Queueing request for row #{@row.source_index} step #{@step.position}:"
     Rails.logger.info "  #{request_fields}"
 
     @hydra_manager.queue(

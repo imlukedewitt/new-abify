@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "rails_helper"
+require 'rails_helper'
 
 RSpec.describe BatchExecutor do
   let(:workflow) { create(:workflow) }
@@ -9,7 +9,7 @@ RSpec.describe BatchExecutor do
   let(:batch) { create(:batch, workflow_execution: workflow_execution) }
 
   before do
-    create(:step, workflow: workflow, order: 1, config: {
+    create(:step, workflow: workflow, position: 1, config: {
              'liquid_templates' => {
                'name' => 'Test Step',
                'url' => 'https://api.example.com/test',
@@ -26,8 +26,8 @@ RSpec.describe BatchExecutor do
     allow(HydraManager.instance).to receive(:run)
   end
 
-  describe "#initialize" do
-    it "creates a new instance with required attributes" do
+  describe '#initialize' do
+    it 'creates a new instance with required attributes' do
       executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
 
       expect(executor.batch).to eq(batch)
@@ -35,7 +35,7 @@ RSpec.describe BatchExecutor do
       expect(executor.workflow_execution).to eq(workflow_execution)
     end
 
-    it "creates a BatchExecution" do
+    it 'creates a BatchExecution' do
       executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
 
       expect(executor.execution).to be_a(BatchExecution)
@@ -43,29 +43,29 @@ RSpec.describe BatchExecutor do
       expect(executor.execution.workflow).to eq(workflow)
     end
 
-    it "raises ArgumentError when batch is nil" do
+    it 'raises ArgumentError when batch is nil' do
       expect { described_class.new(batch: nil, workflow: workflow, workflow_execution: workflow_execution) }
-        .to raise_error(ArgumentError, "batch is required")
+        .to raise_error(ArgumentError, 'batch is required')
     end
 
-    it "raises ArgumentError when workflow is nil" do
+    it 'raises ArgumentError when workflow is nil' do
       expect { described_class.new(batch: batch, workflow: nil, workflow_execution: workflow_execution) }
-        .to raise_error(ArgumentError, "workflow is required")
+        .to raise_error(ArgumentError, 'workflow is required')
     end
 
-    it "raises ArgumentError when workflow_execution is nil" do
+    it 'raises ArgumentError when workflow_execution is nil' do
       expect { described_class.new(batch: batch, workflow: workflow, workflow_execution: nil) }
-        .to raise_error(ArgumentError, "workflow_execution is required")
+        .to raise_error(ArgumentError, 'workflow_execution is required')
     end
   end
 
-  describe "#call" do
-    context "with rows in the batch" do
+  describe '#call' do
+    context 'with rows in the batch' do
       before do
         create_list(:row, 3, batch: batch, data_source: data_source)
       end
 
-      it "creates RowExecutions for each row" do
+      it 'creates RowExecutions for each row' do
         step_templates = build_step_templates(workflow)
         described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
                             step_templates: step_templates).call
@@ -74,7 +74,7 @@ RSpec.describe BatchExecutor do
         expect(RowExecution.pluck(:status).uniq).to eq(['complete'])
       end
 
-      it "starts and completes the batch execution" do
+      it 'starts and completes the batch execution' do
         step_templates = build_step_templates(workflow)
         executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
                                        step_templates: step_templates)
@@ -86,13 +86,13 @@ RSpec.describe BatchExecutor do
       end
     end
 
-    context "sequential processing mode" do
+    context 'sequential processing mode' do
       before do
         batch.update!(processing_mode: 'sequential')
         create_list(:row, 3, batch: batch, data_source: data_source)
       end
 
-      it "calls HydraManager.run once per row" do
+      it 'calls HydraManager.run once per row' do
         run_count = 0
         allow(HydraManager.instance).to receive(:run) { run_count += 1 }
         step_templates = build_step_templates(workflow)
@@ -104,13 +104,13 @@ RSpec.describe BatchExecutor do
       end
     end
 
-    context "parallel processing mode" do
+    context 'parallel processing mode' do
       before do
         batch.update!(processing_mode: 'parallel')
         create_list(:row, 3, batch: batch, data_source: data_source)
       end
 
-      it "calls HydraManager.run once for all rows" do
+      it 'calls HydraManager.run once for all rows' do
         run_count = 0
         allow(HydraManager.instance).to receive(:run) { run_count += 1 }
         step_templates = build_step_templates(workflow)
@@ -122,8 +122,8 @@ RSpec.describe BatchExecutor do
       end
     end
 
-    context "with no rows" do
-      it "completes without creating any RowExecutions" do
+    context 'with no rows' do
+      it 'completes without creating any RowExecutions' do
         step_templates = build_step_templates(workflow)
         executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution,
                                        step_templates: step_templates)
@@ -135,8 +135,8 @@ RSpec.describe BatchExecutor do
     end
   end
 
-  describe "#check_completion" do
-    it "delegates to the batch execution" do
+  describe '#check_completion' do
+    it 'delegates to the batch execution' do
       executor = described_class.new(batch: batch, workflow: workflow, workflow_execution: workflow_execution)
 
       expect(executor.execution).to receive(:check_completion).and_return(true)

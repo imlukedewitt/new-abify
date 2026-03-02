@@ -10,7 +10,7 @@ RSpec.describe 'Workflow Execution Logs', type: :system do
     create(:workflow, name: 'Sync Lead to CRM', connection_slots: [
              { 'handle' => 'crm_slot', 'description' => 'Your primary CRM instance' }
            ]).tap do |w|
-      create(:step, workflow: w, order: 1, name: 'Create Record', config: {
+      create(:step, workflow: w, position: 1, name: 'Create Record', config: {
                'liquid_templates' => {
                  'name' => 'Create CRM Record',
                  'url' => 'https://api.crm.com/leads',

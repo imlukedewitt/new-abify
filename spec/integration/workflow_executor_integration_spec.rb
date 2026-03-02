@@ -7,7 +7,7 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
     context 'when processing a simple workflow without grouping' do
       let!(:simple_workflow) { create(:workflow, name: 'Simple Post Fetcher Workflow') }
       let!(:simple_step) do
-        create(:step, workflow: simple_workflow, order: 1, config: {
+        create(:step, workflow: simple_workflow, position: 1, config: {
                  'liquid_templates' => {
                    'name' => 'Get Post Title',
                    'url' => 'https://jsonplaceholder.typicode.com/posts/{{row.post_id_input}}',
@@ -81,7 +81,7 @@ RSpec.describe WorkflowExecutor, :integration, :vcr do
       end
 
       let!(:grouping_step) do
-        create(:step, workflow: grouping_workflow, order: 1, config: {
+        create(:step, workflow: grouping_workflow, position: 1, config: {
                  'liquid_templates' => {
                    'name' => 'Get Todo Title by Category',
                    'url' => 'https://jsonplaceholder.typicode.com/todos/{{row.id_input}}',

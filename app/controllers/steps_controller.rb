@@ -75,20 +75,20 @@ class StepsController < ApplicationController
   def step_params
     params.require(:step)
           .permit(
-            :name, :order,
+            :name, :position,
             config: { liquid_templates: %i[name url method body params skip_condition success_data required connection_slot] }
           )
   end
 
   def swap_previous_step
-    previous_step = @workflow.steps.unscoped.where('"order" < ?', @step.order).order(order: :desc).first
+    previous_step = @workflow.steps.unscoped.where('position < ?', @step.position).order(position: :desc).first
     return unless previous_step
 
     swap_steps(@step, previous_step)
   end
 
   def swap_next_step
-    next_step = @workflow.steps.unscoped.where('"order" > ?', @step.order).order(order: :asc).first
+    next_step = @workflow.steps.unscoped.where('position > ?', @step.position).order(position: :asc).first
     return unless next_step
 
     swap_steps(@step, next_step)
@@ -96,9 +96,9 @@ class StepsController < ApplicationController
 
   def swap_steps(step_a, step_b)
     Step.transaction do
-      temp_order = step_a.order
-      step_a.update!(order: step_b.order)
-      step_b.update!(order: temp_order)
+      temp_position = step_a.position
+      step_a.update!(position: step_b.position)
+      step_b.update!(position: temp_position)
     end
   end
 end

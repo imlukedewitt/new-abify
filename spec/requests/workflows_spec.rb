@@ -37,7 +37,7 @@ RSpec.describe 'Workflows', type: :request do
             step = workflow.steps.find { |s| s.id == step_json[:id] }
             expect(step_json[:id]).to eq(step.id)
             expect(step_json[:name]).to eq(step.name)
-            expect(step_json[:order]).to eq(step.order)
+            expect(step_json[:position]).to eq(step.position)
           end
         end
       end

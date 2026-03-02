@@ -17,7 +17,7 @@ RSpec.describe Step, type: :model do
     it 'creates a new Step with valid attributes' do
       expect(step).to be_valid
       expect(step.name).to be_a(String)
-      expect(step.order).to be_a(Integer)
+      expect(step.position).to be_a(Integer)
       expect(step.config).to be_a(Hash)
     end
 
@@ -27,36 +27,36 @@ RSpec.describe Step, type: :model do
       expect(step.errors[:name]).to include("can't be blank")
     end
 
-    it 'validates presence of order' do
-      step.order = nil
+    it 'validates presence of position' do
+      step.position = nil
       expect(step).not_to be_valid
-      expect(step.errors[:order]).to include("can't be blank")
+      expect(step.errors[:position]).to include("can't be blank")
     end
 
-    it 'validates order is a positive integer' do
-      step.order = -1
+    it 'validates position is a positive integer' do
+      step.position = -1
       expect(step).not_to be_valid
-      expect(step.errors[:order]).to include('must be greater than 0')
+      expect(step.errors[:position]).to include('must be greater than 0')
     end
   end
 
-  describe '#set_default_order' do
+  describe '#set_default_position' do
     let(:workflow) { create(:workflow) }
     let(:step_config) do
       { 'liquid_templates' => { 'name' => 'test', 'url' => 'http://example.com' } }
     end
 
-    it 'auto-increments order for steps created individually' do
-      step1 = create(:step, workflow: workflow, order: nil)
-      step2 = create(:step, workflow: workflow, order: nil)
-      step3 = create(:step, workflow: workflow, order: nil)
+    it 'auto-increments position for steps created individually' do
+      step1 = create(:step, workflow: workflow, position: nil)
+      step2 = create(:step, workflow: workflow, position: nil)
+      step3 = create(:step, workflow: workflow, position: nil)
 
-      expect(step1.order).to eq(1)
-      expect(step2.order).to eq(2)
-      expect(step3.order).to eq(3)
+      expect(step1.position).to eq(1)
+      expect(step2.position).to eq(2)
+      expect(step3.position).to eq(3)
     end
 
-    it 'auto-increments order for steps created via nested attributes' do
+    it 'auto-increments position for steps created via nested attributes' do
       workflow = Workflow.create!(
         name: 'Test Workflow',
         steps_attributes: [
@@ -66,8 +66,8 @@ RSpec.describe Step, type: :model do
         ]
       )
 
-      orders = workflow.steps.order(:order).pluck(:name, :order)
-      expect(orders).to eq([['Step A', 1], ['Step B', 2], ['Step C', 3]])
+      positions = workflow.steps.order(:position).pluck(:name, :position)
+      expect(positions).to eq([['Step A', 1], ['Step B', 2], ['Step C', 3]])
     end
   end
 

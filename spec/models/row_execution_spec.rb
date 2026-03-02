@@ -105,9 +105,9 @@ RSpec.describe RowExecution, type: :model do
     let(:row) { create(:row) }
     let(:row_execution) { create(:row_execution, row: row) }
     let(:workflow) { create(:workflow) }
-    let(:step1) { create(:step, workflow: workflow, order: 1) }
-    let(:step2) { create(:step, workflow: workflow, order: 2) }
-    let(:step3) { create(:step, workflow: workflow, order: 3) }
+    let(:step1) { create(:step, workflow: workflow, position: 1) }
+    let(:step2) { create(:step, workflow: workflow, position: 2) }
+    let(:step3) { create(:step, workflow: workflow, position: 3) }
 
     before do
       create(:step_execution, step: step1, row: row, row_execution: row_execution, status: 'success')
@@ -131,9 +131,9 @@ RSpec.describe RowExecution, type: :model do
     let(:row) { create(:row) }
     let(:row_execution) { create(:row_execution, row: row) }
     let(:workflow) { create(:workflow) }
-    let(:step1) { create(:step, workflow: workflow, order: 1) }
-    let(:step2) { create(:step, workflow: workflow, order: 2) }
-    let(:step3) { create(:step, workflow: workflow, order: 3) }
+    let(:step1) { create(:step, workflow: workflow, position: 1) }
+    let(:step2) { create(:step, workflow: workflow, position: 2) }
+    let(:step3) { create(:step, workflow: workflow, position: 3) }
 
     it 'returns empty hash when no step executions exist' do
       expect(row_execution.merged_success_data).to eq({})

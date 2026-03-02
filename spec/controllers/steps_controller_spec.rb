@@ -35,10 +35,10 @@ RSpec.describe StepsController, type: :controller do
         expect(step.workflow).to eq(workflow)
       end
 
-      it 'auto-assigns the correct order' do
+      it 'auto-assigns the correct position' do
         post :create, params: valid_params, as: :json
         step = Step.last
-        expect(step.order).to eq(1)
+        expect(step.position).to eq(1)
       end
 
       it 'returns created status and step_id' do
@@ -52,7 +52,7 @@ RSpec.describe StepsController, type: :controller do
     end
 
     context 'with existing steps' do
-      let!(:existing_step) { create(:step, workflow: workflow, order: 3) }
+      let!(:existing_step) { create(:step, workflow: workflow, position: 3) }
 
       let(:valid_params) do
         {
@@ -70,10 +70,10 @@ RSpec.describe StepsController, type: :controller do
         }
       end
 
-      it 'auto-assigns the next available order' do
+      it 'auto-assigns the next available position' do
         post :create, params: valid_params, as: :json
         step = Step.last
-        expect(step.order).to eq(4)
+        expect(step.position).to eq(4)
       end
     end
 
@@ -230,14 +230,14 @@ RSpec.describe StepsController, type: :controller do
 
   describe 'PATCH #move_up' do
     let(:workflow) { create(:workflow) }
-    let!(:step1) { create(:step, workflow: workflow, order: 1, name: 'First') }
-    let!(:step2) { create(:step, workflow: workflow, order: 2, name: 'Second') }
-    let!(:step3) { create(:step, workflow: workflow, order: 3, name: 'Third') }
+    let!(:step1) { create(:step, workflow: workflow, position: 1, name: 'First') }
+    let!(:step2) { create(:step, workflow: workflow, position: 2, name: 'Second') }
+    let!(:step3) { create(:step, workflow: workflow, position: 3, name: 'Third') }
 
     it 'swaps the step with the previous step' do
       patch :move_up, params: { workflow_id: workflow.id, id: step2.id }
-      expect(step1.reload.order).to eq(2)
-      expect(step2.reload.order).to eq(1)
+      expect(step1.reload.position).to eq(2)
+      expect(step2.reload.position).to eq(1)
     end
 
     it 'redirects to workflow path' do
@@ -246,23 +246,23 @@ RSpec.describe StepsController, type: :controller do
     end
 
     context 'when step is already first' do
-      it 'does not change order' do
+      it 'does not change position' do
         patch :move_up, params: { workflow_id: workflow.id, id: step1.id }
-        expect(step1.reload.order).to eq(1)
+        expect(step1.reload.position).to eq(1)
       end
     end
   end
 
   describe 'PATCH #move_down' do
     let(:workflow) { create(:workflow) }
-    let!(:step1) { create(:step, workflow: workflow, order: 1, name: 'First') }
-    let!(:step2) { create(:step, workflow: workflow, order: 2, name: 'Second') }
-    let!(:step3) { create(:step, workflow: workflow, order: 3, name: 'Third') }
+    let!(:step1) { create(:step, workflow: workflow, position: 1, name: 'First') }
+    let!(:step2) { create(:step, workflow: workflow, position: 2, name: 'Second') }
+    let!(:step3) { create(:step, workflow: workflow, position: 3, name: 'Third') }
 
     it 'swaps the step with the next step' do
       patch :move_down, params: { workflow_id: workflow.id, id: step2.id }
-      expect(step2.reload.order).to eq(3)
-      expect(step3.reload.order).to eq(2)
+      expect(step2.reload.position).to eq(3)
+      expect(step3.reload.position).to eq(2)
     end
 
     it 'redirects to workflow path' do
@@ -271,9 +271,9 @@ RSpec.describe StepsController, type: :controller do
     end
 
     context 'when step is already last' do
-      it 'does not change order' do
+      it 'does not change position' do
         patch :move_down, params: { workflow_id: workflow.id, id: step3.id }
-        expect(step3.reload.order).to eq(3)
+        expect(step3.reload.position).to eq(3)
       end
     end
   end

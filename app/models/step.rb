@@ -6,18 +6,18 @@
 #
 # @attr_reader [String] name The name of the workflow step
 # @attr_reader [Hash] config The configuration settings for this step
-# @attr_reader [Integer] order The position of this step in the workflow sequence
+# @attr_reader [Integer] position The position of this step in the workflow sequence
 #
 # @attr [Workflow] workflow The workflow this step belongs to
 class Step < ApplicationRecord
   belongs_to :workflow
   has_many :step_executions, dependent: :destroy
-  default_scope { order(order: :asc) }
+  default_scope { order(position: :asc) }
 
   validates :config, presence: true
   validates :name, presence: true
-  validates :order, presence: true, numericality: { only_integer: true, greater_than: 0 }
-  before_validation :set_default_order, on: :create
+  validates :position, presence: true, numericality: { only_integer: true, greater_than: 0 }
+  before_validation :set_default_position, on: :create
   before_validation :normalize_config
   validate :validate_config
 
@@ -30,12 +30,12 @@ class Step < ApplicationRecord
 
   private
 
-  def set_default_order
-    return if order.present?
+  def set_default_position
+    return if position.present?
 
-    persisted_max = workflow.steps.maximum(:order) || 0
-    unsaved_max = workflow.steps.reject(&:persisted?).reject { |s| s == self }.map(&:order).compact.max || 0
-    self.order = [persisted_max, unsaved_max].max + 1
+    persisted_max = workflow.steps.maximum(:position) || 0
+    unsaved_max = workflow.steps.reject(&:persisted?).reject { |s| s == self }.map(&:position).compact.max || 0
+    self.position = [persisted_max, unsaved_max].max + 1
   end
 
   def validate_config
