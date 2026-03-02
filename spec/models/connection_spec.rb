@@ -8,11 +8,6 @@ RSpec.describe Connection, type: :model do
       association = described_class.reflect_on_association(:user)
       expect(association.macro).to eq :belongs_to
     end
-
-    it 'has many workflows' do
-      association = described_class.reflect_on_association(:workflows)
-      expect(association.macro).to eq :has_many
-    end
   end
 
   describe 'validations' do

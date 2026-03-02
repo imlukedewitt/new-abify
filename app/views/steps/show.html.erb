@@ -9,10 +9,19 @@
       </div>
     <% end %>
     <div class="mt-4 space-y-2 text-sm">
-      <div>
-        <span class="opacity-70">Connection:</span>
-        <span><%= @workflow.connection&.name || "None" %></span>
-      </div>
+      <% if @workflow.connection_slots.any? %>
+        <div class="font-semibold opacity-70 mb-1">Connection Slots:</div>
+        <div class="flex flex-wrap gap-1">
+          <% @workflow.connection_slots.each do |slot| %>
+            <span class="badge badge-outline badge-sm <%= 'badge-primary' if slot['default'] %>" title="<%= slot['description'] %>">
+              <%= slot['handle'] %>
+              <%= '(default)' if slot['default'] %>
+            </span>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="opacity-50 italic">No connection slots configured</div>
+      <% end %>
     </div>
     <div class="flex gap-2 mt-4">
       <%= link_to "Edit Workflow", edit_workflow_path(@workflow), class: "btn btn-ghost btn-xs" %>
@@ -83,12 +92,18 @@
           <code class="text-sm flex-1 break-all"><%= config["url"] || "-" %></code>
         </div>
       </div>
-      <!-- Connection -->
+      <!-- Connection Slot -->
       <div>
-        <label class="label"><span class="label-text font-semibold">Connection</span></label>
-        <p><%= @step.connection&.name || @workflow.connection&.name || "None" %>
-          <% if @step.connection.nil? && @workflow.connection.present? %>
-            <span class="text-xs opacity-70">(from workflow)</span>
+        <label class="label"><span class="label-text font-semibold">Connection Slot</span></label>
+        <p>
+          <% slot_handle = config["connection_slot"] %>
+          <% if slot_handle.present? %>
+            <span class="badge badge-primary"><%= slot_handle %></span>
+          <% elsif (default_slot = @workflow.connection_slots.find { |s| s['default'] }) %>
+            <span class="badge badge-outline"><%= default_slot['handle'] %></span>
+            <span class="text-xs opacity-70 ml-1">(workflow default)</span>
+          <% else %>
+            <span class="opacity-70 italic text-sm">None (will fail if URL requires connection info)</span>
           <% end %>
         </p>
       </div>

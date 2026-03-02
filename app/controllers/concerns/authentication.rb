@@ -10,7 +10,7 @@ module Authentication
 
   def authenticate
     # TODO: Remove this bypass once session auth is implemented
-    if Rails.env.development? && !request.authorization.present?
+    if (Rails.env.development? || Rails.env.test?) && !request.authorization.present? && request.headers['X-Strict-Auth'].nil?
       Current.user ||= User.last
       return
     end

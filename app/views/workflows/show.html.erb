@@ -9,17 +9,26 @@
       <% end %>
     </div>
     <div class="mt-4 space-y-2 text-sm">
-      <div>
-        <span class="opacity-70">Connection:</span>
-        <span><%= @workflow.connection&.name || "None" %></span>
-      </div>
+      <% if @workflow.connection_slots.any? %>
+        <div class="font-semibold opacity-70 mb-1">Connection Slots:</div>
+        <div class="flex flex-wrap gap-1">
+          <% @workflow.connection_slots.each do |slot| %>
+            <span class="badge badge-outline badge-sm <%= 'badge-primary' if slot['default'] %>" title="<%= slot['description'] %>">
+              <%= slot['handle'] %>
+              <%= '(default)' if slot['default'] %>
+            </span>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="opacity-50 italic">No connection slots configured</div>
+      <% end %>
     </div>
-    <div class="flex gap-2 mt-4">
+    <div class="flex flex-wrap gap-2 mt-4">
+      <%= link_to "Run Workflow", new_workflow_execution_path(workflow_id: @workflow.id), class: "btn btn-primary btn-xs" %>
       <%= link_to "Edit Workflow", edit_workflow_path(@workflow), class: "btn btn-ghost btn-xs" %>
       <%= link_to "Run History", workflow_executions_path, class: "btn btn-ghost btn-xs" %>
     </div>
     <div class="divider"></div>
-
     <!-- Steps List -->
     <div class="flex justify-between items-center mb-2">
       <h2 class="text-lg font-semibold">Steps (<%= @workflow.steps.size %>)</h2>
@@ -37,7 +46,6 @@
       <p class="text-sm opacity-70">No steps yet. Add your first step to get started.</p>
     <% end %>
   </div>
-
   <!-- Right Panel: Step Detail (shown when viewing a step) -->
   <div class="bg-base-100 p-6 overflow-auto">
     <% if @step %>

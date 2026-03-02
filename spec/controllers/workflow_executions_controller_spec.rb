@@ -3,6 +3,42 @@
 require 'rails_helper'
 
 RSpec.describe WorkflowExecutionsController, type: :controller do
+  render_views
+
+  describe 'GET #new' do
+    let(:workflow) { create(:workflow, :with_handle) }
+    let(:user) { User.last }
+
+    it 'returns a successful response' do
+      get :new, params: { workflow_id: workflow.id }
+      expect(response).to be_successful
+      expect(response.body).to include('Execute Workflow')
+    end
+
+    it 'returns a successful response (JSON)' do
+      get :new, params: { workflow_id: workflow.id }, as: :json
+      expect(response).to be_successful
+      json_response = JSON.parse(response.body)
+      expect(json_response['workflow']['id']).to eq(workflow.id)
+      expect(json_response).to have_key('connections')
+    end
+
+    it 'loads only connections owned by the user' do
+      # User is already created and authenticated by set_auth_header in before(:each)
+      current_user = User.last
+
+      other_user = create(:user)
+      create(:connection, user: other_user, name: 'Other Connection')
+      my_connection = create(:connection, user: current_user, name: 'My Connection')
+
+      get :new, params: { workflow_id: workflow.id }, as: :json
+      json_response = JSON.parse(response.body)
+      connection_ids = json_response['connections'].map { |c| c['id'] }
+      expect(connection_ids).to include(my_connection.id)
+      expect(connection_ids).not_to include(other_user.connections.first.id)
+    end
+  end
+
   describe 'GET #index' do
     let!(:execution1) { create(:workflow_execution) }
     let!(:execution2) { create(:workflow_execution) }
@@ -13,6 +49,12 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
       json_response = JSON.parse(response.body)
       expect(json_response).to have_key('workflow_executions')
       expect(json_response['workflow_executions'].count).to eq(2)
+    end
+
+    it 'returns all workflow executions (HTML)' do
+      get :index
+      expect(response).to be_successful
+      expect(response.body).to include('Workflow Executions')
     end
   end
 
@@ -26,6 +68,12 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('workflow_execution')
         expect(json_response['workflow_execution']['id']).to eq(execution.id)
+      end
+
+      it 'returns the workflow execution (HTML)' do
+        get :show, params: { id: execution.id }
+        expect(response).to be_successful
+        expect(response.body).to include("Workflow Execution #{execution.id}")
       end
     end
 
@@ -42,6 +90,34 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
     let(:data_source) { create(:data_source) }
 
     context 'with valid parameters' do
+      let(:connection) { create(:connection, user: User.last) }
+      let(:workflow_with_slots) do
+        create(:workflow, :with_handle, connection_slots: [
+                 { 'handle' => 'test_slot', 'description' => 'Test Slot' }
+               ])
+      end
+
+      it 'creates a new workflow execution with connection mappings' do
+        post :create, params: {
+          workflow_id: workflow_with_slots.id,
+          data_source_id: data_source.id,
+          workflow_execution: {
+            connection_mappings: {
+              'test_slot' => {
+                'connection_id' => connection.id,
+                'connection_name' => connection.name,
+                'connection_handle' => connection.handle
+              }
+            }
+          }
+        }, as: :json
+
+        expect(response).to have_http_status(:accepted)
+        execution = WorkflowExecution.last
+        expect(execution.connection_mappings).to be_present
+        expect(execution.connection_mappings['test_slot']['connection_id'].to_i).to eq(connection.id)
+      end
+
       it 'creates a new workflow execution with workflow_id' do
         post :create, params: {
           workflow_id: workflow.id,
@@ -82,6 +158,45 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
     end
 
     context 'with invalid parameters' do
+      it 'returns unprocessable entity when connection mappings are missing for required slots' do
+        workflow_with_slots = create(:workflow, :with_handle, connection_slots: [
+                                       { 'handle' => 'required_slot', 'description' => 'Required' }
+                                     ])
+
+        post :create, params: {
+          workflow_id: workflow_with_slots.id,
+          data_source_id: data_source.id,
+          workflow_execution: { connection_mappings: {} }
+        }, as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(JSON.parse(response.body)['errors']).to include("Connection mappings Missing mapping for slot 'required_slot'")
+      end
+
+      it 'returns unprocessable entity when connection is not owned by user' do
+        connection_other_user = create(:connection) # belongs to different user
+        workflow_with_slots = create(:workflow, :with_handle, connection_slots: [
+                                       { 'handle' => 'test_slot', 'description' => 'Test Slot' }
+                                     ])
+
+        post :create, params: {
+          workflow_id: workflow_with_slots.id,
+          data_source_id: data_source.id,
+          workflow_execution: {
+            connection_mappings: {
+              'test_slot' => {
+                'connection_id' => connection_other_user.id,
+                'connection_name' => connection_other_user.name,
+                'connection_handle' => connection_other_user.handle
+              }
+            }
+          }
+        }, as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(JSON.parse(response.body)['errors']).to include("Connection mappings Connection for slot 'test_slot' not found")
+      end
+
       it 'returns unprocessable entity when workflow is not found' do
         post :create, params: {
           workflow_id: 'invalid_id',

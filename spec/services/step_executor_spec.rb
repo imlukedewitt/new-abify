@@ -3,13 +3,19 @@
 require 'rails_helper'
 
 RSpec.describe StepExecutor do
-  let(:workflow) { create(:workflow) }
+  let(:user) { create(:user) }
+  let(:connection) { create(:connection, user: user, name: 'My Test Connection') }
+  let(:workflow) { create(:workflow, connection_slots: [{ 'handle' => 'primary', 'default' => true }]) }
   let(:step) { create(:step, workflow: workflow) }
   let(:row) { create(:row) }
   let(:step_templates) { build_step_templates_for(step) }
-  let(:hydra_manager) { instance_double(HydraManager) }
+  let(:resolved_connections) { { 'primary' => connection } }
+  let(:hydra_manager) { spy(HydraManager) }
 
-  before { allow(HydraManager).to receive(:instance).and_return(hydra_manager) }
+  before do
+    Current.user = user
+    allow(HydraManager).to receive(:instance).and_return(hydra_manager)
+  end
 
   def step_with_config(liquid_templates)
     step.update(config: { 'liquid_templates' => liquid_templates })
@@ -26,24 +32,30 @@ RSpec.describe StepExecutor do
 
   describe '#initialize' do
     it 'creates a new instance with step and row' do
-      processor = described_class.new(step, row, step_templates: step_templates)
+      processor = described_class.new(step, row, step_templates: step_templates,
+                                                 resolved_connections: resolved_connections)
       expect(processor.step).to eq(step)
       expect(processor.row).to eq(row)
       expect(processor.config).to eq(step.config.with_indifferent_access)
     end
 
     it 'raises an error when step is nil' do
-      expect { described_class.new(nil, row, step_templates: step_templates) }
+      expect do
+        described_class.new(nil, row, step_templates: step_templates, resolved_connections: resolved_connections)
+      end
         .to raise_error(ArgumentError, 'step is required')
     end
 
     it 'raises an error when row is nil' do
-      expect { described_class.new(step, nil, step_templates: step_templates) }
+      expect do
+        described_class.new(step, nil, step_templates: step_templates, resolved_connections: resolved_connections)
+      end
         .to raise_error(ArgumentError, 'row is required')
     end
 
     it 'creates a StepExecution' do
-      processor = described_class.new(step, row, step_templates: step_templates)
+      processor = described_class.new(step, row, step_templates: step_templates,
+                                                 resolved_connections: resolved_connections)
       expect(processor.execution).to be_a(StepExecution)
       expect(processor.execution.step).to eq(step)
       expect(processor.execution.row).to eq(row)
@@ -51,12 +63,14 @@ RSpec.describe StepExecutor do
 
     context 'with priority option' do
       it 'accepts priority: true' do
-        processor = described_class.new(step, row, step_templates: step_templates, priority: true)
+        processor = described_class.new(step, row, step_templates: step_templates, priority: true,
+                                                   resolved_connections: resolved_connections)
         expect(processor).to be_a(StepExecutor)
       end
 
       it 'accepts priority: false' do
-        processor = described_class.new(step, row, step_templates: step_templates, priority: false)
+        processor = described_class.new(step, row, step_templates: step_templates, priority: false,
+                                                   resolved_connections: resolved_connections)
         expect(processor).to be_a(StepExecutor)
       end
     end
@@ -72,7 +86,7 @@ RSpec.describe StepExecutor do
         expect(args[:on_complete]).to be_a(Proc)
       end
 
-      described_class.new(step, row, step_templates: templates).call
+      described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections).call
     end
 
     it 'processes successful response with success_data extraction' do
@@ -83,7 +97,8 @@ RSpec.describe StepExecutor do
       )
 
       callback_spy = spy('callback')
-      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy)
+      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy,
+                                                 resolved_connections: resolved_connections)
 
       allow(hydra_manager).to receive(:queue) do |args|
         args[:on_complete].call(success_response('{"customer":{"id":"123"}}'))
@@ -98,7 +113,8 @@ RSpec.describe StepExecutor do
       templates = step_with_config('url' => 'https://api.example.com', 'method' => 'get')
 
       callback_spy = spy('callback')
-      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy)
+      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy,
+                                                 resolved_connections: resolved_connections)
 
       allow(hydra_manager).to receive(:queue) do |args|
         args[:on_complete].call(error_response(404, '{"error":"Not found"}'))
@@ -107,14 +123,15 @@ RSpec.describe StepExecutor do
       processor.call
 
       expect(callback_spy).to have_received(:call)
-        .with(success: false, error: 'Request failed with status 404')
+        .with(success: false, error: "Connection default slot ('My Test Connection'): Request failed with status 404")
     end
 
     it 'handles invalid JSON responses' do
       templates = step_with_config('url' => 'https://api.example.com', 'method' => 'get')
 
       callback_spy = spy('callback')
-      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy)
+      processor = described_class.new(step, row, step_templates: templates, on_complete: callback_spy,
+                                                 resolved_connections: resolved_connections)
 
       allow(hydra_manager).to receive(:queue) do |args|
         args[:on_complete].call(success_response('not json'))
@@ -123,13 +140,13 @@ RSpec.describe StepExecutor do
       processor.call
 
       expect(callback_spy).to have_received(:call)
-        .with(success: false, error: 'Invalid JSON response')
+        .with(success: false, error: "Connection default slot ('My Test Connection'): Invalid JSON response")
     end
 
     it 'handles nil on_complete gracefully' do
       templates = step_with_config('url' => 'https://test.com', 'method' => 'post')
 
-      processor = described_class.new(step, row, step_templates: templates)
+      processor = described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections)
 
       allow(hydra_manager).to receive(:queue) do |args|
         expect { args[:on_complete].call(success_response) }.not_to raise_error
@@ -141,7 +158,8 @@ RSpec.describe StepExecutor do
     it 'queues request with priority when priority flag is true' do
       templates = step_with_config('url' => 'https://priority.example.com/test', 'method' => 'post')
 
-      processor = described_class.new(step, row, step_templates: templates, priority: true)
+      processor = described_class.new(step, row, step_templates: templates, priority: true,
+                                                 resolved_connections: resolved_connections)
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:front]).to be true
@@ -153,41 +171,106 @@ RSpec.describe StepExecutor do
     it 'uses connection fields in URL templates' do
       user = create(:user)
       connection = create(:connection, user: user, subdomain: 'acme', domain: 'my-app.io')
-      workflow_with_connection = create(:workflow, connection: connection)
-      step_with_connection = create(:step, workflow: workflow_with_connection, config: {
-                                      'liquid_templates' => {
-                                        'name' => 'Connection Test',
-                                        'url' => 'https://{{subdomain}}.{{domain}}/api/v1/users',
-                                        'method' => 'get'
-                                      }
-                                    })
-      templates = build_step_templates_for(step_with_connection)
+      workflow_with_slots = create(:workflow, connection_slots: [{ 'handle' => 'primary', 'default' => true }])
+      step_with_slots = create(:step, workflow: workflow_with_slots, config: {
+                                 'liquid_templates' => {
+                                   'name' => 'Connection Test',
+                                   'url' => 'https://{{subdomain}}.{{domain}}/api/v1/users',
+                                   'method' => 'get'
+                                 }
+                               })
+      templates = build_step_templates_for(step_with_slots)
+      resolved_connections = { 'primary' => connection }
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:url]).to eq('https://acme.my-app.io/api/v1/users')
       end
 
-      described_class.new(step_with_connection, row, step_templates: templates).call
+      described_class.new(step_with_slots, row, step_templates: templates,
+                                                resolved_connections: resolved_connections).call
     end
 
     it 'uses connection base_url in templates' do
       user = create(:user)
       connection = create(:connection, user: user, subdomain: 'mycompany', domain: 'salesforce.com')
-      workflow_with_connection = create(:workflow, connection: connection)
-      step_with_connection = create(:step, workflow: workflow_with_connection, config: {
-                                      'liquid_templates' => {
-                                        'name' => 'Base URL Test',
-                                        'url' => '{{base_url}}/services/data/v57.0/sobjects/Account',
-                                        'method' => 'get'
-                                      }
-                                    })
-      templates = build_step_templates_for(step_with_connection)
+      workflow_with_slots = create(:workflow, connection_slots: [{ 'handle' => 'primary', 'default' => true }])
+      step_with_slots = create(:step, workflow: workflow_with_slots, config: {
+                                 'liquid_templates' => {
+                                   'name' => 'Base URL Test',
+                                   'url' => '{{base_url}}/services/data/v57.0/sobjects/Account',
+                                   'method' => 'get'
+                                 }
+                               })
+      templates = build_step_templates_for(step_with_slots)
+      resolved_connections = { 'primary' => connection }
 
       expect(hydra_manager).to receive(:queue) do |args|
         expect(args[:url]).to eq('https://mycompany.salesforce.com/services/data/v57.0/sobjects/Account')
       end
 
-      described_class.new(step_with_connection, row, step_templates: templates).call
+      described_class.new(step_with_slots, row, step_templates: templates,
+                                                resolved_connections: resolved_connections).call
+    end
+
+    it 'uses connection from resolved_connections when connection_slot is specified' do
+      user = create(:user)
+      connection = create(:connection, user: user, subdomain: 'acme', domain: 'api.io',
+                                       credentials: { 'token' => 'abc' })
+      workflow_with_slots = create(:workflow, connection_slots: [{ 'handle' => 'primary', 'description' => '...' }])
+      step_with_slot = create(:step, workflow: workflow_with_slots, config: {
+                                'liquid_templates' => {
+                                  'name' => 'Slot Test',
+                                  'url' => '{{base_url}}/test',
+                                  'method' => 'get',
+                                  'connection_slot' => 'primary'
+                                }
+                              })
+      templates = build_step_templates_for(step_with_slot)
+      resolved_connections = { 'primary' => connection }
+
+      expect(hydra_manager).to receive(:queue) do |args|
+        expect(args[:url]).to eq('https://acme.api.io/test')
+        expect(args[:auth_config]).to eq({ 'token' => 'abc' })
+      end
+
+      processor = described_class.new(step_with_slot, row,
+                                      step_templates: templates,
+                                      resolved_connections: resolved_connections)
+      processor.call
+    end
+
+    it 'includes slot info and connection name in failure messages' do
+      user = create(:user)
+      connection = create(:connection, user: user, name: 'Target CRM')
+      workflow = create(:workflow, connection_slots: [
+                          { 'handle' => 'primary', 'description' => 'Primary slot', 'default' => true }
+                        ])
+      step = create(:step, workflow: workflow, config: {
+                      'liquid_templates' => {
+                        'name' => 'Fail Step',
+                        'url' => 'https://api.example.com/fail',
+                        'method' => 'get',
+                        'connection_slot' => 'primary'
+                      }
+                    })
+      templates = build_step_templates_for(step)
+      resolved_connections = { 'primary' => connection }
+
+      # Mock a timeout/failure
+      allow(hydra_manager).to receive(:queue) do |**args|
+        args[:on_complete]&.call(nil) # No response = timeout
+      end
+
+      callback_spy = spy('callback')
+      executor = described_class.new(step, row, step_templates: templates,
+                                                resolved_connections: resolved_connections,
+                                                on_complete: callback_spy)
+      executor.call
+
+      expect(callback_spy).to have_received(:call) do |result|
+        expect(result[:success]).to be false
+        expect(result[:error]).to include("Connection slot 'primary' ('Target CRM'): No response received")
+      end
     end
 
     it 'renders Liquid templates with row data' do
@@ -202,26 +285,27 @@ RSpec.describe StepExecutor do
         expect(args[:body]).to eq('{"name":"John Doe"}')
       end
 
-      described_class.new(step, row, step_templates: templates).call
+      described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections).call
     end
   end
 
   describe '#should_skip?' do
     it 'returns false when no skip_condition is configured' do
-      processor = described_class.new(step, row, step_templates: step_templates)
+      processor = described_class.new(step, row, step_templates: step_templates,
+                                                 resolved_connections: resolved_connections)
       expect(processor.should_skip?).to be false
     end
 
     it 'evaluates skip_condition and returns true when condition is met' do
       templates = step_with_config('skip_condition' => '{{row.email | present?}}')
-      processor = described_class.new(step, row, step_templates: templates)
+      processor = described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections)
 
       expect(processor.should_skip?).to be true
     end
 
     it 'returns false when skip_condition evaluates to false' do
       templates = step_with_config('skip_condition' => '{{row.email | blank?}}')
-      processor = described_class.new(step, row, step_templates: templates)
+      processor = described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections)
 
       expect(processor.should_skip?).to be false
     end
@@ -230,20 +314,20 @@ RSpec.describe StepExecutor do
   describe '#required?' do
     it 'returns false when no required is configured' do
       templates = step_with_config({})
-      processor = described_class.new(step, row, step_templates: templates)
+      processor = described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections)
       expect(processor.required?).to be false
     end
 
     it 'evaluates required and returns true when condition is met' do
       templates = step_with_config('required' => '{{row.organization | present?}}')
-      processor = described_class.new(step, row, step_templates: templates)
+      processor = described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections)
 
       expect(processor.required?).to be true
     end
 
     it 'returns false when required evaluates to false' do
       templates = step_with_config('required' => '{{row.missing_field | present?}}')
-      processor = described_class.new(step, row, step_templates: templates)
+      processor = described_class.new(step, row, step_templates: templates, resolved_connections: resolved_connections)
 
       expect(processor.required?).to be false
     end

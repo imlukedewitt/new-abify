@@ -3,7 +3,7 @@
 ##
 # WorkflowExecutionsController is responsible for creating workflow executions.
 class WorkflowExecutionsController < ApplicationController
-  before_action :set_workflow, only: :create
+  before_action :set_workflow, only: %i[create new]
   before_action :set_data_source, only: :create
 
   def index
@@ -22,26 +22,60 @@ class WorkflowExecutionsController < ApplicationController
     end
   end
 
+  def new
+    set_connections
+    @workflow_execution = WorkflowExecution.new(workflow: @workflow)
+    respond_to do |format|
+      format.html { render :new }
+      format.json { render json: { workflow: @workflow, connections: @connections } }
+    end
+  end
+
   def create
     return if performed?
 
-    # TODO: Replace with proper background job (Sidekiq/ActiveJob)
-    Thread.new do
-      WorkflowExecutor.new(@workflow, @data_source, execution: execution).call
-    rescue StandardError => e
-      Rails.logger.error "Workflow execution failed: #{e.message}"
+    @workflow_execution = WorkflowExecution.new(workflow_execution_params)
+    @workflow_execution.workflow = @workflow
+    @workflow_execution.data_source = @data_source
+
+    # Enrich mappings with audit data (name, handle) before saving
+    if @workflow.connection_slots.present?
+      @workflow_execution.connection_mappings = ConnectionMapping::Normalizer.call(
+        workflow: @workflow,
+        raw_mappings: @workflow_execution.connection_mappings || {}
+      )
     end
 
-    respond_to do |format|
-      format.json { render json: { message: 'Workflow started', workflow_execution_id: execution.id }, status: :accepted }
-      format.html { redirect_to data_source_path(@data_source), notice: 'Workflow started' }
+    if @workflow_execution.save
+      # TODO: Replace with proper background job (Sidekiq/ActiveJob)
+      user_id = Current.user&.id
+      Thread.new do
+        Current.user = User.find(user_id) if user_id
+        WorkflowExecutor.new(@workflow, @data_source, execution: @workflow_execution).call
+      rescue StandardError => e
+        Rails.logger.error "Workflow execution failed: #{e.message}"
+      end
+
+      respond_to do |format|
+        format.json do
+          render json: { message: 'Workflow started', workflow_execution_id: @workflow_execution.id }, status: :accepted
+        end
+        format.html { redirect_to data_source_path(@data_source), notice: 'Workflow started' }
+      end
+    else
+      set_connections
+      respond_with_errors(@workflow_execution, :new)
     end
   end
 
   private
 
-  def execution
-    @execution ||= WorkflowExecution.create!(workflow: @workflow, data_source: @data_source)
+  def set_connections
+    @connections = Current.user.connections.order(:name)
+  end
+
+  def workflow_execution_params
+    params.fetch(:workflow_execution, {}).permit(connection_mappings: {})
   end
 
   def set_workflow

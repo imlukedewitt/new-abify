@@ -35,8 +35,8 @@ RSpec.describe StepExecutor, :integration, :vcr do
 
     # Verify success response
     expect(result[:data]).to include(
-      'id' => "1",
-      'userId' => "1",
+      'id' => '1',
+      'userId' => '1',
       'title' => be_a(String),
       'body' => be_a(String)
     )
@@ -69,10 +69,10 @@ RSpec.describe StepExecutor, :integration, :vcr do
 
     # Verify success response
     expect(result[:data]).to include(
-      'id' => "101",
+      'id' => '101',
       'title' => 'Test Post',
       'body' => 'This is a test post',
-      'userId' => "1"
+      'userId' => '1'
     )
   end
 
@@ -96,6 +96,6 @@ RSpec.describe StepExecutor, :integration, :vcr do
 
     # Verify error response
     expect(result).to include(success: false)
-    expect(result).to include(error: "Request failed with status 404")
+    expect(result[:error]).to include('Request failed with status 404')
   end
 end

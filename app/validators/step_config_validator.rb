@@ -20,6 +20,7 @@ class StepConfigValidator
     params
     skip_condition
     success_data
+    connection_slot
   ].freeze
 
   ALLOWED_KEYS = (REQUIRED_KEYS + OPTIONAL_KEYS).freeze

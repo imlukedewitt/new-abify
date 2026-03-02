@@ -1,0 +1,23 @@
+<%# Connection mapping fields partial %>
+<div class="form-control">
+  <h3 class="text-lg font-semibold mb-2">Connection Mapping</h3>
+  <%= render 'shared/connection_slot_explanation' %>
+  <% workflow.connection_slots&.each do |slot| %>
+    <div class="border border-base-300 rounded p-4 mb-4">
+      <div class="form-control">
+        <%= label_tag "workflow_execution[connection_mappings][#{slot['handle']}][connection_id]", 
+                      "#{slot['handle']} - #{slot['description']}", 
+                      class: "label" %>
+        <%= select_tag "workflow_execution[connection_mappings][#{slot['handle']}][connection_id]",
+                       options_from_collection_for_select(@connections, :id, :name),
+                       include_blank: "Select a connection...",
+                       class: "select select-bordered w-full" %>
+        <label class="label">
+          <span class="label-text-alt opacity-70">
+            Map the abstract slot <strong><%= slot['handle'] %></strong> to a concrete connection.
+          </span>
+        </label>
+      </div>
+    </div>
+  <% end %>
+</div>

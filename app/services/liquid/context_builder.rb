@@ -3,16 +3,17 @@
 module Liquid
   # builds context for liquid templates with row/api info
   class ContextBuilder
-    def initialize(row:, workflow:, row_execution: nil)
+    def initialize(row:, workflow:, row_execution: nil, connection: nil)
       @row = row
       @workflow = workflow
       @row_execution = row_execution
+      @connection = connection
     end
 
     def build
       {
         row: {
-          "source_index" => @row.source_index,
+          'source_index' => @row.source_index,
           **@row.data,
           **accumulated_success_data
         }
@@ -28,12 +29,12 @@ module Liquid
     end
 
     def connection_info
-      return {} unless @workflow.connection
+      return {} unless @connection
 
       {
-        'subdomain' => @workflow.connection.subdomain,
-        'domain' => @workflow.connection.domain,
-        'base_url' => @workflow.connection.base_url
+        'subdomain' => @connection.subdomain,
+        'domain' => @connection.domain,
+        'base_url' => @connection.base_url
       }
     end
   end

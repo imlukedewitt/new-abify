@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_22_202739) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -97,8 +97,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
     t.json "config"
     t.integer "order"
     t.string "name"
-    t.integer "connection_id"
-    t.index ["connection_id"], name: "index_steps_on_connection_id"
     t.index ["workflow_id"], name: "index_steps_on_workflow_id"
   end
 
@@ -121,6 +119,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "connection_mappings", default: {}
     t.index ["data_source_id"], name: "index_workflow_executions_on_data_source_id"
     t.index ["workflow_id"], name: "index_workflow_executions_on_workflow_id"
   end
@@ -130,9 +129,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
     t.datetime "updated_at", null: false
     t.json "config"
     t.string "name"
-    t.integer "connection_id"
     t.string "handle"
-    t.index ["connection_id"], name: "index_workflows_on_connection_id"
+    t.json "connection_slots", default: []
     t.index ["handle"], name: "index_workflows_on_handle", unique: true
   end
 
@@ -147,9 +145,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_064704) do
   add_foreign_key "step_executions", "row_executions"
   add_foreign_key "step_executions", "rows"
   add_foreign_key "step_executions", "steps"
-  add_foreign_key "steps", "connections", on_delete: :nullify
   add_foreign_key "steps", "workflows"
   add_foreign_key "workflow_executions", "data_sources"
   add_foreign_key "workflow_executions", "workflows"
-  add_foreign_key "workflows", "connections", on_delete: :nullify
 end

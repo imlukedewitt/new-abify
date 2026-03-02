@@ -14,7 +14,13 @@ body:json {
   {
     "name": "Create Customers",
     "handle": "create_customers",
-    "connection_id": {{connection_id}},
+    "connection_slots": [
+      {
+        "handle": "chargify",
+        "description": "Advanced Billing",
+        "default": true
+      }
+    ],
     "config": {
       "workflow": {
         "liquid_templates": {

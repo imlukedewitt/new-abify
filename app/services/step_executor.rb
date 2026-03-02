@@ -10,19 +10,21 @@ require_relative 'liquid/context_builder'
 class StepExecutor
   attr_reader :step, :row, :config, :execution
 
-  def initialize(step, row, step_templates:,
-                 row_execution: nil, hydra_manager: HydraManager.instance, on_complete: nil, priority: false)
+  def initialize(step, row, step_templates:, **options)
     raise ArgumentError, 'step is required' unless step
     raise ArgumentError, 'row is required' unless row
 
     @step = step
     @row = row
-    @row_execution = row_execution
     @config = @step.step_config.with_indifferent_access
-    @hydra_manager = hydra_manager
-    @on_complete = on_complete
-    @auth_config = @step.resolved_auth_config
-    @priority = priority
+    @row_execution = options[:row_execution]
+    @hydra_manager = options.fetch(:hydra_manager, HydraManager.instance)
+    @on_complete = options[:on_complete]
+    @resolved_connections = options.fetch(:resolved_connections, {})
+    @priority = options.fetch(:priority, false)
+
+    @connection = resolve_connection
+    @auth_config = @connection&.credentials || {}
     @execution = StepExecution.new(step: @step, row: @row, row_execution: @row_execution)
     @templates = step_templates.fetch(@step.id)
   end
@@ -31,6 +33,14 @@ class StepExecutor
     return skip! if should_skip?
 
     @execution.start!
+
+    # We only fail early if using the new connection slot system
+    if @connection.nil? && @step.workflow.connection_slots.present?
+      error = 'No connection available'
+      Rails.logger.error "Row #{@row.source_index} step #{@step.order} failed: #{error}"
+      return @on_complete&.call(fail_response(error))
+    end
+
     queue_request
   end
 
@@ -43,6 +53,13 @@ class StepExecutor
   end
 
   private
+
+  def resolve_connection
+    explicit_handle = @config.dig(:liquid_templates, :connection_slot).presence
+    default_handle = @step.workflow.connection_slots&.find { |s| s['default'] }&.dig('handle')
+
+    @resolved_connections[explicit_handle] || @resolved_connections[default_handle]
+  end
 
   def skip!
     @execution.skip!
@@ -86,8 +103,17 @@ class StepExecutor
   end
 
   def fail_response(error)
-    @execution.fail!(error)
-    { success: false, error: error }
+    slot_handle = @config.dig(:liquid_templates, :connection_slot)
+    slot_info = slot_handle ? "slot '#{slot_handle}'" : 'default slot'
+    connection_name = @connection&.name
+
+    context = "Connection #{slot_info}"
+    context += " ('#{connection_name}')" if connection_name
+
+    full_error = "#{context}: #{error}"
+
+    @execution.fail!(full_error)
+    { success: false, error: full_error }
   end
 
   def parse_json_response(body)
@@ -102,7 +128,8 @@ class StepExecutor
     @context ||= Liquid::ContextBuilder.new(
       row: @row,
       workflow: @step.workflow,
-      row_execution: @row_execution
+      row_execution: @row_execution,
+      connection: @connection
     ).build
   end
 end

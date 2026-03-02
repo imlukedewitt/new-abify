@@ -4,23 +4,24 @@
 class BatchExecutor
   attr_reader :batch, :workflow, :workflow_execution, :execution, :rows
 
-  def initialize(batch:, workflow:, workflow_execution:, rows: nil, step_templates: nil)
-    raise ArgumentError, "batch is required" if batch.nil?
-    raise ArgumentError, "workflow is required" if workflow.nil?
-    raise ArgumentError, "workflow_execution is required" if workflow_execution.nil?
+  def initialize(batch:, workflow:, workflow_execution:, rows: nil, step_templates: nil, resolved_connections: {})
+    raise ArgumentError, 'batch is required' if batch.nil?
+    raise ArgumentError, 'workflow is required' if workflow.nil?
+    raise ArgumentError, 'workflow_execution is required' if workflow_execution.nil?
 
     @batch = batch
     @workflow = workflow
     @workflow_execution = workflow_execution
     @rows = rows || batch.rows
     @step_templates = step_templates
+    @resolved_connections = resolved_connections
     @execution = BatchExecution.new(batch: batch, workflow: workflow)
   end
 
   def call
     @execution.start!
 
-    if batch.processing_mode == "parallel"
+    if batch.processing_mode == 'parallel'
       process_in_parallel
     else
       process_sequentially
@@ -41,7 +42,8 @@ class BatchExecutor
         row: row,
         workflow: workflow,
         workflow_execution: workflow_execution,
-        step_templates: @step_templates
+        step_templates: @step_templates,
+        resolved_connections: @resolved_connections
       )
       row_executor.call
       row_executor
@@ -57,7 +59,8 @@ class BatchExecutor
         row: row,
         workflow: workflow,
         workflow_execution: workflow_execution,
-        step_templates: @step_templates
+        step_templates: @step_templates,
+        resolved_connections: @resolved_connections
       )
       row_executor.call
       HydraManager.instance.run

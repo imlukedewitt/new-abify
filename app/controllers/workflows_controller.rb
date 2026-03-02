@@ -5,7 +5,7 @@ class WorkflowsController < ApplicationController
   include Serializable
 
   def index
-    @workflows = Workflow.includes(:steps, :connection).all
+    @workflows = Workflow.includes(:steps).all
 
     respond_to do |format|
       format.html
@@ -18,7 +18,6 @@ class WorkflowsController < ApplicationController
 
   def show
     @workflow = Workflow.find_by_id_or_handle!(params[:id])
-    @connections = Connection.all
 
     respond_to do |format|
       format.html
@@ -28,21 +27,16 @@ class WorkflowsController < ApplicationController
 
   def new
     @workflow = Workflow.new
-    @connections = Connection.all
   end
 
   def edit
     @workflow = Workflow.find_by_id_or_handle!(params[:id])
-    @connections = Connection.all
   end
 
   def create
     @workflow = Workflow.new(workflow_params)
 
-    unless @workflow.save
-      @connections = Connection.all
-      return respond_with_errors(@workflow, :new)
-    end
+    return respond_with_errors(@workflow, :new) unless @workflow.save
 
     respond_to do |format|
       format.html { redirect_to workflow_path(@workflow), notice: 'Workflow created successfully' }
@@ -53,10 +47,7 @@ class WorkflowsController < ApplicationController
   def update
     @workflow = Workflow.find_by_id_or_handle!(params[:id])
 
-    unless @workflow.update(workflow_params)
-      @connections = Connection.all
-      return respond_with_errors(@workflow, :edit)
-    end
+    return respond_with_errors(@workflow, :edit) unless @workflow.update(workflow_params)
 
     respond_to do |format|
       format.html { redirect_to workflow_path(@workflow), notice: 'Workflow updated successfully' }
@@ -77,12 +68,15 @@ class WorkflowsController < ApplicationController
   private
 
   def workflow_params
-    params.require(:workflow)
-          .permit(
-            :name, :handle, :connection_id, :connection_handle,
-            config: {},
-            steps_attributes: [:id, :name, { config: {} }]
-          )
+    permitted = params.require(:workflow)
+                      .permit(
+                        :name, :handle,
+                        config: {},
+                        connection_slots: %i[handle description default],
+                        steps_attributes: [:id, :name, { config: {} }]
+                      )
+    permitted[:connection_slots] = ConnectionSlot::Normalizer.call(permitted[:connection_slots])
+    permitted
   end
 
   def respond_with_destroy_error

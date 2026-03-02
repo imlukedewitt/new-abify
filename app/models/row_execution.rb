@@ -14,10 +14,17 @@ class RowExecution < ApplicationRecord
   has_many :step_executions
 
   def fail!
-    update!(
-      status: Executable::FAILED,
-      completed_at: Time.current
-    )
+    if persisted?
+      update_columns(
+        status: Executable::FAILED,
+        completed_at: Time.current
+      )
+    else
+      assign_attributes(
+        status: Executable::FAILED,
+        completed_at: Time.current
+      )
+    end
   end
 
   # TODO: this is AI. Need to add actual functions to load row responses/errors etc

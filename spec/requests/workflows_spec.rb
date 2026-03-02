@@ -59,4 +59,36 @@ RSpec.describe 'Workflows', type: :request do
       end
     end
   end
+
+  describe 'POST /workflows' do
+    let(:valid_params) do
+      {
+        workflow: {
+          name: 'New Workflow',
+          handle: 'new-workflow',
+          connection_slots: {
+            '0' => { 'handle' => 'primary', 'description' => 'Main connection', 'default' => 'true' },
+            '1' => { 'handle' => 'secondary', 'description' => 'Backup', 'default' => 'false' },
+            '2' => { 'handle' => '', 'description' => 'ignore me' }
+          }
+        }
+      }
+    end
+
+    it 'creates a new workflow and normalizes connection slots' do
+      expect do
+        post workflows_path, params: valid_params, as: :json
+      end.to change(Workflow, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+
+      workflow = Workflow.last
+      expect(workflow.name).to eq('New Workflow')
+      expect(workflow.connection_slots).to eq([
+                                                { 'handle' => 'primary', 'description' => 'Main connection',
+                                                  'default' => true },
+                                                { 'handle' => 'secondary', 'description' => 'Backup' }
+                                              ])
+    end
+  end
 end
