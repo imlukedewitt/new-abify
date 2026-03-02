@@ -27,14 +27,14 @@
       </div>
       <div class="flex gap-3">
         <div class="form-control w-28">
-          <label class="label label-text">Method</label>
+          <%= label_tag "step[config][liquid_templates][method]", "Method", class: "label label-text" %>
           <%= select_tag "step[config][liquid_templates][method]",
                         options_for_select([%w[GET GET], %w[POST POST], %w[PUT PUT], %w[PATCH PATCH], %w[DELETE DELETE]], 
                             liquid_templates['method'] || 'GET'),
                         class: "select select-bordered select-sm w-full" %>
         </div>
         <div class="form-control flex-1">
-          <label class="label label-text">URL</label>
+          <%= label_tag "step[config][liquid_templates][url]", "URL", class: "label label-text" %>
           <%= text_field_tag "step[config][liquid_templates][url]",
                         liquid_templates['url'],
                         class: "input input-bordered input-sm w-full font-mono text-xs",
@@ -43,7 +43,8 @@
         </div>
       </div>
       <div class="form-control">
-        <label class="label label-text">Request Body <span class="opacity-50">(optional)</span></label>
+        <%= label_tag "step[config][liquid_templates][body]", "Request Body", class: "label label-text" %>
+        <span class="opacity-50 text-xs ml-1">(optional)</span>
         <%= text_area_tag "step[config][liquid_templates][body]",
                     liquid_templates['body'],
                     class: "textarea textarea-bordered w-full font-mono text-xs leading-relaxed",
@@ -57,7 +58,8 @@
     <div class="card-body gap-4">
       <h3 class="card-title text-base">Response & Connection Slot</h3>
       <div class="form-control">
-        <label class="label label-text">Connection Slot <span class="opacity-50">(optional)</span></label>
+        <%= label_tag "step[config][liquid_templates][connection_slot]", "Connection Slot", class: "label label-text" %>
+        <span class="opacity-50 text-xs ml-1">(optional)</span>
         <% 
           options = workflow.connection_slots.map { |s| [s['handle'], s['handle']] }
           default_slot = workflow.connection_slots.find { |s| s['default'] }
@@ -72,7 +74,8 @@
         </label>
       </div>
       <div class="form-control">
-        <label class="label label-text">Success Data <span class="opacity-50">(optional)</span></label>
+        <%= label_tag "step[config][liquid_templates][success_data]", "Success Data", class: "label label-text" %>
+        <span class="opacity-50 text-xs ml-1">(optional)</span>
         <%= text_area_tag "step[config][liquid_templates][success_data]",
                     liquid_templates['success_data'].is_a?(Hash) ? JSON.pretty_generate(liquid_templates['success_data']) : liquid_templates['success_data'],
                     class: "textarea textarea-bordered w-full font-mono text-xs leading-relaxed",
@@ -84,7 +87,8 @@
         <label class="label cursor-pointer gap-2 pb-2">
           <%= check_box_tag "step[config][liquid_templates][required]", 'true',
                         liquid_templates['required'] == true || liquid_templates['required'] == 'true',
-                        class: "checkbox checkbox-sm" %>
+                        class: "checkbox checkbox-sm",
+                        id: "step_required" %>
           <span class="label-text">Required</span>
         </label>
       </div>
@@ -95,7 +99,8 @@
     <div class="card-body gap-4">
       <h3 class="card-title text-base">Conditional Logic</h3>
       <div class="form-control">
-        <label class="label label-text">Skip Condition <span class="opacity-50">(optional)</span></label>
+        <%= label_tag "step[config][liquid_templates][skip_condition]", "Skip Condition", class: "label label-text" %>
+        <span class="opacity-50 text-xs ml-1">(optional)</span>
         <%= text_field_tag "step[config][liquid_templates][skip_condition]",
                     liquid_templates['skip_condition'],
                     class: "input input-bordered input-sm w-full font-mono text-xs",
@@ -116,12 +121,9 @@
       </div>
     </div>
   </div>
-</div>
-</div>
-</details>
-<!-- actions -->
-<div class="flex gap-2 pt-2 px-8">
-  <%= form.submit class: "btn btn-primary btn-sm" %>
-  <%= link_to "Cancel", step.persisted? ? workflow_step_path(workflow, step) : workflow_path(workflow), class: "btn btn-ghost btn-sm" %>
-</div>
+  <!-- actions -->
+  <div class="flex gap-2 pt-2 px-8">
+    <%= form.submit class: "btn btn-primary btn-sm" %>
+    <%= link_to "Cancel", step.persisted? ? workflow_step_path(workflow, step) : workflow_path(workflow), class: "btn btn-ghost btn-sm" %>
+  </div>
 <% end %>
