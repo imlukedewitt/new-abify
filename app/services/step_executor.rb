@@ -10,22 +10,21 @@ require_relative 'liquid/context_builder'
 class StepExecutor
   attr_reader :step, :row, :config, :execution
 
-  def initialize(step, row, step_templates:,
-                 row_execution: nil, hydra_manager: HydraManager.instance, on_complete: nil, priority: false,
-                 resolved_connections: {})
+  def initialize(step, row, step_templates:, **options)
     raise ArgumentError, 'step is required' unless step
     raise ArgumentError, 'row is required' unless row
 
     @step = step
     @row = row
-    @row_execution = row_execution
     @config = @step.step_config.with_indifferent_access
-    @hydra_manager = hydra_manager
-    @on_complete = on_complete
-    @resolved_connections = resolved_connections
+    @row_execution = options[:row_execution]
+    @hydra_manager = options.fetch(:hydra_manager, HydraManager.instance)
+    @on_complete = options[:on_complete]
+    @resolved_connections = options.fetch(:resolved_connections, {})
+    @priority = options.fetch(:priority, false)
+
     @connection = resolve_connection
-    @auth_config = @connection&.credentials || @step.workflow&.resolved_auth_config || {}
-    @priority = priority
+    @auth_config = @connection&.credentials || {}
     @execution = StepExecution.new(step: @step, row: @row, row_execution: @row_execution)
     @templates = step_templates.fetch(@step.id)
   end
@@ -56,29 +55,10 @@ class StepExecutor
   private
 
   def resolve_connection
-    # 1. Check for explicit slot reference in step config
-    # We look in liquid_templates because that's where the validator expects it
-    slot_handle = @config.dig(:liquid_templates, :connection_slot)
-    if slot_handle.present?
-      connection = @resolved_connections[slot_handle]
-      return connection if connection
-    end
+    explicit_handle = @config.dig(:liquid_templates, :connection_slot).presence
+    default_handle = @step.workflow.connection_slots&.find { |s| s['default'] }&.dig('handle')
 
-    # 2. Check for step-level connection override
-    return @step.connection if @step.connection.present?
-
-    # 3. Check for workflow-level default slot
-    default_slot = @step.workflow.connection_slots&.find { |s| s['default'] }
-    if default_slot
-      connection = @resolved_connections[default_slot['handle']]
-      return connection if connection
-    end
-
-    # 4. Fallback to workflow-level default connection
-    # If using connection slots, we bypass the old hardcoded connection
-    return nil if @step.workflow.connection_slots.present?
-
-    @step.workflow.connection
+    @resolved_connections[explicit_handle] || @resolved_connections[default_handle]
   end
 
   def skip!

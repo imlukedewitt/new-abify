@@ -50,6 +50,12 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
       expect(json_response).to have_key('workflow_executions')
       expect(json_response['workflow_executions'].count).to eq(2)
     end
+
+    it 'returns all workflow executions (HTML)' do
+      get :index
+      expect(response).to be_successful
+      expect(response.body).to include('Workflow Executions')
+    end
   end
 
   describe 'GET #show' do
@@ -62,6 +68,12 @@ RSpec.describe WorkflowExecutionsController, type: :controller do
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('workflow_execution')
         expect(json_response['workflow_execution']['id']).to eq(execution.id)
+      end
+
+      it 'returns the workflow execution (HTML)' do
+        get :show, params: { id: execution.id }
+        expect(response).to be_successful
+        expect(response.body).to include("Workflow Execution #{execution.id}")
       end
     end
 

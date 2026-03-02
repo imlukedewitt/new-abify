@@ -5,7 +5,6 @@
 # Stores encrypted API credentials that can be referenced by workflows
 class Connection < ApplicationRecord
   belongs_to :user
-  has_many :workflows, dependent: :nullify
 
   attribute :credentials, :json
   encrypts :credentials

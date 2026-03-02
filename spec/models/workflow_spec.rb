@@ -15,12 +15,6 @@ RSpec.describe Workflow, type: :model do
       expect(association.macro).to eq :has_many
       expect(association.options[:dependent]).to eq :restrict_with_error
     end
-
-    it 'belongs to connection (optional)' do
-      association = described_class.reflect_on_association(:connection)
-      expect(association.macro).to eq :belongs_to
-      expect(association.options[:optional]).to eq true
-    end
   end
 
   describe 'connection_slots attribute' do
@@ -195,74 +189,6 @@ RSpec.describe Workflow, type: :model do
       end
     end
 
-    context 'connection section' do
-      context 'when connection is not a hash' do
-        it 'is invalid' do
-          workflow = build(:workflow, config: {
-                             'workflow' => { 'connection' => 'not a hash' }
-                           })
-          expect(workflow).not_to be_valid
-          expect(workflow.errors[:config]).to include('workflow.connection must be a hash')
-        end
-      end
-
-      context 'when connection has unknown keys' do
-        it 'is invalid' do
-          workflow = build(:workflow, config: {
-                             'workflow' => {
-                               'connection' => { 'unknown_key' => 'value' }
-                             }
-                           })
-          expect(workflow).not_to be_valid
-          expect(workflow.errors[:config]).to include('unexpected key in workflow.connection: unknown_key')
-        end
-      end
-
-      context 'when connection has valid keys' do
-        it 'is valid' do
-          workflow = build(:workflow, config: {
-                             'workflow' => {
-                               'connection' => {
-                                 'subdomain' => 'mycompany',
-                                 'domain' => 'myapp.com'
-                               }
-                             }
-                           })
-          expect(workflow).to be_valid
-        end
-      end
-
-      context 'when connection values are not strings' do
-        it 'is invalid' do
-          workflow = build(:workflow, config: {
-                             'workflow' => {
-                               'connection' => {
-                                 'subdomain' => 123, # Should be string
-                                 'domain' => ['array'] # Should be string
-                               }
-                             }
-                           })
-          expect(workflow).not_to be_valid
-          expect(workflow.errors[:config]).to include('workflow.connection.subdomain must be a string')
-          expect(workflow.errors[:config]).to include('workflow.connection.domain must be a string')
-        end
-      end
-
-      context 'when connection values are nil' do
-        it 'is valid' do
-          workflow = build(:workflow, config: {
-                             'workflow' => {
-                               'connection' => {
-                                 'subdomain' => nil,
-                                 'domain' => nil
-                               }
-                             }
-                           })
-          expect(workflow).to be_valid
-        end
-      end
-    end
-
     context 'when config has both valid sections' do
       it 'is valid' do
         workflow = build(:workflow, config: {
@@ -270,10 +196,6 @@ RSpec.describe Workflow, type: :model do
                              'liquid_templates' => {
                                'group_by' => '{{row.type}}',
                                'sort_by' => '{{row.order}}'
-                             },
-                             'connection' => {
-                               'subdomain' => 'test',
-                               'domain' => 'example.com'
                              }
                            }
                          })
@@ -360,121 +282,6 @@ RSpec.describe Workflow, type: :model do
         workflow = build(:workflow, connection_slots: [{ 'handle' => nil }])
         expect(workflow).not_to be_valid
         expect(workflow.errors[:connection_slots]).to include('slot at index 0 handle must be a string')
-      end
-    end
-  end
-
-  describe '#resolved_auth_config' do
-    let(:user) { create(:user) }
-
-    context 'when workflow has a connection' do
-      it 'returns the connection credentials' do
-        connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'conn_token' })
-        workflow = create(:workflow, connection: connection)
-
-        expect(workflow.resolved_auth_config).to eq({ 'type' => 'bearer', 'token' => 'conn_token' })
-      end
-    end
-
-    context 'when workflow has no connection but has auth in config' do
-      it 'returns auth from config (backwards compatibility)' do
-        workflow = create(:workflow, config: {
-                            'connection' => {
-                              'auth' => { 'type' => 'basic', 'username' => 'user', 'password' => 'pass' }
-                            }
-                          })
-
-        expect(workflow.resolved_auth_config).to eq({ 'type' => 'basic', 'username' => 'user', 'password' => 'pass' })
-      end
-    end
-
-    context 'when workflow has both connection and config auth' do
-      it 'prioritizes connection over config' do
-        connection = create(:connection, user: user, credentials: { type: 'bearer', token: 'conn_token' })
-        workflow = create(:workflow, connection: connection, config: {
-                            'connection' => {
-                              'auth' => { 'type' => 'basic', 'username' => 'user', 'password' => 'pass' }
-                            }
-                          })
-
-        expect(workflow.resolved_auth_config).to eq({ 'type' => 'bearer', 'token' => 'conn_token' })
-      end
-    end
-
-    context 'when workflow has neither connection nor config auth' do
-      it 'returns empty hash' do
-        workflow = create(:workflow, config: nil)
-
-        expect(workflow.resolved_auth_config).to eq({})
-      end
-
-      it 'returns empty hash when config has no auth' do
-        workflow = create(:workflow, config: { 'connection' => { 'subdomain' => 'test' } })
-
-        expect(workflow.resolved_auth_config).to eq({})
-      end
-    end
-  end
-
-  describe 'connection deletion behavior' do
-    let(:user) { create(:user) }
-
-    it 'nullifies connection_id when connection is deleted' do
-      connection = create(:connection, user: user)
-      workflow = create(:workflow, connection: connection)
-
-      expect(workflow.connection_id).not_to be_nil
-
-      connection.destroy
-
-      workflow.reload
-      expect(workflow.connection_id).to be_nil
-    end
-  end
-
-  describe 'connection validation' do
-    let(:user) { create(:user) }
-
-    context 'with connection_handle' do
-      it 'resolves connection_id from handle' do
-        connection = create(:connection, user: user, handle: 'my-handle')
-        workflow = build(:workflow, connection_handle: 'my-handle')
-
-        expect(workflow).to be_valid
-        expect(workflow.connection_id).to eq(connection.id)
-      end
-
-      it 'adds error when handle not found' do
-        workflow = build(:workflow, connection_handle: 'nonexistent')
-
-        expect(workflow).not_to be_valid
-        expect(workflow.errors[:connection]).to include('not found')
-      end
-    end
-
-    context 'with connection_id' do
-      it 'adds error when connection_id not found' do
-        workflow = build(:workflow, connection_id: 99_999)
-
-        expect(workflow).not_to be_valid
-        expect(workflow.errors[:connection]).to include('not found')
-      end
-
-      it 'is valid when connection exists' do
-        connection = create(:connection, user: user)
-        workflow = build(:workflow, connection_id: connection.id)
-
-        expect(workflow).to be_valid
-      end
-    end
-
-    context 'with both connection_id and connection_handle' do
-      it 'prefers connection_id over connection_handle' do
-        connection1 = create(:connection, user: user, handle: 'handle-1')
-        workflow = build(:workflow, connection_id: connection1.id, connection_handle: 'handle-2')
-
-        expect(workflow).to be_valid
-        expect(workflow.connection_id).to eq(connection1.id)
       end
     end
   end

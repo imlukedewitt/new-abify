@@ -97,8 +97,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_22_202739) do
     t.json "config"
     t.integer "order"
     t.string "name"
-    t.integer "connection_id"
-    t.index ["connection_id"], name: "index_steps_on_connection_id"
     t.index ["workflow_id"], name: "index_steps_on_workflow_id"
   end
 
@@ -131,10 +129,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_22_202739) do
     t.datetime "updated_at", null: false
     t.json "config"
     t.string "name"
-    t.integer "connection_id"
     t.string "handle"
     t.json "connection_slots", default: []
-    t.index ["connection_id"], name: "index_workflows_on_connection_id"
     t.index ["handle"], name: "index_workflows_on_handle", unique: true
   end
 
@@ -149,9 +145,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_22_202739) do
   add_foreign_key "step_executions", "row_executions"
   add_foreign_key "step_executions", "rows"
   add_foreign_key "step_executions", "steps"
-  add_foreign_key "steps", "connections", on_delete: :nullify
   add_foreign_key "steps", "workflows"
   add_foreign_key "workflow_executions", "data_sources"
   add_foreign_key "workflow_executions", "workflows"
-  add_foreign_key "workflows", "connections", on_delete: :nullify
 end

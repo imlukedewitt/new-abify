@@ -7,7 +7,7 @@ module Liquid
       @row = row
       @workflow = workflow
       @row_execution = row_execution
-      @connection = connection || workflow.connection
+      @connection = connection
     end
 
     def build

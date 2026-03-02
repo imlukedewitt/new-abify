@@ -14,7 +14,6 @@
       </ul>
     </div>
   <% end %>
-
   <!-- request config -->
   <div class="card bg-base-200">
     <div class="card-body gap-4">
@@ -53,11 +52,25 @@
       </div>
     </div>
   </div>
-
-  <!-- response & connection -->
+  <!-- response & connection slot -->
   <div class="card bg-base-200">
     <div class="card-body gap-4">
-      <h3 class="card-title text-base">Response & Connection</h3>
+      <h3 class="card-title text-base">Response & Connection Slot</h3>
+      <div class="form-control">
+        <label class="label label-text">Connection Slot <span class="opacity-50">(optional)</span></label>
+        <% 
+          options = workflow.connection_slots.map { |s| [s['handle'], s['handle']] }
+          default_slot = workflow.connection_slots.find { |s| s['default'] }
+          placeholder = default_slot ? "Default: #{default_slot['handle']}" : "Select a slot"
+        %>
+        <%= select_tag "step[config][liquid_templates][connection_slot]",
+                      options_for_select(options, liquid_templates['connection_slot']),
+                      include_blank: placeholder,
+                      class: "select select-bordered select-sm w-full" %>
+        <label class="label">
+          <span class="label-text-alt opacity-60">Which connection slot should this step use?</span>
+        </label>
+      </div>
       <div class="form-control">
         <label class="label label-text">Success Data <span class="opacity-50">(optional)</span></label>
         <%= text_area_tag "step[config][liquid_templates][success_data]",
@@ -68,13 +81,6 @@
         <label class="label"><span class="label-text-alt opacity-60">Extract data from response. Available to subsequent steps as <code class="text-info">response.*</code></span></label>
       </div>
       <div class="flex gap-4 items-end">
-        <div class="form-control flex-1">
-          <label class="label label-text">Connection Override <span class="opacity-50">(optional)</span></label>
-          <%= form.select :connection_id,
-                        options_from_collection_for_select(connections, :id, :name, step.connection_id),
-                        { include_blank: "Use workflow default" },
-                        { class: "select select-bordered select-sm w-full" } %>
-        </div>
         <label class="label cursor-pointer gap-2 pb-2">
           <%= check_box_tag "step[config][liquid_templates][required]", 'true',
                         liquid_templates['required'] == true || liquid_templates['required'] == 'true',
@@ -84,7 +90,6 @@
       </div>
     </div>
   </div>
-
   <!-- skip condition -->
   <div class="card bg-base-200 h-full">
     <div class="card-body gap-4">
@@ -99,7 +104,6 @@
       </div>
     </div>
   </div>
-
   <!-- variables reference -->
   <div class="card bg-base-200 h-full">
     <div class="card-body gap-2">
@@ -115,7 +119,6 @@
 </div>
 </div>
 </details>
-
 <!-- actions -->
 <div class="flex gap-2 pt-2 px-8">
   <%= form.submit class: "btn btn-primary btn-sm" %>

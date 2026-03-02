@@ -9,10 +9,19 @@
       <% end %>
     </div>
     <div class="mt-4 space-y-2 text-sm">
-      <div>
-        <span class="opacity-70">Connection:</span>
-        <span><%= @workflow.connection&.name || "None" %></span>
-      </div>
+      <% if @workflow.connection_slots.any? %>
+        <div class="font-semibold opacity-70 mb-1">Connection Slots:</div>
+        <div class="flex flex-wrap gap-1">
+          <% @workflow.connection_slots.each do |slot| %>
+            <span class="badge badge-outline badge-sm <%= 'badge-primary' if slot['default'] %>" title="<%= slot['description'] %>">
+              <%= slot['handle'] %>
+              <%= '(default)' if slot['default'] %>
+            </span>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="opacity-50 italic">No connection slots configured</div>
+      <% end %>
     </div>
     <div class="flex flex-wrap gap-2 mt-4">
       <%= link_to "Run Workflow", new_workflow_execution_path(workflow_id: @workflow.id), class: "btn btn-primary btn-xs" %>

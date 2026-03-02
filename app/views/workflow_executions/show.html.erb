@@ -4,6 +4,16 @@
   </div>
   <div class="flex items-center gap-4 mb-6 text-sm text-neutral-content/70">
     <span>Workflow: <strong class="text-base-content"><%= @workflow_execution.workflow.name %></strong></span>
+    <% if @workflow_execution.connection_mappings.present? %>
+      <div class="flex items-center gap-2">
+        <span class="opacity-70">Connections:</span>
+        <% @workflow_execution.connection_mappings.each do |slot, metadata| %>
+          <span class="badge badge-sm badge-outline" title="Slot: <%= slot %>">
+            <%= metadata['connection_name'] %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
     <span>Rows: <%= @workflow_execution.row_executions.count %></span>
     <span>Complete: <%= @workflow_execution.row_executions.where(status: 'complete').count %></span>
     <span>Failed: <%= @workflow_execution.row_executions.where(status: 'failed').count %></span>

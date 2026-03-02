@@ -4,7 +4,6 @@
 class StepsController < ApplicationController
   before_action :set_workflow
   before_action :set_step, only: %i[show edit update destroy move_up move_down]
-  before_action :set_connections, only: %i[show new edit create update]
 
   def index
     redirect_to workflow_path(@workflow)
@@ -66,10 +65,6 @@ class StepsController < ApplicationController
     @step = @workflow.steps.unscoped.find(params[:id])
   end
 
-  def set_connections
-    @connections = Connection.all
-  end
-
   def respond_with_destroy_error
     respond_to do |format|
       format.html { redirect_to workflow_step_path(@workflow, @step), alert: @step.errors.full_messages.join(', ') }
@@ -80,8 +75,8 @@ class StepsController < ApplicationController
   def step_params
     params.require(:step)
           .permit(
-            :name, :order, :connection_id, :connection_handle,
-            config: { liquid_templates: %i[name url method body params skip_condition success_data required] }
+            :name, :order,
+            config: { liquid_templates: %i[name url method body params skip_condition success_data required connection_slot] }
           )
   end
 

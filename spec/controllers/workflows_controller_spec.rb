@@ -13,10 +13,6 @@ RSpec.describe WorkflowsController, type: :controller do
               liquid_templates: {
                 group_by: '{{row.group}}',
                 sort_by: '{{row.priority}}'
-              },
-              connection: {
-                subdomain: 'test',
-                domain: 'example.com'
               }
             }
           }
@@ -27,33 +23,6 @@ RSpec.describe WorkflowsController, type: :controller do
         expect do
           post :create, params: valid_config, as: :json
         end.to change(Workflow, :count).by(1)
-      end
-    end
-
-    context 'with a connection_id' do
-      let(:user) { create(:user) }
-      let(:connection) { create(:connection, user: user) }
-      let(:config_with_connection) do
-        {
-          name: 'Workflow with Connection',
-          connection_id: connection.id,
-          config: {
-            workflow: {
-              liquid_templates: {
-                group_by: '{{row.group}}'
-              }
-            }
-          }
-        }
-      end
-
-      it 'creates a workflow with the connection' do
-        expect do
-          post :create, params: config_with_connection, as: :json
-        end.to change(Workflow, :count).by(1)
-
-        workflow = Workflow.last
-        expect(workflow.connection_id).to eq(connection.id)
       end
     end
 
@@ -275,52 +244,6 @@ RSpec.describe WorkflowsController, type: :controller do
       expect(response).to have_http_status(:unprocessable_content)
       json = JSON.parse(response.body)
       expect(json['errors']).to include(a_string_including('must start with a letter'))
-    end
-  end
-
-  describe 'POST #create with connection_handle' do
-    let(:user) { create(:user) }
-    let(:connection) { create(:connection, user: user, handle: 'my-connection') }
-
-    it 'creates a workflow using connection_handle' do
-      post :create, params: { workflow: { name: 'Connected Workflow', connection_handle: connection.handle } },
-                    as: :json
-
-      expect(response).to have_http_status(:created)
-      workflow = Workflow.last
-      expect(workflow.connection_id).to eq(connection.id)
-    end
-
-    it 'prefers connection_id over connection_handle when both provided' do
-      other_connection = create(:connection, user: user, handle: 'other-connection')
-
-      post :create, params: {
-        workflow: {
-          name: 'Connected Workflow',
-          connection_id: connection.id,
-          connection_handle: other_connection.handle
-        }
-      }, as: :json
-
-      expect(response).to have_http_status(:created)
-      workflow = Workflow.last
-      expect(workflow.connection_id).to eq(connection.id)
-    end
-
-    it 'returns error when connection_handle not found' do
-      post :create, params: { workflow: { name: 'Workflow', connection_handle: 'nonexistent' } }, as: :json
-
-      expect(response).to have_http_status(:unprocessable_content)
-      json = JSON.parse(response.body)
-      expect(json['errors']).to eq(['Connection not found'])
-    end
-
-    it 'returns error when connection_id not found' do
-      post :create, params: { workflow: { name: 'Workflow', connection_id: 99_999 } }, as: :json
-
-      expect(response).to have_http_status(:unprocessable_content)
-      json = JSON.parse(response.body)
-      expect(json['errors']).to eq(['Connection not found'])
     end
   end
 

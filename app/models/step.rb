@@ -10,10 +10,7 @@
 #
 # @attr [Workflow] workflow The workflow this step belongs to
 class Step < ApplicationRecord
-  attr_accessor :connection_handle
-
   belongs_to :workflow
-  belongs_to :connection, optional: true
   has_many :step_executions, dependent: :destroy
   default_scope { order(order: :asc) }
 
@@ -21,24 +18,14 @@ class Step < ApplicationRecord
   validates :name, presence: true
   validates :order, presence: true, numericality: { only_integer: true, greater_than: 0 }
   before_validation :set_default_order, on: :create
-  before_validation :resolve_connection_from_handle
   before_validation :normalize_config
   validate :validate_config
-  validate :validate_connection_exists
 
   def step_config
     return nil if config.nil?
     return config['steps'][name] if config.key?('steps') && config['steps'].is_a?(Hash)
 
     config
-  end
-
-  def resolved_auth_config
-    if connection.present?
-      connection.credentials
-    else
-      workflow&.resolved_auth_config || {}
-    end
   end
 
   private
@@ -66,20 +53,6 @@ class Step < ApplicationRecord
     return if validator.valid?
 
     validator.errors.each { |error| errors.add(:config, error) }
-  end
-
-  def resolve_connection_from_handle
-    return if connection_handle.blank? || connection_id.present?
-
-    self.connection_id = Connection.find_by(handle: connection_handle)&.id
-  end
-
-  def validate_connection_exists
-    if connection_id.present? && !Connection.exists?(connection_id)
-      errors.add(:connection, 'not found')
-    elsif connection_handle.present? && connection_id.blank?
-      errors.add(:connection, 'not found')
-    end
   end
 
   def normalize_config
