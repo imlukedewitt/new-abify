@@ -3,6 +3,7 @@ module ApplicationHelper
     {
       data_sources: :data_sources,
       workflows: :workflows,
+      steps: :workflows,
       workflow_executions: :logs,
       connections: :connections
     }.fetch(controller_name.to_sym, nil)
