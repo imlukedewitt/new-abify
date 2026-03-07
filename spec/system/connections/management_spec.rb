@@ -4,9 +4,7 @@ RSpec.describe 'Connection Management', type: :system do
   let!(:user) { create(:user) }
 
   before do
-    # Authentication bypass will set Current.user = User.last
-    # Ensure our user is the last one
-    user
+    sign_in(user)
   end
 
   describe 'creating a new connection' do

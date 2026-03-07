@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_22_202739) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_04_030435) do
   create_table "batch_executions", force: :cascade do |t|
     t.integer "batch_id", null: false
     t.integer "workflow_id", null: false
@@ -108,6 +108,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_22_202739) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "api_token"
+    t.string "password_digest", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
   end
 
   create_table "workflow_executions", force: :cascade do |t|

@@ -24,6 +24,7 @@ RSpec.describe 'Workflow Execution Logs', type: :system do
   end
 
   before do
+    sign_in(user)
     # Stub HydraManager to simulate successful API response
     allow(HydraManager.instance).to receive(:queue) do |**args|
       response = double('Response', code: 201, body: '{"id": "CRM-999", "status": "created"}')

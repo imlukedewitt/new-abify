@@ -29,8 +29,7 @@ RSpec.describe 'Run Workflow', type: :system do
   end
 
   before do
-    # Current.user is handled by the developer bypass in Authentication concern
-    # because Rails.env.test? is true and no Authorization header is present.
+    sign_in(user)
   end
 
   it 'allows a user to map connection slots and execute a workflow' do

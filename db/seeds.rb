@@ -10,6 +10,7 @@ system_user = User.find_or_create_by!(email: 'system@app.local') do |user|
   user.last_name = 'User'
   user.role = 'system'
   user.api_token = 'api_key_system'
+  user.password = 'password'
 end
 puts "✓ System user created (ID: #{system_user.id})"
 
@@ -19,6 +20,7 @@ owner_user = User.find_or_create_by!(email: 'owner@app.local') do |user|
   user.last_name = 'User'
   user.role = 'owner'
   user.api_token = 'api_token_owner'
+  user.password = 'password'
 end
 puts "✓ Owner user created (ID: #{owner_user.id})"
 
@@ -28,6 +30,7 @@ admin_user = User.find_or_create_by!(email: 'admin@app.local') do |user|
   user.last_name = 'User'
   user.role = 'admin'
   user.api_token = 'api_token_admin'
+  user.password = 'password'
 end
 puts "✓ Admin user created (ID: #{admin_user.id})"
 
@@ -37,5 +40,6 @@ member_user = User.find_or_create_by!(email: 'member@app.local') do |user|
   user.last_name = 'User'
   user.role = 'member'
   user.api_token = 'api_token_member'
+  user.password = 'password'
 end
 puts "✓ Member user created (ID: #{member_user.id})"

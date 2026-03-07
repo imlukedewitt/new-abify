@@ -5,8 +5,7 @@ RSpec.describe 'Step Management', type: :system do
   let!(:workflow) { create(:workflow, :with_steps) }
 
   before do
-    # Authentication bypass will set Current.user = User.last
-    user
+    sign_in(user)
   end
 
   describe 'adding a step' do

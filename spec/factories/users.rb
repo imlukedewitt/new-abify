@@ -7,5 +7,6 @@ FactoryBot.define do
     last_name { 'User' }
     role { :member }
     api_token { SecureRandom.hex(20) }
+    password { 'password' }
   end
 end

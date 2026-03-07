@@ -9,11 +9,11 @@ module Authentication
   private
 
   def authenticate
-    # TODO: Remove this bypass once session auth is implemented
-    if (Rails.env.development? || Rails.env.test?) && !request.authorization.present? && request.headers['X-Strict-Auth'].nil?
-      Current.user ||= User.last
-      return
-    end
+    # Check session-based authentication first
+    Current.user ||= User.find_by(id: session[:user_id]) if session[:user_id].present?
+
+    # If session auth didn't set Current.user, fall back to token auth
+    return unless Current.user.nil? && request.authorization.present?
 
     authenticate_or_request_with_http_token do |token|
       Current.user = User.find_by(api_token: token)
@@ -21,11 +21,16 @@ module Authentication
   end
 
   def require_current_user
-    render_unauthorized unless Current.user.present?
+    return if Current.user.present?
+
+    respond_to do |format|
+      format.html { redirect_to login_path, alert: 'Please sign in' }
+      format.json { render_unauthorized }
+    end
   end
 
   def require_admin
-    render_unauthorized unless Current.user.admin?
+    render_unauthorized unless Current.user&.admin?
   end
 
   def render_unauthorized
