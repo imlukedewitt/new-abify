@@ -13,6 +13,10 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+  resource :session, only: %i[new create destroy]
+  get 'login' => 'sessions#new'
+  delete 'logout' => 'sessions#destroy'
+
   resources :workflow_executions, only: %i[create index show new]
   resources :data_sources, only: %i[create index show new]
   resources :workflows do

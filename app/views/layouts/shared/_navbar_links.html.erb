@@ -15,3 +15,26 @@
     </li>
   </ul>
 </div>
+<div class="navbar-end">
+  <% if Current.user.present? %>
+    <div class="dropdown dropdown-end">
+      <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+        <div class="avatar avatar-placeholder">
+          <div class="bg-accent text-accent-content rounded-full w-8">
+            <span class="text-xs"><%= Current.user.email[0].upcase %></span>
+          </div>
+        </div>
+      </div>
+      <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow">
+        <li class="menu-title">
+          <span><%= Current.user.email %></span>
+        </li>
+        <li>
+          <%= link_to "Logout", logout_path, data: { turbo_method: :delete } %>
+        </li>
+      </ul>
+    </div>
+  <% else %>
+    <%= link_to "Sign In", login_path, class: "btn btn-ghost" %>
+  <% end %>
+</div>
