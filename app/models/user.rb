@@ -1,11 +1,14 @@
 class User < ApplicationRecord
   include Role
 
+  has_secure_password
+
   after_initialize :set_api_token, if: :new_record?
 
   has_many :connections, dependent: :destroy
 
   validates :api_token, uniqueness: true
+  validates :email, uniqueness: true, presence: true
 
   attribute :api_token, :string
   encrypts :api_token, deterministic: true
