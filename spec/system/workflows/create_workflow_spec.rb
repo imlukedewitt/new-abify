@@ -4,9 +4,7 @@ RSpec.describe 'Workflow Creation', type: :system do
   let!(:user) { create(:user) }
 
   before do
-    # Authentication bypass will set Current.user = User.last
-    # Ensure our user is the last one
-    user
+    sign_in(user)
   end
 
   it 'creates a workflow and verifies database persistence' do
