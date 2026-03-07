@@ -37,9 +37,15 @@ RSpec.describe Authentication, type: :controller do
     end
 
     context 'without authorization header' do
-      it 'returns unauthorized' do
-        get :index
+      it 'returns unauthorized for JSON requests' do
+        get :index, format: :json
         expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'redirects to login for HTML requests' do
+        get :index, format: :html
+        expect(response).to have_http_status(:found)
+        expect(response).to redirect_to(login_path)
       end
     end
 
