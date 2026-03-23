@@ -9,9 +9,8 @@ ENV RAILS_ENV=${RAILS_ENV:-development} \
 # Install system dependencies required for the app
 # - build-essential: for compiling native gem extensions
 # - libsqlite3-dev: for the sqlite3 gem
-# - nodejs: for the asset pipeline (if using JavaScript)
 RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends build-essential libsqlite3-dev nodejs libyaml-dev libcurl4-openssl-dev && \
+    apt-get install -y --no-install-recommends build-essential libsqlite3-dev libyaml-dev libcurl4-openssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
