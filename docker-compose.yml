@@ -1,8 +1,18 @@
 services:
   app:
     build: .
+    command: bundle exec rails server -b 0.0.0.0 -p 10000
     ports:
       - "10000:10000"
+    volumes:
+      - .:/rails
+      - gem_cache:/usr/local/bundle/gems
+    environment:
+      - RAILS_ENV=development
+
+  css:
+    build: .
+    command: bundle exec rails tailwindcss:watch[always]
     volumes:
       - .:/rails
       - gem_cache:/usr/local/bundle/gems
