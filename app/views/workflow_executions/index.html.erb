@@ -14,7 +14,10 @@
       </tr>
     </thead>
     <tbody>
-      <%= render partial: 'workflow_execution', collection: @workflow_executions.order(id: :desc) %>
+      <%= render partial: 'workflow_execution', collection: @workflow_executions %>
     </tbody>
   </table>
+  <div class="mt-4">
+    <%= daisy_pagination(@pagy) %>
+  </div>
 </div>

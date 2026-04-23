@@ -45,3 +45,5 @@ gem 'csv'
 gem 'rspec-core', '~> 3.13'
 
 gem 'tailwindcss-rails', '~> 4.4'
+# Pagination
+gem 'pagy', '~> 43.5'

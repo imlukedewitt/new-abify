@@ -3,6 +3,7 @@
 class ApplicationController < ActionController::Base
   include Authentication
   include Respondable
+  include Pagy::Method
 
   allow_browser versions: :modern
 
