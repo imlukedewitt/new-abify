@@ -1,0 +1,17 @@
+---
+EnableDefaultLinters: true
+linters:
+  ErbSafety:
+    enabled: true
+  FinalNewline:
+    enabled: true
+  TrailingWhitespace:
+    enabled: true
+  Rubocop:
+    enabled: true
+    rubocop_config:
+      AllCops:
+        DisabledByDefault: true
+      Layout/LineLength:
+        Enabled: true
+        Max: 120
