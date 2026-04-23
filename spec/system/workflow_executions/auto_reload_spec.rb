@@ -3,23 +3,32 @@ require 'rails_helper'
 RSpec.describe 'Workflow Execution Auto Reload', type: :system do
   self.use_transactional_tests = false
 
-  let!(:user) { create(:user) }
-  let!(:workflow) { create(:workflow) }
-  let!(:data_source) { create(:data_source) }
-
   before do
-    sign_in(user)
+    WorkflowExecution.destroy_all
+    RowExecution.destroy_all
+    Row.destroy_all
+    DataSource.destroy_all
+    Workflow.destroy_all
+    User.destroy_all
+
+    @user = create(:user)
+    @workflow = create(:workflow)
+    @data_source = create(:data_source)
+
+    sign_in(@user)
   end
 
   after do
     WorkflowExecution.destroy_all
+    RowExecution.destroy_all
+    Row.destroy_all
     DataSource.destroy_all
     Workflow.destroy_all
     User.destroy_all
   end
 
   it 'reloads frame when execution status changes from processing to complete' do
-    execution = create(:workflow_execution, workflow: workflow, data_source: data_source, status: 'processing')
+    execution = create(:workflow_execution, workflow: @workflow, data_source: @data_source, status: 'processing')
 
     visit workflow_executions_path
 
@@ -34,7 +43,7 @@ RSpec.describe 'Workflow Execution Auto Reload', type: :system do
   end
 
   it 'stops polling when all executions are complete' do
-    create(:workflow_execution, :complete, workflow: workflow, data_source: data_source)
+    create(:workflow_execution, :complete, workflow: @workflow, data_source: @data_source)
 
     visit workflow_executions_path
 
@@ -43,7 +52,7 @@ RSpec.describe 'Workflow Execution Auto Reload', type: :system do
   end
 
   it 'replaces history on pagination so back button skips the list' do
-    create_list(:workflow_execution, 25, :complete, workflow: workflow, data_source: data_source)
+    create_list(:workflow_execution, 25, :complete, workflow: @workflow, data_source: @data_source)
 
     visit workflows_path
     visit workflow_executions_path

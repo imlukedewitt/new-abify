@@ -24,11 +24,19 @@
       <span>Completed: <%= @workflow_execution.completed_at.strftime('%Y-%m-%d %H:%M:%S') %></span>
     <% end %>
   </div>
-  <div class="rounded-box shadow-md bg-base-200 divide-y divide-base-300">
-    <%= render partial: 'row_execution', collection: @row_executions %>
-  </div>
+  <%= turbo_frame_tag "row_executions",
+        data: {
+          "turbo-action": "replace",
+          "controller": "reload-frame",
+          "reload-frame-active-value": @row_executions.any? { |re| !re.complete? },
+          "reload-frame-interval-value": 3000
+        } do %>
+    <div class="rounded-box shadow-md bg-base-200 divide-y divide-base-300">
+      <%= render partial: 'row_execution', collection: @row_executions %>
+    </div>
 
-  <div class="mt-4">
-    <%= daisy_pagination(@pagy) %>
-  </div>
+    <div class="mt-4">
+      <%= daisy_pagination(@pagy) %>
+    </div>
+  <% end %>
 </div>
