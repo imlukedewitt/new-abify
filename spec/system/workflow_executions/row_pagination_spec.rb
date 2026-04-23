@@ -20,17 +20,17 @@ RSpec.describe 'Workflow Execution Row Pagination', type: :system do
     expect(page).to have_css('.collapse', count: 20)
     expect(page).to have_css('.join')
 
-    # Page 1 shows last 20 rows (highest source_index first due to id desc)
+    # Page 1 shows first 20 rows (lowest source_index first)
     titles = page.all('.collapse-title').map(&:text)
-    expect(titles.first).to include("Row #{rows.last.source_index}")
-    expect(titles.last).to include("Row #{rows[5].source_index}")
+    expect(titles.first).to include("Row #{rows.first.source_index}")
+    expect(titles.last).to include("Row #{rows[19].source_index}")
 
     within('.join') { click_link '2' }
 
-    # Page 2 shows first 5 rows
+    # Page 2 shows remaining 5 rows
     expect(page).to have_css('.collapse', count: 5)
     titles = page.all('.collapse-title').map(&:text)
-    expect(titles.first).to include("Row #{rows[4].source_index}")
-    expect(titles.last).to include("Row #{rows.first.source_index}")
+    expect(titles.first).to include("Row #{rows[20].source_index}")
+    expect(titles.last).to include("Row #{rows.last.source_index}")
   end
 end
