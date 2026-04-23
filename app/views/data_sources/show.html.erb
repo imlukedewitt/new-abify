@@ -14,10 +14,9 @@
   <div class="bg-base p-4 overflow-auto">
     <%= link_to "← Back to Data Sources", data_sources_path, class: "link-primary text-sm" %>
     <h1><%= @data_source.name %> </h1>
-    <% rows = @data_source.rows.limit(50) %>
-    <% keys = rows.map { |row| row.data.keys || [] }.flatten.uniq %>
+    <% keys = @data_source.rows.limit(100).flat_map { |row| row.data.keys }.uniq %>
     <% if keys.any? %>
-      <p class="text-sm text-gray-500 mb-4">Showing first 50 of <%= @data_source.rows.count %> total rows</p>
+      <p class="text-sm text-gray-500 mb-4">Showing <%= @rows.count %> of <%= @data_source.rows.count %> total rows</p>
       <table class="table">
         <thead>
           <tr>
@@ -28,12 +27,12 @@
           </tr>
         </thead>
         <tbody>
-          <% if rows.empty? %>
+          <% if @rows.empty? %>
             <tr>
               <td colspan="<%= keys.size + 2 %>" class="text-center">No rows found</td>
             </tr>
           <% else %>
-            <% rows.each do |row| %>
+            <% @rows.each do |row| %>
               <tr>
                 <th><%= row.source_index %></th>
                 <% keys.each do |key| %>
@@ -44,6 +43,10 @@
           <% end %>
         </tbody>
       </table>
+
+      <div class="mt-4">
+        <%= daisy_pagination(@pagy) %>
+      </div>
     <% end %>
   </div>
 </div>

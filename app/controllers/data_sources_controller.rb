@@ -29,6 +29,8 @@ class DataSourcesController < ApplicationController
 
   def show
     @data_source = DataSource.find(params[:id])
+    @pagy, @rows = pagy(:offset, @data_source.rows.order(id: :asc))
+
     respond_to do |format|
       format.json { render json: { data_source: @data_source } }
       format.html do
