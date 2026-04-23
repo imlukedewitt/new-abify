@@ -12,7 +12,11 @@
       </tr>
     </thead>
     <tbody>
-      <%= render partial: 'connection', collection: @connections.order(id: :desc) %>
+      <%= render partial: 'connection', collection: @connections %>
     </tbody>
   </table>
+
+  <div class="mt-4">
+    <%= daisy_pagination(@pagy) %>
+  </div>
 </div>

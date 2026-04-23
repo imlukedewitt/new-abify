@@ -7,8 +7,9 @@ class ConnectionsController < ApplicationController
   before_action :set_connection, only: %i[show edit update destroy]
 
   def index
-    @connections = Connection.all
-    @connections = @connections.where(user_id: params[:user_id]) if params[:user_id]
+    connections = Connection.all
+    connections = connections.where(user_id: params[:user_id]) if params[:user_id]
+    @pagy, @connections = pagy(:offset, connections.order(id: :desc))
 
     respond_to do |format|
       format.html
