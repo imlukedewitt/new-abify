@@ -1,23 +1,31 @@
 <div class="p-4">
   <h1>Workflow Executions</h1>
-  <table class="table table-zebra">
-    <thead>
-      <tr>
-        <th></th>
-        <th>Workflow</th>
-        <th>Data Source</th>
-        <th>Rows</th>
-        <th>Connection</th>
-        <th>Started At</th>
-        <th>Completed At</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <%= render partial: 'workflow_execution', collection: @workflow_executions %>
-    </tbody>
-  </table>
-  <div class="mt-4">
-    <%= daisy_pagination(@pagy) %>
-  </div>
+  <%= turbo_frame_tag "workflow_executions",
+        data: {
+          "turbo-action": "replace",
+          "controller": "reload-frame",
+          "reload-frame-active-value": @workflow_executions.any? { |we| !we.complete? },
+          "reload-frame-interval-value": 3000
+        } do %>
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Workflow</th>
+          <th>Data Source</th>
+          <th>Rows</th>
+          <th>Connection</th>
+          <th>Started At</th>
+          <th>Completed At</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= render partial: 'workflow_execution', collection: @workflow_executions %>
+      </tbody>
+    </table>
+    <div class="mt-4">
+      <%= daisy_pagination(@pagy) %>
+    </div>
+  <% end %>
 </div>

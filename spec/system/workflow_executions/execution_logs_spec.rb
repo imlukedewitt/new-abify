@@ -4,7 +4,10 @@ RSpec.describe 'Workflow Execution Logs', type: :system do
   let!(:user) { create(:user) }
   let!(:connection) { create(:connection, user: user, name: 'Target CRM', credentials: { 'api_key' => 'secret-123' }) }
   let!(:data_source) { create(:data_source, name: 'Sample Leads') }
-  let!(:row) { create(:row, data_source: data_source, data: { 'email' => 'test@example.com', 'name' => 'John Doe' }) }
+  let!(:row) do
+    create(:row, data_source: data_source, source_index: 1,
+                 data: { 'email' => 'test@example.com', 'name' => 'John Doe' })
+  end
 
   let!(:workflow) do
     create(:workflow, name: 'Sync Lead to CRM', connection_slots: [

@@ -16,8 +16,10 @@ class WorkflowExecutionsController < ApplicationController
 
   def show
     @workflow_execution = WorkflowExecution.find(params[:id])
-    row_executions = @workflow_execution.row_executions.includes(:step_executions).order(id: :desc)
+    row_executions = @workflow_execution.row_executions.includes(:row, :step_executions).order(id: :asc)
     @pagy, @row_executions = pagy(:offset, row_executions)
+    @processed_count = row_executions.where.not(status: %w[pending processing]).count
+    @failed_count = row_executions.where(status: 'failed').count
 
     respond_to do |format|
       format.json { render json: { workflow_execution: @workflow_execution } }
