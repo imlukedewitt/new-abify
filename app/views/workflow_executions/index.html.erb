@@ -5,7 +5,7 @@
           "turbo-action": "replace",
           "controller": "reload-frame",
           "reload-frame-active-value": @workflow_executions.any? { |we| !we.complete? },
-          "reload-frame-interval-value": params[:poll_interval] || 3000
+          "reload-frame-interval-value": 3000
         } do %>
     <table class="table table-zebra">
       <thead>
