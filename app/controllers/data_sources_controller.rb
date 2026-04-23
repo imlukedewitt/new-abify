@@ -20,7 +20,7 @@ class DataSourcesController < ApplicationController
   end
 
   def index
-    @data_sources = DataSource.all
+    @pagy, @data_sources = pagy(:offset, DataSource.order(id: :desc))
     respond_to do |format|
       format.json { render json: { data_sources: @data_sources } }
       format.html { render :index  }
@@ -29,6 +29,8 @@ class DataSourcesController < ApplicationController
 
   def show
     @data_source = DataSource.find(params[:id])
+    @pagy, @rows = pagy(:offset, @data_source.rows.order(id: :asc))
+
     respond_to do |format|
       format.json { render json: { data_source: @data_source } }
       format.html do

@@ -35,6 +35,7 @@ group :development, :test do
   gem 'pry-byebug'
   gem 'pry-rails'
   gem 'rspec-rails', '~> 6.1.0'
+  gem 'erb_lint', require: false
   gem 'rubocop', require: false
   gem 'vcr'
   gem 'webmock'
@@ -45,3 +46,5 @@ gem 'csv'
 gem 'rspec-core', '~> 3.13'
 
 gem 'tailwindcss-rails', '~> 4.4'
+# Pagination
+gem 'pagy', '~> 43.5'

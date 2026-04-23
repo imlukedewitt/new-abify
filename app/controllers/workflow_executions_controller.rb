@@ -7,7 +7,7 @@ class WorkflowExecutionsController < ApplicationController
   before_action :set_data_source, only: :create
 
   def index
-    @workflow_executions = WorkflowExecution.all
+    @pagy, @workflow_executions = pagy(:offset, WorkflowExecution.order(id: :desc))
     respond_to do |format|
       format.json { render json: { workflow_executions: @workflow_executions } }
       format.html { render :index }
@@ -16,6 +16,9 @@ class WorkflowExecutionsController < ApplicationController
 
   def show
     @workflow_execution = WorkflowExecution.find(params[:id])
+    row_executions = @workflow_execution.row_executions.includes(:step_executions).order(id: :desc)
+    @pagy, @row_executions = pagy(:offset, row_executions)
+
     respond_to do |format|
       format.json { render json: { workflow_execution: @workflow_execution } }
       format.html { render :show }

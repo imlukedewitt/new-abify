@@ -5,7 +5,7 @@ class WorkflowsController < ApplicationController
   include Serializable
 
   def index
-    @workflows = Workflow.includes(:steps).all
+    @pagy, @workflows = pagy(:offset, Workflow.includes(:steps).order(id: :desc))
 
     respond_to do |format|
       format.html

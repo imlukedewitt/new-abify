@@ -25,6 +25,10 @@
     <% end %>
   </div>
   <div class="rounded-box shadow-md bg-base-200 divide-y divide-base-300">
-    <%= render partial: 'row_execution', collection: @workflow_execution.row_executions.includes(:step_executions) %>
+    <%= render partial: 'row_execution', collection: @row_executions %>
+  </div>
+
+  <div class="mt-4">
+    <%= daisy_pagination(@pagy) %>
   </div>
 </div>

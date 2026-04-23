@@ -11,7 +11,11 @@
       </tr>
     </thead>
     <tbody>
-      <%= render partial: 'data_source', collection: @data_sources.order(id: :desc) %>
+      <%= render partial: 'data_source', collection: @data_sources %>
     </tbody>
   </table>
+
+  <div class="mt-4">
+    <%= daisy_pagination(@pagy) %>
+  </div>
 </div>
