@@ -6,18 +6,14 @@ services:
       - "10000:10000"
     volumes:
       - .:/rails
-      - gem_cache:/usr/local/bundle/gems
     environment:
       - RAILS_ENV=development
 
   css:
     build: .
+    entrypoint: []
     command: bundle exec rails tailwindcss:watch[always]
     volumes:
       - .:/rails
-      - gem_cache:/usr/local/bundle/gems
     environment:
       - RAILS_ENV=development
-
-volumes:
-  gem_cache:

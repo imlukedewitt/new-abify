@@ -139,6 +139,28 @@ RSpec.describe DataSourcesController, type: :controller do
       expect(flash[:notice]).to eq('Data source updated successfully.')
     end
 
+    it 'replaces rows even when prior executions reference them' do
+      workflow = create(:workflow)
+      step = create(:step, workflow: workflow)
+      execution = create(:workflow_execution, workflow: workflow, data_source: data_source)
+
+      data_source.rows.each do |row|
+        re = create(:row_execution, row: row, workflow_execution: execution)
+        create(:step_execution, step: step, row: row, row_execution: re)
+      end
+
+      expect(StepExecution.where(row_id: data_source.row_ids).count).to eq(3)
+      expect(RowExecution.where(row_id: data_source.row_ids).count).to eq(3)
+
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      expect(response).to redirect_to(data_source_path(data_source))
+      expect(flash[:notice]).to eq('Data source updated successfully.')
+
+      data_source.reload
+      expect(data_source.rows.count).to eq(2)
+    end
+
     it 'redirects with an error on failure' do
       allow_any_instance_of(DataSource).to receive(:load_data).and_raise(StandardError, 'Parse error')
 

@@ -44,7 +44,10 @@ class DataSourcesController < ApplicationController
     @data_source = DataSource.find(params[:id])
     source = params[:source]
 
-    @data_source.rows.in_batches.delete_all
+    row_ids = @data_source.row_ids
+    StepExecution.where(row_id: row_ids).delete_all
+    RowExecution.where(row_id: row_ids).delete_all
+    Row.where(id: row_ids).delete_all
     @data_source.name = File.basename(source.original_filename) if source.respond_to?(:original_filename)
     @data_source.save!
 
