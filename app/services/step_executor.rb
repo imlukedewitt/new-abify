@@ -68,6 +68,7 @@ class StepExecutor
 
   def queue_request
     request_fields = @templates.render_request(context)
+    request_fields[:body] = DataUtils.normalize_request_body(request_fields[:body]) if request_fields[:body]
     Rails.logger.info "Queueing request for row #{@row.source_index} step #{@step.position}:"
     Rails.logger.info "  #{request_fields}"
 
