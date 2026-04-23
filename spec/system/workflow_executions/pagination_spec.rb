@@ -10,7 +10,7 @@ RSpec.describe 'Workflow Executions Pagination', type: :system do
   end
 
   it 'paginates workflow executions' do
-    create_list(:workflow_execution, 25, workflow: workflow, data_source: data_source)
+    create_list(:workflow_execution, 25, :complete, workflow: workflow, data_source: data_source)
 
     visit workflow_executions_path
 
@@ -25,7 +25,7 @@ RSpec.describe 'Workflow Executions Pagination', type: :system do
   end
 
   it 'handles many pages with gaps' do
-    create_list(:workflow_execution, 250, workflow: workflow, data_source: data_source)
+    create_list(:workflow_execution, 250, :complete, workflow: workflow, data_source: data_source)
 
     visit workflow_executions_path
 

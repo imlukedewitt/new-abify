@@ -10,8 +10,9 @@ RSpec.describe 'Workflow Execution Row Pagination', type: :system do
     sign_in(user)
   end
 
-  it 'paginates row executions' do
-    create_list(:row_execution, 25, :complete, workflow_execution: workflow_execution)
+  it 'paginates row executions with correct row indices' do
+    rows = create_list(:row, 25, data_source: data_source)
+    rows.each { |row| create(:row_execution, :complete, workflow_execution: workflow_execution, row: row) }
 
     visit workflow_execution_path(workflow_execution)
 
@@ -19,8 +20,17 @@ RSpec.describe 'Workflow Execution Row Pagination', type: :system do
     expect(page).to have_css('.collapse', count: 20)
     expect(page).to have_css('.join')
 
+    # Page 1 shows last 20 rows (highest source_index first due to id desc)
+    titles = page.all('.collapse-title').map(&:text)
+    expect(titles.first).to include("Row #{rows.last.source_index}")
+    expect(titles.last).to include("Row #{rows[5].source_index}")
+
     within('.join') { click_link '2' }
 
+    # Page 2 shows first 5 rows
     expect(page).to have_css('.collapse', count: 5)
+    titles = page.all('.collapse-title').map(&:text)
+    expect(titles.first).to include("Row #{rows[4].source_index}")
+    expect(titles.last).to include("Row #{rows.first.source_index}")
   end
 end

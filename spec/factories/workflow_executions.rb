@@ -39,6 +39,12 @@ FactoryBot.define do
       end
     end
 
+    trait :complete do
+      status { 'complete' }
+      started_at { 1.hour.ago }
+      completed_at { Time.current }
+    end
+
     factory :complete_workflow_execution, traits: [:with_rows]
   end
 end

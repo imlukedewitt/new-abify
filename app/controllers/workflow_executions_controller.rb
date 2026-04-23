@@ -16,7 +16,7 @@ class WorkflowExecutionsController < ApplicationController
 
   def show
     @workflow_execution = WorkflowExecution.find(params[:id])
-    row_executions = @workflow_execution.row_executions.includes(:step_executions).order(id: :desc)
+    row_executions = @workflow_execution.row_executions.includes(:row, :step_executions).order(id: :desc)
     @pagy, @row_executions = pagy(:offset, row_executions)
 
     respond_to do |format|

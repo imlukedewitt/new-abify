@@ -3,7 +3,7 @@
   <input type="checkbox">
   <div class="collapse-title flex items-center gap-3">
     <div class="badge badge-<%= execution_status_color(row_execution.status) %>"><%= row_execution.status %></div>
-    <span class="font-semibold">Row <%= row_execution_counter + 1 %></span>
+    <span class="font-semibold">Row <%= row_execution.row.source_index %></span>
   </div>
   <div class="collapse-content">
     <ul class="timeline timeline-vertical timeline-compact pl-4">
