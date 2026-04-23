@@ -99,4 +99,53 @@ RSpec.describe DataSourcesController, type: :controller do
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe 'PATCH #update' do
+    let!(:data_source) { create(:csv) }
+    let(:csv_file) { fixture_file_upload('spec/fixtures/files/3_rows.csv', 'text/csv') }
+    let(:replacement_file) { fixture_file_upload('spec/fixtures/files/simple.csv', 'text/csv') }
+
+    before do
+      data_source.source = csv_file
+      data_source.load_data
+    end
+
+    it 'replaces existing rows with new data' do
+      expect(data_source.rows.count).to eq(3)
+
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      data_source.reload
+      expect(data_source.rows.count).to eq(2)
+    end
+
+    it 'updates the data source name' do
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      data_source.reload
+      expect(data_source.name).to eq('simple.csv')
+    end
+
+    it 'does not create a new data source' do
+      expect do
+        patch :update, params: { id: data_source.id, source: replacement_file }
+      end.not_to change(DataSource, :count)
+    end
+
+    it 'redirects to the data source with a success notice' do
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      expect(response).to redirect_to(data_source_path(data_source))
+      expect(flash[:notice]).to eq('Data source updated successfully.')
+    end
+
+    it 'redirects with an error on failure' do
+      allow_any_instance_of(DataSource).to receive(:load_data).and_raise(StandardError, 'Parse error')
+
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      expect(response).to redirect_to(data_source_path(data_source))
+      expect(flash[:alert]).to include('Failed to update')
+    end
+  end
 end

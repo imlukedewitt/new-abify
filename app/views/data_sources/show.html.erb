@@ -10,6 +10,14 @@
                 { class: "select" } %>
       <%= form.submit "Run", class: "btn btn-primary mt-2" %>
     <% end %>
+
+    <div class="divider"></div>
+
+    <h2>Replace Data</h2>
+    <%= form_with url: data_source_path(@data_source), method: :patch, multipart: true do |form| %>
+      <%= form.file_field :source, class: "file-input file-input-sm w-full" %>
+      <%= form.submit "Upload", class: "btn btn-secondary btn-sm mt-2" %>
+    <% end %>
   </div>
   <div class="bg-base p-4 overflow-auto">
     <%= link_to "← Back to Data Sources", data_sources_path, class: "link-primary text-sm" %>

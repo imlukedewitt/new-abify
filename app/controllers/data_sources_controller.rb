@@ -39,4 +39,22 @@ class DataSourcesController < ApplicationController
       end
     end
   end
+
+  def update
+    @data_source = DataSource.find(params[:id])
+    source = params[:source]
+
+    @data_source.rows.in_batches.delete_all
+    @data_source.name = File.basename(source.original_filename) if source.respond_to?(:original_filename)
+    @data_source.save!
+
+    # Reload to clear stale association cache, then load new rows
+    @data_source.reload
+    @data_source.source = source
+    @data_source.load_data
+
+    redirect_to data_source_path(@data_source), notice: 'Data source updated successfully.'
+  rescue StandardError => e
+    redirect_to data_source_path(@data_source), alert: "Failed to update: #{e.message}"
+  end
 end
