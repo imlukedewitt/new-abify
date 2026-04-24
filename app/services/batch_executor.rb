@@ -37,13 +37,16 @@ class BatchExecutor
   private
 
   def process_in_parallel
+    row_executions = bulk_create_row_executions
+
     row_executors = rows.map do |row|
       row_executor = RowExecutor.new(
         row: row,
         workflow: workflow,
         workflow_execution: workflow_execution,
         step_templates: @step_templates,
-        resolved_connections: @resolved_connections
+        resolved_connections: @resolved_connections,
+        row_execution: row_executions[row.id]
       )
       row_executor.call
       row_executor
@@ -66,5 +69,14 @@ class BatchExecutor
       HydraManager.instance.run
       row_executor.wait_for_completion
     end
+  end
+
+  def bulk_create_row_executions
+    now = Time.current
+    records = rows.map do |row|
+      { row_id: row.id, workflow_execution_id: workflow_execution.id, status: 'pending', created_at: now, updated_at: now }
+    end
+    RowExecution.insert_all!(records)
+    RowExecution.where(workflow_execution_id: workflow_execution.id).index_by(&:row_id)
   end
 end
