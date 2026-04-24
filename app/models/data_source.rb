@@ -6,8 +6,10 @@
 class DataSource < ApplicationRecord
   attr_accessor :source
 
-  has_many :rows
-  has_many :workflow_executions
+  has_many :rows, dependent: :delete_all
+  has_many :workflow_executions, dependent: :delete_all
+
+  before_destroy :clean_dependent_records, prepend: true
 
   validates :name, presence: true
   validates :type, presence: true
@@ -88,5 +90,17 @@ class DataSource < ApplicationRecord
     else
       'string'
     end
+  end
+
+  def clean_dependent_records
+    we_ids = workflow_execution_ids
+    re_ids = RowExecution.where(workflow_execution_id: we_ids).pluck(:id)
+    batch_ids = Batch.where(workflow_execution_id: we_ids).pluck(:id)
+
+    StepExecution.where(row_execution_id: re_ids).delete_all
+    RowExecution.where(id: re_ids).delete_all
+    BatchExecution.where(batch_id: batch_ids).delete_all
+    Row.where(batch_id: batch_ids).update_all(batch_id: nil)
+    Batch.where(id: batch_ids).delete_all
   end
 end

@@ -18,7 +18,7 @@ Rails.application.routes.draw do
   delete 'logout' => 'sessions#destroy'
 
   resources :workflow_executions, only: %i[create index show new]
-  resources :data_sources, only: %i[create index show new update]
+  resources :data_sources, only: %i[create index show new update destroy]
   resources :workflows do
     resources :steps do
       member do

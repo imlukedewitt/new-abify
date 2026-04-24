@@ -221,6 +221,24 @@ RSpec.describe WorkflowsController, type: :controller do
       end
     end
 
+    context 'with associated workflow executions' do
+      it 'deletes the workflow and its executions' do
+        step = create(:step, workflow: workflow)
+        ds = create(:data_source)
+        we = create(:workflow_execution, workflow: workflow, data_source: ds)
+        row = create(:row, data_source: ds)
+        re = create(:row_execution, row: row, workflow_execution: we)
+        create(:step_execution, step: step, row: row, row_execution: re)
+
+        expect do
+          delete :destroy, params: { id: workflow.id }, as: :json
+        end.to change(Workflow, :count).by(-1)
+          .and change(WorkflowExecution, :count).by(-1)
+          .and change(RowExecution, :count).by(-1)
+          .and change(StepExecution, :count).by(-1)
+      end
+    end
+
     context 'with invalid workflow id' do
       it 'returns not found' do
         delete :destroy, params: { id: 99_999 }, as: :json

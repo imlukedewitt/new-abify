@@ -18,6 +18,13 @@
       <%= form.file_field :source, class: "file-input file-input-sm w-full" %>
       <%= form.submit "Upload", class: "btn btn-secondary btn-sm mt-2" %>
     <% end %>
+
+    <div class="divider"></div>
+
+    <h2>Delete</h2>
+    <%= button_to "Delete Data Source", data_source_path(@data_source), method: :delete,
+      class: "btn btn-error btn-sm",
+      data: { turbo_confirm: "Delete this data source and all its rows? This cannot be undone." } %>
   </div>
   <div class="bg-base p-4 overflow-auto">
     <%= link_to "← Back to Data Sources", data_sources_path, class: "link-primary text-sm" %>
