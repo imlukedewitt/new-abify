@@ -43,12 +43,25 @@ RSpec.describe 'Workflow Execution Auto Reload', type: :system do
   end
 
   it 'stops polling when all executions are complete' do
-    create(:workflow_execution, :complete, workflow: @workflow, data_source: @data_source)
+    execution = create(:workflow_execution, workflow: @workflow, data_source: @data_source, status: 'processing')
 
     visit workflow_executions_path
+    expect(page).to have_css('.badge-warning', text: 'PROCESSING')
 
-    frame = find('turbo-frame#workflow_executions')
-    expect(frame['data-reload-frame-active-value']).to eq('false')
+    execution.update!(status: 'complete', completed_at: Time.current)
+
+    # Wait for the frame to reload and show complete
+    using_wait_time(6) do
+      expect(page).to have_css('.badge-success', text: 'COMPLETE')
+    end
+
+    # Inject a marker element inside the frame — if polling continues it will be wiped
+    page.execute_script("document.querySelector('turbo-frame#workflow_executions').insertAdjacentHTML('beforeend', '<div id=polling-marker></div>')")
+    expect(page).to have_css('#polling-marker')
+
+    # Wait longer than one polling interval
+    sleep 4
+    expect(page).to have_css('#polling-marker')
   end
 
   it 'replaces history on pagination so back button skips the list' do

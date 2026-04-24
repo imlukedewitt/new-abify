@@ -51,7 +51,7 @@ RSpec.describe 'Run Workflow', type: :system do
     click_button 'Execute Workflow'
 
     # Verify redirection and success message
-    expect(page).to have_current_path(data_source_path(data_source))
+    expect(page).to have_current_path(workflow_execution_path(WorkflowExecution.last))
     expect(page).to have_content('Workflow started')
 
     # Verify record creation

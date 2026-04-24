@@ -12,7 +12,7 @@
   <div class="form-control">
     <%= label_tag :data_source_id, "Data Source", class: "label" %>
     <%= select_tag :data_source_id, 
-                   options_from_collection_for_select(DataSource.all, :id, :name),
+                   options_from_collection_for_select(DataSource.all, :id, :name, params[:data_source_id]),
                    class: "select select-bordered w-full" %>
   </div>
   <% if @workflow.connection_slots.present? %>

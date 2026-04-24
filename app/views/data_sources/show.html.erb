@@ -1,8 +1,7 @@
 <div class="grid h-[calc(100dvh-var(--header-height))] grid-cols-[var(--sidebar-width)_1fr]">
   <div class="bg-base-300 p-4">
     <h2>Run Workflow</h2>
-    <%= render 'shared/connection_slot_explanation' %>
-    <%= form_with url: workflow_executions_path, method: :post do |form| %>
+    <%= form_with url: new_workflow_execution_path, method: :get do |form| %>
       <%= form.hidden_field :data_source_id, value: @data_source.id %>
       <%= form.select :workflow_id,
                 options_from_collection_for_select(@workflows, :id, :name),

@@ -6,6 +6,8 @@ export default class extends Controller {
     active: { type: Boolean, default: true }
   }
 
+  static targets = ["status"]
+
   connect() {
     if (this.activeValue) this.start()
   }
@@ -14,12 +16,31 @@ export default class extends Controller {
     this.stop()
   }
 
+  activeValueChanged() {
+    if (this.activeValue) {
+      this.start()
+    } else {
+      this.stop()
+    }
+  }
+
+  statusTargetConnected(target) {
+    const active = target.dataset.active === "true"
+    if (!active && this.timer) {
+      this.activeValue = false
+    }
+  }
+
   start() {
+    if (this.timer) return
     if (!this.element.src) this.element.src = window.location.href
     this.timer = setInterval(() => this.element.reload(), this.intervalValue)
   }
 
   stop() {
-    if (this.timer) clearInterval(this.timer)
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
   }
 }

@@ -46,11 +46,26 @@ RSpec.describe 'Row Execution Auto Reload', type: :system do
 
   it 'stops polling when all row executions are complete' do
     row = create(:row, data_source: @data_source)
-    create(:row_execution, :complete, workflow_execution: @workflow_execution, row: row)
+    row_execution = create(:row_execution, workflow_execution: @workflow_execution, row: row, status: 'processing')
 
     visit workflow_execution_path(@workflow_execution)
+    expect(page).to have_css('.badge-warning', text: 'processing')
 
-    frame = find('turbo-frame#row_executions')
-    expect(frame['data-reload-frame-active-value']).to eq('false')
+    # Complete the row execution
+    row_execution.update!(status: 'complete', completed_at: Time.current)
+    @workflow_execution.update!(status: 'complete', completed_at: Time.current)
+
+    # Wait for the frame to reload and show complete
+    using_wait_time(6) do
+      expect(page).to have_css('.badge-success', text: 'complete')
+    end
+
+    # Inject a marker element inside the frame — if polling continues it will be wiped
+    page.execute_script("document.querySelector('turbo-frame#row_executions').insertAdjacentHTML('beforeend', '<div id=polling-marker></div>')")
+    expect(page).to have_css('#polling-marker')
+
+    # Wait longer than one polling interval — marker should survive
+    sleep 4
+    expect(page).to have_css('#polling-marker')
   end
 end
