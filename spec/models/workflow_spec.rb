@@ -13,7 +13,7 @@ RSpec.describe Workflow, type: :model do
     it 'has many workflow_executions' do
       association = described_class.reflect_on_association(:workflow_executions)
       expect(association.macro).to eq :has_many
-      expect(association.options[:dependent]).to eq :restrict_with_error
+      expect(association.options[:dependent]).to eq :destroy
     end
   end
 

@@ -227,7 +227,7 @@ RSpec.describe WorkflowExecutor do
         create(:row, data_source: data_source)
         allow(HydraManager.instance).to receive(:queue) do |**args|
           @captured_auth_config = args[:auth_config]
-          response = double('Response', code: 200, body: '{"id": "123"}')
+          response = double('Response', code: 200, body: '{"id": "123"}', total_time: 0.5)
           args[:on_complete]&.call(response)
         end
       end

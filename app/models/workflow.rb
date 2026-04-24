@@ -6,8 +6,8 @@
 class Workflow < ApplicationRecord
   HANDLE_FORMAT = /\A[a-z][a-z0-9_-]*\z/
 
+  has_many :workflow_executions, dependent: :destroy
   has_many :steps, dependent: :destroy
-  has_many :workflow_executions, dependent: :restrict_with_error
 
   validates :name, presence: true
   validates :handle, format: {

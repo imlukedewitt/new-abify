@@ -8,13 +8,4 @@ RSpec.describe 'UI Messaging', type: :request do
       expect(response.body).to include('Placeholders for connections')
     end
   end
-
-  describe 'Data Source show page' do
-    it 'renders the connection slot explanation tooltip' do
-      data_source = create(:data_source)
-      get data_source_path(data_source)
-      expect(response.body).to include('What is this?')
-      expect(response.body).to include('Placeholders for connections')
-    end
-  end
 end

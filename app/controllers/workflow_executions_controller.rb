@@ -65,7 +65,7 @@ class WorkflowExecutionsController < ApplicationController
         format.json do
           render json: { message: 'Workflow started', workflow_execution_id: @workflow_execution.id }, status: :accepted
         end
-        format.html { redirect_to data_source_path(@data_source), notice: 'Workflow started' }
+        format.html { redirect_to workflow_execution_path(@workflow_execution), notice: 'Workflow started' }
       end
     else
       set_connections

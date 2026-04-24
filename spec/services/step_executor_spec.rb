@@ -23,11 +23,11 @@ RSpec.describe StepExecutor do
   end
 
   def success_response(body = '{}')
-    double('Response', body: body, code: 200)
+    double('Response', body: body, code: 200, total_time: 0.5)
   end
 
   def error_response(code, body = '{}')
-    double('Response', body: body, code: code)
+    double('Response', body: body, code: code, total_time: 0.5)
   end
 
   describe '#initialize' do

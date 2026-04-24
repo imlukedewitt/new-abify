@@ -5,7 +5,7 @@
 class RowExecutor
   attr_reader :row, :workflow, :workflow_execution
 
-  def initialize(row:, workflow:, workflow_execution:, step_templates: nil, resolved_connections: {})
+  def initialize(row:, workflow:, workflow_execution:, step_templates: nil, resolved_connections: {}, row_execution: nil)
     raise ArgumentError, 'row is required' if row.nil?
     raise ArgumentError, 'workflow is required' if workflow.nil?
     raise ArgumentError, 'workflow_execution is required' if workflow_execution.nil?
@@ -13,6 +13,7 @@ class RowExecutor
     @row = row
     @workflow = workflow
     @workflow_execution = workflow_execution
+    @row_execution = row_execution
     @step_templates = step_templates
     @resolved_connections = resolved_connections
     @ordered_steps = workflow.steps.sort_by(&:position)
@@ -47,7 +48,7 @@ class RowExecutor
   private
 
   def execution
-    @execution ||= RowExecution.new(row: @row, workflow_execution: @workflow_execution)
+    @execution ||= @row_execution || RowExecution.new(row: @row, workflow_execution: @workflow_execution)
   end
 
   def process_current_step

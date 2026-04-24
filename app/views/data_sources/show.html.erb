@@ -1,8 +1,7 @@
 <div class="grid h-[calc(100dvh-var(--header-height))] grid-cols-[var(--sidebar-width)_1fr]">
   <div class="bg-base-300 p-4">
     <h2>Run Workflow</h2>
-    <%= render 'shared/connection_slot_explanation' %>
-    <%= form_with url: workflow_executions_path, method: :post do |form| %>
+    <%= form_with url: new_workflow_execution_path, method: :get do |form| %>
       <%= form.hidden_field :data_source_id, value: @data_source.id %>
       <%= form.select :workflow_id,
                 options_from_collection_for_select(@workflows, :id, :name),
@@ -10,6 +9,21 @@
                 { class: "select" } %>
       <%= form.submit "Run", class: "btn btn-primary mt-2" %>
     <% end %>
+
+    <div class="divider"></div>
+
+    <h2>Replace Data</h2>
+    <%= form_with url: data_source_path(@data_source), method: :patch, multipart: true do |form| %>
+      <%= form.file_field :source, class: "file-input file-input-sm w-full" %>
+      <%= form.submit "Upload", class: "btn btn-secondary btn-sm mt-2" %>
+    <% end %>
+
+    <div class="divider"></div>
+
+    <h2>Delete</h2>
+    <%= button_to "Delete Data Source", data_source_path(@data_source), method: :delete,
+      class: "btn btn-error btn-sm",
+      data: { turbo_confirm: "Delete this data source and all its rows? This cannot be undone." } %>
   </div>
   <div class="bg-base p-4 overflow-auto">
     <%= link_to "← Back to Data Sources", data_sources_path, class: "link-primary text-sm" %>

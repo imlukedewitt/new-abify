@@ -5,9 +5,10 @@
         data: {
           "turbo-action": "replace",
           "controller": "reload-frame",
-          "reload-frame-active-value": @row_executions.any? { |re| !re.complete? },
+          "reload-frame-active-value": !@workflow_execution.complete?,
           "reload-frame-interval-value": 3000
         } do %>
+    <span hidden data-reload-frame-target="status" data-active="<%= !@workflow_execution.complete? %>"></span>
     <div class="flex flex-wrap items-center gap-4 mb-2 text-sm text-neutral-content/70">
       <span>Workflow: <strong class="text-base-content"><%= @workflow_execution.workflow.name %></strong></span>
       <% if @workflow_execution.connection_mappings.present? %>

@@ -20,7 +20,7 @@ RSpec.describe BatchExecutor do
 
     # Stub HydraManager to prevent HTTP and immediately invoke callbacks
     allow(HydraManager.instance).to receive(:queue) do |**args|
-      response = double('Response', code: 200, body: '{"id": "123"}')
+      response = double('Response', code: 200, body: '{"id": "123"}', total_time: 0.5)
       args[:on_complete]&.call(response)
     end
     allow(HydraManager.instance).to receive(:run)

@@ -52,6 +52,7 @@ class HydraManager
     @running = true
     hydra.run
     @running = false
+    @requests.clear
     Rails.logger.info "Hydra queue complete"
   end
 

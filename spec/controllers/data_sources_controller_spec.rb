@@ -99,4 +99,133 @@ RSpec.describe DataSourcesController, type: :controller do
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe 'PATCH #update' do
+    let!(:data_source) { create(:csv) }
+    let(:csv_file) { fixture_file_upload('spec/fixtures/files/3_rows.csv', 'text/csv') }
+    let(:replacement_file) { fixture_file_upload('spec/fixtures/files/simple.csv', 'text/csv') }
+
+    before do
+      data_source.source = csv_file
+      data_source.load_data
+    end
+
+    it 'replaces existing rows with new data' do
+      expect(data_source.rows.count).to eq(3)
+
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      data_source.reload
+      expect(data_source.rows.count).to eq(2)
+    end
+
+    it 'updates the data source name' do
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      data_source.reload
+      expect(data_source.name).to eq('simple.csv')
+    end
+
+    it 'does not create a new data source' do
+      expect do
+        patch :update, params: { id: data_source.id, source: replacement_file }
+      end.not_to change(DataSource, :count)
+    end
+
+    it 'redirects to the data source with a success notice' do
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      expect(response).to redirect_to(data_source_path(data_source))
+      expect(flash[:notice]).to eq('Data source updated successfully.')
+    end
+
+    it 'replaces rows even when prior executions reference them' do
+      workflow = create(:workflow)
+      step = create(:step, workflow: workflow)
+      execution = create(:workflow_execution, workflow: workflow, data_source: data_source)
+
+      data_source.rows.each do |row|
+        re = create(:row_execution, row: row, workflow_execution: execution)
+        create(:step_execution, step: step, row: row, row_execution: re)
+      end
+
+      expect(StepExecution.where(row_id: data_source.row_ids).count).to eq(3)
+      expect(RowExecution.where(row_id: data_source.row_ids).count).to eq(3)
+
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      expect(response).to redirect_to(data_source_path(data_source))
+      expect(flash[:notice]).to eq('Data source updated successfully.')
+
+      data_source.reload
+      expect(data_source.rows.count).to eq(2)
+    end
+
+    it 'redirects with an error on failure' do
+      allow_any_instance_of(DataSource).to receive(:load_data).and_raise(StandardError, 'Parse error')
+
+      patch :update, params: { id: data_source.id, source: replacement_file }
+
+      expect(response).to redirect_to(data_source_path(data_source))
+      expect(flash[:alert]).to include('Failed to update')
+    end
+  end
+
+  describe 'DELETE #destroy' do
+    let!(:data_source) { create(:csv) }
+    let(:csv_file) { fixture_file_upload('spec/fixtures/files/3_rows.csv', 'text/csv') }
+
+    before do
+      data_source.source = csv_file
+      data_source.load_data
+    end
+
+    it 'deletes the data source and its rows' do
+      expect(data_source.rows.count).to eq(3)
+
+      expect do
+        delete :destroy, params: { id: data_source.id }
+      end.to change(DataSource, :count).by(-1)
+                                       .and change(Row, :count).by(-3)
+    end
+
+    it 'redirects to the index with a notice' do
+      delete :destroy, params: { id: data_source.id }
+
+      expect(response).to redirect_to(data_sources_path)
+      expect(flash[:notice]).to eq('Data source deleted.')
+    end
+
+    it 'deletes even when executions reference its rows' do
+      workflow = create(:workflow)
+      step = create(:step, workflow: workflow)
+      execution = create(:workflow_execution, workflow: workflow, data_source: data_source)
+
+      data_source.rows.each do |row|
+        re = create(:row_execution, row: row, workflow_execution: execution)
+        create(:step_execution, step: step, row: row, row_execution: re)
+      end
+
+      expect do
+        delete :destroy, params: { id: data_source.id }
+      end.to change(DataSource, :count).by(-1)
+        .and change(Row, :count).by(-3)
+        .and change(WorkflowExecution, :count).by(-1)
+        .and change(RowExecution, :count).by(-3)
+        .and change(StepExecution, :count).by(-3)
+    end
+
+    it 'deletes even when rows are batched' do
+      execution = create(:workflow_execution, workflow: create(:workflow), data_source: data_source)
+      batch = Batch.create!(workflow_execution: execution)
+      data_source.rows.update_all(batch_id: batch.id)
+      BatchExecution.create!(batch: batch, workflow: execution.workflow)
+
+      expect do
+        delete :destroy, params: { id: data_source.id }
+      end.to change(DataSource, :count).by(-1)
+                                       .and change(Batch, :count).by(-1)
+                                                                 .and change(BatchExecution, :count).by(-1)
+    end
+  end
 end

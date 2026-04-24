@@ -11,12 +11,12 @@
   <%= hidden_field_tag :workflow_id, @workflow.id %>
   <div class="form-control">
     <%= label_tag :data_source_id, "Data Source", class: "label" %>
-    <%= select_tag :data_source_id, 
-                   options_from_collection_for_select(DataSource.all, :id, :name),
-                   class: "select select-bordered w-full" %>
+    <%= select_tag :data_source_id,
+                   options_from_collection_for_select(DataSource.all, :id, :name, params[:data_source_id]),
+                   class: 'select select-bordered w-full' %>
   </div>
   <% if @workflow.connection_slots.present? %>
-    <hr class="my-6 border-base-300" />
+    <hr class="my-6 border-base-300">
     <%= render partial: 'connection_mapping_fields', locals: { form: form, workflow: @workflow } %>
   <% end %>
   <div class="flex gap-2">

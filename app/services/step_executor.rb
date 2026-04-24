@@ -68,6 +68,7 @@ class StepExecutor
 
   def queue_request
     request_fields = @templates.render_request(context)
+    request_fields[:body] = DataUtils.normalize_request_body(request_fields[:body]) if request_fields[:body]
     Rails.logger.info "Queueing request for row #{@row.source_index} step #{@step.position}:"
     Rails.logger.info "  #{request_fields}"
 
@@ -85,24 +86,25 @@ class StepExecutor
     parsed = parse_json_response(response.body)
     return fail_response('Invalid JSON response') if parsed.nil?
 
-    response.code.between?(200, 299) ? handle_success(parsed) : handle_error(parsed, response.code)
+    started_at = response.total_time ? Time.current - response.total_time : nil
+    response.code.between?(200, 299) ? handle_success(parsed, started_at) : handle_error(parsed, response.code, started_at)
   rescue StandardError => e
     fail_response(e.message)
   end
 
-  def handle_success(parsed)
+  def handle_success(parsed, started_at = nil)
     context_with_response = context.merge('response' => parsed)
     success_data = @templates.extract_success_data(context_with_response, required: required?)
-    @execution.succeed!(success_data)
+    @execution.succeed!(success_data, started_at: started_at)
     { success: true, data: success_data }
   end
 
-  def handle_error(parsed, code)
+  def handle_error(parsed, code, started_at = nil)
     error = parsed['errors'] || "Request failed with status #{code}"
-    fail_response(error)
+    fail_response(error, started_at: started_at)
   end
 
-  def fail_response(error)
+  def fail_response(error, started_at: nil)
     slot_handle = @config.dig(:liquid_templates, :connection_slot)
     slot_info = slot_handle ? "slot '#{slot_handle}'" : 'default slot'
     connection_name = @connection&.name
@@ -112,7 +114,7 @@ class StepExecutor
 
     full_error = "#{context}: #{error}"
 
-    @execution.fail!(full_error)
+    @execution.fail!(full_error, started_at: started_at)
     { success: false, error: full_error }
   end
 

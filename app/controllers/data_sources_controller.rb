@@ -23,7 +23,7 @@ class DataSourcesController < ApplicationController
     @pagy, @data_sources = pagy(:offset, DataSource.order(id: :desc))
     respond_to do |format|
       format.json { render json: { data_sources: @data_sources } }
-      format.html { render :index  }
+      format.html { render :index }
     end
   end
 
@@ -38,5 +38,38 @@ class DataSourcesController < ApplicationController
         render :show
       end
     end
+  end
+
+  def update
+    @data_source = DataSource.find(params[:id])
+    source = params[:source]
+
+    replace_rows(@data_source, source)
+
+    redirect_to data_source_path(@data_source), notice: 'Data source updated successfully.'
+  rescue StandardError => e
+    redirect_to data_source_path(@data_source), alert: "Failed to update: #{e.message}"
+  end
+
+  def destroy
+    @data_source = DataSource.find(params[:id])
+    @data_source.destroy!
+    redirect_to data_sources_path, notice: 'Data source deleted.'
+  rescue StandardError => e
+    redirect_to data_source_path(@data_source), alert: "Failed to delete: #{e.message}"
+  end
+
+  private
+
+  def replace_rows(data_source, source)
+    row_ids = data_source.row_ids
+    StepExecution.where(row_id: row_ids).delete_all
+    RowExecution.where(row_id: row_ids).delete_all
+    Row.where(id: row_ids).delete_all
+    data_source.name = File.basename(source.original_filename) if source.respond_to?(:original_filename)
+    data_source.save!
+    data_source.reload
+    data_source.source = source
+    data_source.load_data
   end
 end
