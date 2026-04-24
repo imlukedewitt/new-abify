@@ -28,6 +28,22 @@ RSpec.describe 'Row Execution Auto Reload', type: :system do
     User.destroy_all
   end
 
+  it 'polls for rows when execution is pending with no row executions yet' do
+    visit workflow_execution_path(@workflow_execution)
+
+    # No rows visible yet
+    expect(page).to have_no_css('.badge')
+
+    # Create a row execution after the page loads (simulates background thread)
+    row = create(:row, data_source: @data_source)
+    create(:row_execution, workflow_execution: @workflow_execution, row: row, status: 'processing')
+
+    # Polling should pick it up
+    using_wait_time(6) do
+      expect(page).to have_css('.badge-warning', text: 'processing')
+    end
+  end
+
   it 'reloads frame when row execution status changes from processing to complete' do
     row = create(:row, data_source: @data_source)
     row_execution = create(:row_execution, workflow_execution: @workflow_execution, row: row, status: 'processing')
