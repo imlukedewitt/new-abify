@@ -31,15 +31,15 @@ RSpec.describe StepExecutor, type: :service do
 
     context 'when processing response' do
       let(:success_response) do
-        double('response', body: '{"customer":{"id":"123"}}', code: 200)
+        double('response', body: '{"customer":{"id":"123"}}', code: 200, total_time: 0.5)
       end
 
       let(:failure_response) do
-        double('response', body: '{"errors":["Not found"]}', code: 404)
+        double('response', body: '{"errors":["Not found"]}', code: 404, total_time: 0.5)
       end
 
       it 'marks execution as successful when API returns success' do
-        expect(processor.execution).to receive(:succeed!).with(hash_including('customer_id' => '123'))
+        expect(processor.execution).to receive(:succeed!).with(hash_including('customer_id' => '123'), started_at: anything)
 
         expect(hydra_manager).to receive(:queue) do |args|
           args[:on_complete].call(success_response)
@@ -49,7 +49,7 @@ RSpec.describe StepExecutor, type: :service do
       end
 
       it 'marks execution as failed when API returns error' do
-        expect(processor.execution).to receive(:fail!).with(a_string_including('["Not found"]'))
+        expect(processor.execution).to receive(:fail!).with(a_string_including('["Not found"]'), started_at: anything)
 
         expect(hydra_manager).to receive(:queue) do |args|
           args[:on_complete].call(failure_response)

@@ -12,7 +12,7 @@ RSpec.describe RowExecutor do
   before do
     # Stub HydraManager to prevent actual HTTP and immediately invoke callbacks
     allow(HydraManager.instance).to receive(:queue) do |**args|
-      response = double('Response', code: 200, body: '{"id": "123"}')
+      response = double('Response', code: 200, body: '{"id": "123"}', total_time: 0.5)
       args[:on_complete]&.call(response)
     end
     allow(HydraManager.instance).to receive(:run)
@@ -147,7 +147,7 @@ RSpec.describe RowExecutor do
     context 'when a required step fails' do
       before do
         allow(HydraManager.instance).to receive(:queue) do |**args|
-          response = double('Response', code: 500, body: '{"error": "Server error"}')
+          response = double('Response', code: 500, body: '{"error": "Server error"}', total_time: 0.5)
           args[:on_complete]&.call(response)
         end
 
@@ -178,7 +178,7 @@ RSpec.describe RowExecutor do
     context 'when a non-required step fails' do
       before do
         allow(HydraManager.instance).to receive(:queue) do |**args|
-          response = double('Response', code: 500, body: '{"error": "Server error"}')
+          response = double('Response', code: 500, body: '{"error": "Server error"}', total_time: 0.5)
           args[:on_complete]&.call(response)
         end
 

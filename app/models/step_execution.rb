@@ -17,28 +17,28 @@ class StepExecution < ApplicationRecord
 
   attribute :result
 
-  def succeed!(data = {})
-    update!(
+  def succeed!(data = {}, started_at: nil)
+    attrs = {
       status: Executable::SUCCESS,
-      result: { success: true, data: data },
+      result: { success: true, data: data || {} },
       completed_at: Time.current
-    )
+    }
+    attrs[:started_at] = started_at if started_at
+    update!(attrs)
   end
 
-  def fail!(error)
+  def fail!(error, started_at: nil)
     errors = error.is_a?(Array) ? error : [error]
+    attrs = {
+      status: Executable::FAILED,
+      result: { success: false, errors: errors },
+      completed_at: Time.current
+    }
+    attrs[:started_at] = started_at if started_at
     if persisted?
-      update_columns(
-        status: Executable::FAILED,
-        result: { success: false, errors: errors },
-        completed_at: Time.current
-      )
+      update_columns(attrs)
     else
-      assign_attributes(
-        status: Executable::FAILED,
-        result: { success: false, errors: errors },
-        completed_at: Time.current
-      )
+      assign_attributes(attrs)
     end
   end
 

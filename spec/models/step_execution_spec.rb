@@ -56,13 +56,13 @@ RSpec.describe StepExecution, type: :model do
 
       it 'changes status to success and sets completed_at' do
         expect do
-          step_execution.succeed!(customer_id: '123')
+          step_execution.succeed!({ customer_id: '123' })
         end.to change(step_execution, :status).from('processing').to('success')
                                               .and change(step_execution, :completed_at).from(nil)
       end
 
       it 'stores result data' do
-        step_execution.succeed!(customer_id: '123')
+        step_execution.succeed!({ customer_id: '123' })
         expect(step_execution.reload.result).to eq({
                                                      'success' => true,
                                                      'data' => { 'customer_id' => '123' }
