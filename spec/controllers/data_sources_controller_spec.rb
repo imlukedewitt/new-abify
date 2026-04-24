@@ -186,7 +186,7 @@ RSpec.describe DataSourcesController, type: :controller do
       expect do
         delete :destroy, params: { id: data_source.id }
       end.to change(DataSource, :count).by(-1)
-        .and change(Row, :count).by(-3)
+                                       .and change(Row, :count).by(-3)
     end
 
     it 'redirects to the index with a notice' do
@@ -224,8 +224,8 @@ RSpec.describe DataSourcesController, type: :controller do
       expect do
         delete :destroy, params: { id: data_source.id }
       end.to change(DataSource, :count).by(-1)
-        .and change(Batch, :count).by(-1)
-        .and change(BatchExecution, :count).by(-1)
+                                       .and change(Batch, :count).by(-1)
+                                                                 .and change(BatchExecution, :count).by(-1)
     end
   end
 end

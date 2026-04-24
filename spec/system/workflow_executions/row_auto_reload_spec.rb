@@ -77,7 +77,8 @@ RSpec.describe 'Row Execution Auto Reload', type: :system do
     end
 
     # Inject a marker element inside the frame — if polling continues it will be wiped
-    page.execute_script("document.querySelector('turbo-frame#row_executions').insertAdjacentHTML('beforeend', '<div id=polling-marker></div>')")
+    marker = "document.querySelector('turbo-frame#row_executions')"
+    page.execute_script("#{marker}.insertAdjacentHTML('beforeend', '<div id=polling-marker></div>')")
     expect(page).to have_css('#polling-marker')
 
     # Wait longer than one polling interval — marker should survive
